@@ -1,0 +1,16 @@
+{
+  "name": "purescript-spec",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "tests",
+    "externs",
+    "tmp"
+  ],
+  "dependencies": {
+    "purescript-arrays": "*",
+    "purescript-transformers": "~0.5.4",
+    "purescript-strings": "~0.4.5",
+    "purescript-exceptions": "~0.2.3"
+  }
+}
