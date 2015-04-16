@@ -11,31 +11,21 @@ import Control.Monad.State.Trans
 import Control.Monad.Trans
 import Control.Monad.Eff
 import Control.Monad.Eff.Exception
-import Control.Monad.Eff.Random
 import Test.Spec
+import Test.Spec.Console
+import Test.Spec.Summary
+foreign import data Process :: !
+
+foreign import exit
+  """
+  function exit(code) {
+    return function() {
+      process.exit(code);
+    };
+  }
+  """ :: forall eff. Number -> Eff (process :: Process | eff) Unit
 
 type Runner r t = StateT [Group] (Eff r) t
-
-foreign import setAttr
-  """
-  function setAttr(code) {
-    return function () {
-      if (process) {
-        process.stdout.write("\x1b[" + code + "m");
-      }
-    };
-  };
-  """ :: forall e. Number -> Eff (trace :: Trace | e) Unit
-
-reset :: forall e. Eff (trace :: Trace | e) Unit
-reset = setAttr 0
-
-withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) Unit
-withAttrs [] r = r
-withAttrs (attr : attrs) r = do
-  setAttr attr
-  withAttrs attrs r
-  reset
 
 describe :: forall r. String
          -> Runner r Unit
@@ -98,12 +88,13 @@ printGroup (Describe name groups) = do
   mapM_ printGroup groups
   trace ""
 
-suite :: forall r. Runner (trace :: Trace | r) Unit
-      -> Eff (trace :: Trace | r) Unit
+suite :: forall r. Runner (trace :: Trace, process :: Process | r) Unit
+      -> Eff (trace :: Trace, process :: Process | r) Unit
 suite r = do
   pair <- runStateT r []
   let groups = snd pair
   -- TODO: Separate console printing as a pluggable "Reporter"
   mapM_ printGroup groups
+  printSummary groups
   return unit
 
