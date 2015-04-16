@@ -17,3 +17,7 @@ main = suite $
       (1 + 1) `equals` 2
     pending "this is not used yet"
 ```
+
+## API
+
+See [API](API.md).
