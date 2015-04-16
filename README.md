@@ -21,3 +21,7 @@ main = suite $
 ## API
 
 See [API](API.md).
+
+## License
+
+[MIT License](LICENSE.md).
