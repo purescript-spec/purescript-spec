@@ -2,15 +2,22 @@
 
 ## Module Test.Spec.Assertions
 
-#### `equals`
+#### `shouldEqual`
 
 ``` purescript
-equals :: forall r t. (Show t, Eq t) => t -> t -> Eff (err :: Exception | r) Unit
+shouldEqual :: forall r t. (Show t, Eq t) => t -> t -> Eff (err :: Exception | r) Unit
+```
+
+
+#### `shouldNotEqual`
+
+``` purescript
+shouldNotEqual :: forall r t. (Show t, Eq t) => t -> t -> Eff (err :: Exception | r) Unit
 ```
 
 
 
-## Module Termino.Runner
+## Module Test.Spec.Runner
 
 #### `Runner`
 
