@@ -1,16 +1,3 @@
-# purescript-spec
-
-![Screenshot](screenshot.png)
-
-## Usage
-
-```bash
-bower install purescript-spec
-```
-
-Then in a `Main.purs` in your tests directory...
-
-```purescript
 module Main where
 
 import Test.Spec
@@ -24,12 +11,3 @@ main = suite $
     it "does not work" do
       (1 + 1) `shouldNotEqual` 2
     pending "this is not used yet"
-```
-
-## API
-
-See [API](API.md).
-
-## License
-
-[MIT License](LICENSE.md).
