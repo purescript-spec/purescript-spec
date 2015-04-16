@@ -10,7 +10,7 @@ Then in a `Main.purs` in your tests directory...
 
 ```purescript
 main = suite $
-  describe "Core" do
+  describe "Math" do
     it "works" do
       (1 + 1) `equals` 2
     it "does not work" do
