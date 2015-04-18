@@ -25,10 +25,13 @@ main = suite $
   describe "Test" do
     describe "Spec" do
       describe "Runner" do
-        it "collect \"it\" and \"pending\" in Describe groups" do
-          -- The mind fuck begins here.
+        it "collects \"it\" and \"pending\" in Describe groups" do
           results <- collect successTest
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success]]]
+        it "collects \"it\" and \"pending\" with shared Describes" do
+          results <- collect successSharedDescribeTest
+          results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success],
+                                               Describe "c" [It "works" Success]]]
     describe "Spec" do
       describe "Reporter" do
         it "collapses groups into entries with names" do
