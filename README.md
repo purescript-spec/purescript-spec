@@ -30,6 +30,19 @@ main = suite $
 
 See [API](API.md).
 
+## Build
+
+```bash
+# Make the library
+make
+# Run tests
+make run-tests
+# Generate docs
+make docs
+# Generate example.png, requires phantomjs and aha installed.
+make example.png
+```
+
 ## License
 
 [MIT License](LICENSE.md).
