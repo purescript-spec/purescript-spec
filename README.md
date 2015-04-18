@@ -1,6 +1,6 @@
 # purescript-spec
 
-![Screenshot](screenshot.png)
+![Example](example.png)
 
 ## Usage
 
