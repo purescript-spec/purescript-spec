@@ -39,7 +39,8 @@ printSkipped s =
 
 printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
 printSummary' (Count p f s) = withAttrs [1] do
-  withAttrs [4] $ writeln "Summary"
+  writeln ""
+  withAttrs [34] $ writeln "Summary"
   printPassedFailed p f
   printSkipped s
   writeln ""
