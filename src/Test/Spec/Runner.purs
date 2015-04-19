@@ -5,6 +5,7 @@ import Data.Maybe
 import Data.Tuple
 import Data.Array
 import Data.String (joinWith, split)
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.State.Class
 import Control.Monad.State.Trans
@@ -14,6 +15,7 @@ import Control.Monad.Eff.Exception
 import Control.Monad.Extras
 import Test.Spec
 import Test.Spec.Console
+import Test.Spec.Summary
 import Test.Spec.Reporter (report)
 
 foreign import data Process :: !
@@ -30,8 +32,8 @@ foreign import exit
 type Runner r t = StateT [Group] (Eff r) t
 
 describe :: forall r. String
-         -> Runner (trace :: Trace | r) Unit
-         -> Runner (trace :: Trace | r) Unit
+         -> Runner r Unit
+         -> Runner r Unit
 describe name its = do
   results <- lift $ collect its
   modify $ \r -> r ++ [Describe name results]
@@ -59,17 +61,18 @@ it description tests = do
   modify $ \p -> p ++ [result]
   return unit
 
-collect :: forall r. Runner (trace :: Trace | r) Unit
-        -> Eff (trace :: Trace | r) [Group]
+collect :: forall r. Runner r Unit
+        -> Eff r [Group]
 collect r = do
   pair <- runStateT r []
   return $ snd pair
 
-suite :: forall r. Runner (trace :: Trace | r) Unit
-      -> Eff (trace :: Trace | r) Unit
+suite :: forall r. Runner (trace :: Trace, process :: Process | r) Unit
+      -> Eff (trace :: Trace, process :: Process | r) Unit
 suite r = do
   results <- collect r
   -- TODO: Separate console printing as a pluggable "Reporter"
   report $ results
-  return unit
+  when (not $ successful results) $
+    exit 1
 

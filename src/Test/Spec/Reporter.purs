@@ -10,6 +10,7 @@ import Control.Monad.Extras
 import qualified Test.Spec as S
 import Test.Spec.Console
 import Test.Spec.Summary
+import Test.Spec.Reporter.Summary
 
 foreign import debug
   """
