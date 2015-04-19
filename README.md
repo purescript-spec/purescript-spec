@@ -1,6 +1,7 @@
 # purescript-spec
 
-![Example](example.png)
+<img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
+
 
 ## Usage
 
