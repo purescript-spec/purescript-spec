@@ -39,7 +39,17 @@ make
 make run-tests
 # Generate docs
 make docs
-# Generate example.png, requires phantomjs and aha installed.
+```
+
+### Generate Example
+
+Generating the `example.png` requires:
+
+* phantomjs
+* aha
+* imagemagick
+
+```
 make example.png
 ```
 

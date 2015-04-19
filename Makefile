@@ -27,7 +27,8 @@ run-examples: build-examples
 example.png: build-examples
 	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
 	aha -f $(EXAMPLE_OUT) > $(EXAMPLE_HTML)
-	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 1
+	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
+	convert example.png -trim example.png
 
 watch-examples:
 	nodemon --watch src --watch examples -e purs --exec make run-examples
