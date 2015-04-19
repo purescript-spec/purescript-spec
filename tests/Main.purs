@@ -47,11 +47,5 @@ main = suite $
               R.Describe ["a", "c"],
               R.It "also works" Success
             ]
-        it "collapses groups with Its" do
-          (R.collapse
-            (Describe "a"
-              [Describe "b" [Describe "c" [It "does c" Success]],
-               Describe "d" [Describe "e" [It "does e" Success]]]))
-            `shouldEqual`
-            [R.Describe ["a", "b", "c"], R.It "does c" Success,
-            R.Describe ["a", "d", "e"], R.It "does e" Success]
+        pending "reports errors"
+        pending "reports pending"

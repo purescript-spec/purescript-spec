@@ -29,20 +29,20 @@ printPassedFailed p f = do
       attrs = if f > 0 then [31] else [32]
   withAttrs attrs $ writeln amount
 
-printSkipped :: forall r. Number -> Eff (trace :: Trace | r) Unit
-printSkipped s =
-  if s > 0 then withAttrs [33] do write $ show s
+printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
+printPending p =
+  if p > 0 then withAttrs [33] do write $ show p
                                   write " "
-                                  write (pluralize "test" s)
-                                  writeln " skipped"
+                                  write (pluralize "test" p)
+                                  writeln " pending"
            else return unit
 
 printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
-printSummary' (Count p f s) = withAttrs [1] do
+printSummary' (Count passed failed pending) = do
   writeln ""
-  writeln "Summary"
-  printPassedFailed p f
-  printSkipped s
+  withAttrs [1] $ writeln "Summary"
+  printPassedFailed passed failed
+  printPending pending
   writeln ""
 
 printSummary :: forall r. [Group] -> Eff (trace :: Trace | r) Unit

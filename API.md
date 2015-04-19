@@ -1,5 +1,15 @@
 # Module Documentation
 
+## Module Control.Monad.Extras
+
+#### `mapM_`
+
+``` purescript
+mapM_ :: forall m a b. (Monad m) => (a -> m b) -> [a] -> m Unit
+```
+
+
+
 ## Module Test.Spec.Assertions
 
 #### `shouldEqual`
@@ -55,6 +65,75 @@ withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :
 
 
 
+## Module Test.Spec.Reporter
+
+#### `debug`
+
+``` purescript
+debug :: forall v. v -> v
+```
+
+
+#### `showAssertionError`
+
+``` purescript
+showAssertionError :: Error -> String
+```
+
+
+#### `Entry`
+
+``` purescript
+data Entry
+  = Describe [S.Name]
+  | It S.Name S.Result
+  | Pending S.Name
+```
+
+
+#### `eqEntry`
+
+``` purescript
+instance eqEntry :: Eq Entry
+```
+
+
+#### `showEntry`
+
+``` purescript
+instance showEntry :: Show Entry
+```
+
+
+#### `printEntry`
+
+``` purescript
+printEntry :: forall r. Entry -> Eff (trace :: Trace | r) Unit
+```
+
+
+#### `countDescribes`
+
+``` purescript
+countDescribes :: [Entry] -> Number
+```
+
+
+#### `collapse`
+
+``` purescript
+collapse :: S.Group -> [Entry]
+```
+
+
+#### `report`
+
+``` purescript
+report :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
+```
+
+
+
 ## Module Test.Spec.Runner
 
 #### `Process`
@@ -81,7 +160,7 @@ type Runner r t = StateT [Group] (Eff r) t
 #### `describe`
 
 ``` purescript
-describe :: forall r. String -> Runner r Unit -> Runner r Unit
+describe :: forall r. String -> Runner (trace :: Trace | r) Unit -> Runner (trace :: Trace | r) Unit
 ```
 
 
@@ -106,31 +185,17 @@ it :: forall r. String -> Eff (err :: Exception | r) Unit -> Runner r Unit
 ```
 
 
-#### `mapM_`
+#### `collect`
 
 ``` purescript
-mapM_ :: forall m a b. (Monad m) => (a -> m b) -> [a] -> m Unit
-```
-
-
-#### `showAssertionError`
-
-``` purescript
-showAssertionError :: Error -> String
-```
-
-
-#### `printGroup`
-
-``` purescript
-printGroup :: forall r. Group -> Eff (trace :: Trace | r) Unit
+collect :: forall r. Runner (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) [Group]
 ```
 
 
 #### `suite`
 
 ``` purescript
-suite :: forall r. Runner (process :: Process, trace :: Trace | r) Unit -> Eff (process :: Process, trace :: Trace | r) Unit
+suite :: forall r. Runner (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) Unit
 ```
 
 
@@ -173,10 +238,10 @@ printPassedFailed :: forall r. Number -> Number -> Eff (trace :: Trace | r) Unit
 ```
 
 
-#### `printSkipped`
+#### `printPending`
 
 ``` purescript
-printSkipped :: forall r. Number -> Eff (trace :: Trace | r) Unit
+printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
 ```
 
 
@@ -220,6 +285,34 @@ data Group
   = Describe Name [Group]
   | It Name Result
   | Pending Name
+```
+
+
+#### `showResult`
+
+``` purescript
+instance showResult :: Show Result
+```
+
+
+#### `eqResult`
+
+``` purescript
+instance eqResult :: Eq Result
+```
+
+
+#### `showGroup`
+
+``` purescript
+instance showGroup :: Show Group
+```
+
+
+#### `eqGroup`
+
+``` purescript
+instance eqGroup :: Eq Group
 ```
 
 

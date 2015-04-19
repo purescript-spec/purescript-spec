@@ -50,7 +50,7 @@ printEntry :: forall r. Entry
 printEntry (It name S.Success) = do
   withAttrs [32] $ writeln $  "√ " ++ name
 printEntry (Pending name) = do
-  withAttrs [33] $ writeln $  "~ " ++ name ++ " (pending)"
+  withAttrs [33] $ writeln $  "~ " ++ name
 printEntry (It name (S.Failure err)) = do
   withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
   trace ""
