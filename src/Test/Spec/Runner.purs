@@ -30,12 +30,11 @@ foreign import exit
 type Runner r t = StateT [Group] (Eff r) t
 
 describe :: forall r. String
-         -> Runner r Unit
-         -> Runner r Unit
+         -> Runner (trace :: Trace | r) Unit
+         -> Runner (trace :: Trace | r) Unit
 describe name its = do
-  its
-  results <- get
-  put $ [Describe name results]
+  results <- lift $ collect its
+  modify $ \r -> r ++ [Describe name results]
   return unit
 
 run :: forall r. String
@@ -60,14 +59,14 @@ it description tests = do
   modify $ \p -> p ++ [result]
   return unit
 
-collect :: forall r. Runner (trace :: Trace, process :: Process | r) Unit
-        -> Eff (trace :: Trace, process :: Process | r) [Group]
+collect :: forall r. Runner (trace :: Trace | r) Unit
+        -> Eff (trace :: Trace | r) [Group]
 collect r = do
   pair <- runStateT r []
   return $ snd pair
 
-suite :: forall r. Runner (trace :: Trace, process :: Process | r) Unit
-      -> Eff (trace :: Trace, process :: Process | r) Unit
+suite :: forall r. Runner (trace :: Trace | r) Unit
+      -> Eff (trace :: Trace | r) Unit
 suite r = do
   results <- collect r
   -- TODO: Separate console printing as a pluggable "Reporter"

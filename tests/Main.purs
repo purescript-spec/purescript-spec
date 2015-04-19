@@ -31,8 +31,7 @@ main = suite $
         it "collects \"it\" and \"pending\" with shared Describes" do
           results <- collect successSharedDescribeTest
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success],
-                                               Describe "c" [It "works" Success]]]
-    describe "Spec" do
+                                               Describe "c" [It "also works" Success]]]
       describe "Reporter" do
         it "collapses groups into entries with names" do
           results <- collect successTest

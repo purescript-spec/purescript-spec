@@ -12,7 +12,7 @@ data Group = Describe Name [Group]
 
 instance showResult :: Show Result where
   show Success = "Success"
-  show (Failure err) = "Failure " ++ show err
+  show (Failure err) = "Failure (Error ...)"
 
 instance eqResult :: Eq Result where
   (==) Success Success = true
