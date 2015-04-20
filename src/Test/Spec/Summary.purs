@@ -1,4 +1,8 @@
-module Test.Spec.Summary where
+module Test.Spec.Summary (
+  Summary(..),
+  summarize,
+  successful
+  ) where
 
 import Test.Spec
 

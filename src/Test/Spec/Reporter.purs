@@ -1,4 +1,8 @@
-module Test.Spec.Reporter where
+module Test.Spec.Reporter (
+  Entry(..),
+  collapse,
+  report
+  ) where
 
 import Debug.Trace
 import Data.String
@@ -11,14 +15,6 @@ import qualified Test.Spec as S
 import Test.Spec.Console
 import Test.Spec.Summary
 import Test.Spec.Reporter.Summary
-
-foreign import debug
-  """
-  function debug(value) {
-    console.log('Debug', value);
-    return value;
-  }
-  """ :: forall v. v -> v
 
 foreign import showAssertionError
   """
@@ -79,7 +75,6 @@ collapse (S.Describe name groups) =
       prependName (Describe names) = Describe (name : names)
       prependName e = e
       c = countDescribes sub
-      -- n = debug $ show sub ++ " " ++ show c
   in if c == 0 then (Describe [name]) : sub
                else map prependName sub
 

@@ -65,21 +65,45 @@ withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :
 
 
 
+## Module Test.Spec.Reporter.Summary
+
+#### `pluralize`
+
+``` purescript
+pluralize :: String -> Number -> String
+```
+
+
+#### `printPassedFailed`
+
+``` purescript
+printPassedFailed :: forall r. Number -> Number -> Eff (trace :: Trace | r) Unit
+```
+
+
+#### `printPending`
+
+``` purescript
+printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
+```
+
+
+#### `printSummary'`
+
+``` purescript
+printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
+```
+
+
+#### `printSummary`
+
+``` purescript
+printSummary :: forall r. [Group] -> Eff (trace :: Trace | r) Unit
+```
+
+
+
 ## Module Test.Spec.Reporter
-
-#### `debug`
-
-``` purescript
-debug :: forall v. v -> v
-```
-
-
-#### `showAssertionError`
-
-``` purescript
-showAssertionError :: Error -> String
-```
-
 
 #### `Entry`
 
@@ -102,20 +126,6 @@ instance eqEntry :: Eq Entry
 
 ``` purescript
 instance showEntry :: Show Entry
-```
-
-
-#### `printEntry`
-
-``` purescript
-printEntry :: forall r. Entry -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `countDescribes`
-
-``` purescript
-countDescribes :: [Entry] -> Number
 ```
 
 
@@ -160,7 +170,7 @@ type Runner r t = StateT [Group] (Eff r) t
 #### `describe`
 
 ``` purescript
-describe :: forall r. String -> Runner (trace :: Trace | r) Unit -> Runner (trace :: Trace | r) Unit
+describe :: forall r. String -> Runner r Unit -> Runner r Unit
 ```
 
 
@@ -188,14 +198,14 @@ it :: forall r. String -> Eff (err :: Exception | r) Unit -> Runner r Unit
 #### `collect`
 
 ``` purescript
-collect :: forall r. Runner (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) [Group]
+collect :: forall r. Runner r Unit -> Eff r [Group]
 ```
 
 
 #### `suite`
 
 ``` purescript
-suite :: forall r. Runner (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) Unit
+suite :: forall r. Runner (process :: Process, trace :: Trace | r) Unit -> Eff (process :: Process, trace :: Trace | r) Unit
 ```
 
 
@@ -224,38 +234,10 @@ summarize :: [Group] -> Summary
 ```
 
 
-#### `pluralize`
+#### `successful`
 
 ``` purescript
-pluralize :: String -> Number -> String
-```
-
-
-#### `printPassedFailed`
-
-``` purescript
-printPassedFailed :: forall r. Number -> Number -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `printPending`
-
-``` purescript
-printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `printSummary'`
-
-``` purescript
-printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `printSummary`
-
-``` purescript
-printSummary :: forall r. [Group] -> Eff (trace :: Trace | r) Unit
+successful :: [Group] -> Boolean
 ```
 
 
