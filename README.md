@@ -56,6 +56,12 @@ Generating the `example.png` requires:
 make example.png
 ```
 
+## Contribute
+
+If you have any issues or possible improvements please file them as
+[GitHub Issues](https://github.com/owickstrom/purescript-spec/issues). Pull
+requests requests are encouraged.
+
 ## License
 
 [MIT License](LICENSE.md).
