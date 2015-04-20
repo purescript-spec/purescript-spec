@@ -67,34 +67,6 @@ withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :
 
 ## Module Test.Spec.Reporter.Summary
 
-#### `pluralize`
-
-``` purescript
-pluralize :: String -> Number -> String
-```
-
-
-#### `printPassedFailed`
-
-``` purescript
-printPassedFailed :: forall r. Number -> Number -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `printPending`
-
-``` purescript
-printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
-```
-
-
-#### `printSummary'`
-
-``` purescript
-printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
-```
-
-
 #### `printSummary`
 
 ``` purescript
