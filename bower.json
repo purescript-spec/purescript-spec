@@ -6,7 +6,9 @@
     "bower_components",
     "tests",
     "externs",
-    "tmp"
+    "tmp",
+    "output",
+    "tools"
   ],
   "dependencies": {
     "purescript-arrays": "*",
