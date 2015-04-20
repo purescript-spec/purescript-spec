@@ -22,10 +22,10 @@ build-examples: $(OUTPUT)
 	psc-make -o $(OUTPUT)/examples $(EXAMPLES) $(SRC) $(LIB)
 
 run-examples: build-examples
-	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
+	! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
 
 example.png: build-examples
-	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
+	! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
 	aha -f $(EXAMPLE_OUT) > $(EXAMPLE_HTML)
 	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
 	convert example.png -trim example.png
