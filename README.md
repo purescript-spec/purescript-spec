@@ -48,7 +48,7 @@ main = suite do
 Then run the test suite using `psc-make` and NodeJS. Not that `$TESTS`, `$SRC`
 and `$LIB` contains all the Purescript source paths needed.
 
-```
+```bash
 psc-make -o output/tests $TESTS $SRC $LIB
 NODE_PATH=output/tests node -e "require('Main').main();"
 ```
