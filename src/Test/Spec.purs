@@ -1,7 +1,27 @@
-module Test.Spec where
+module Test.Spec (
+  Name(..),
+  Result(..),
+  Group(..),
+  Spec(..),
+  describe,
+  pending,
+  it,
+  collect
+  ) where
 
+import Debug.Trace
+import Data.Maybe
+import Data.Tuple
+import Data.Array
+import Data.String (joinWith, split)
+import Control.Monad
+import Control.Monad.State
+import Control.Monad.State.Class
+import Control.Monad.State.Trans
+import Control.Monad.Trans
 import Control.Monad.Eff
 import Control.Monad.Eff.Exception
+import Control.Monad.Extras
 
 type Name = String
 data Result = Success
@@ -31,3 +51,38 @@ instance eqGroup :: Eq Group where
   (==) (Pending n1) (Pending n2) = n1 == n2
   (==) _ _ = false
   (/=) r1 r2 = not (r1 == r2)
+
+type Spec r t = StateT [Group] (Eff r) t
+
+describe :: forall r. String
+         -> Spec r Unit
+         -> Spec r Unit
+describe name its = do
+  results <- lift $ collect its
+  modify $ \r -> r ++ [Describe name results]
+  return unit
+
+pending :: forall r. String
+        -> Spec r Unit
+pending name = modify $ \p -> p ++ [Pending name]
+
+
+it :: forall r. String
+   -> Eff (err :: Exception | r) Unit
+   -> Spec r Unit
+it description tests =
+  do
+    result <- run description tests
+    modify $ \p -> p ++ [result]
+    return unit
+  where run name tests =
+          lift $ catchException printErr onSuccess
+          where onSuccess = do tests
+                               return $ It name $ Success
+                printErr err = return $ It name $ Failure err
+
+collect :: forall r. Spec r Unit
+        -> Eff r [Group]
+collect r = do
+  pair <- runStateT r []
+  return $ snd pair

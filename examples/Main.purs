@@ -1,6 +1,7 @@
 module Main where
 
-import Test.Spec.Runner
+import Test.Spec
+import Test.Spec.Node
 import Test.Spec.Assertions
 
 additionSpec =
@@ -10,7 +11,7 @@ additionSpec =
     it "fails as well" do
       (1 + 1) `shouldEqual` 3
 
-main = suite $
+main = runNode $
   describe "Math" do
     additionSpec
     describe "Multiplication" do

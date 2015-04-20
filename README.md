@@ -16,17 +16,18 @@ Then in a `Main.purs` file...
 ```purescript
 module Main where
 
-import Test.Spec.Runner
+import Test.Spec
+import Test.Spec.Node
 import Test.Spec.Assertions
 
 additionSpec =
   describe "Addition" do
-      it "does addition" do
-        (1 + 1) `shouldEqual` 2
-      it "fails as well" do
-        (1 + 1) `shouldEqual` 3
+    it "does addition" do
+      (1 + 1) `shouldEqual` 2
+    it "fails as well" do
+      (1 + 1) `shouldEqual` 3
 
-main = suite $
+main = runNode $
   describe "Math" do
     additionSpec
     describe "Multiplication" do

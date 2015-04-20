@@ -2,7 +2,7 @@ module Main where
 
 import Data.Array
 import Test.Spec
-import Test.Spec.Runner
+import Test.Spec.Node
 import Test.Spec.Assertions
 import qualified Test.Spec.Reporter as R
 
@@ -21,7 +21,7 @@ successSharedDescribeTest =
       it "also works" do
         1 `shouldEqual` 1
 
-main = suite $
+main = runNode $
   describe "Test" do
     describe "Spec" do
       describe "Runner" do
