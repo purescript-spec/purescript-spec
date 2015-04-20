@@ -45,7 +45,7 @@ instance showEntry :: Show Entry where
 printEntry :: forall r. Entry
            -> Eff (trace :: Trace | r) Unit
 printEntry (It name S.Success) = do
-  withAttrs [32] $ writeln $  "√ " ++ name
+  withAttrs [32] $ writeln $  "✓︎ " ++ name
 printEntry (Pending name) = do
   withAttrs [33] $ writeln $  "~ " ++ name
 printEntry (It name (S.Failure err)) = do
