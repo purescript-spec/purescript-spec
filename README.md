@@ -1,7 +1,9 @@
 # purescript-spec
 
-<img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
+purescript-spec is a simple testing framework for Purescript using NodeJS. It's
+inspired by [hspec](http://hspec.github.io/).
 
+<img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
 
 ## Usage
 
@@ -41,6 +43,14 @@ main = suite do
   stringsSpec
   arraySpec
   ...
+```
+
+Then run the test suite using `psc-make` and NodeJS. Not that `$TESTS`, `$SRC`
+and `$LIB` contains all the Purescript source paths needed.
+
+```
+psc-make -o output/tests $TESTS $SRC $LIB
+NODE_PATH=output/tests node -e "require('Main').main();"
 ```
 
 ## API
