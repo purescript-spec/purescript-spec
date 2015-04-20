@@ -1,4 +1,6 @@
-module Test.Spec.Reporter.Summary where
+module Test.Spec.Reporter.Summary (
+  printSummary
+  ) where
 
 import Debug.Trace
 import Control.Monad.Eff
