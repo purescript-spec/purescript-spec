@@ -18,6 +18,9 @@ $(OUTPUT):
 docs:
 	psc-docs $(SRC) > API.md
 
+ctags:
+	psc-docs --format ctags $(SRC) $(LIB) > tags
+
 build-examples: $(OUTPUT)
 	psc-make -o $(OUTPUT)/examples $(EXAMPLES) $(SRC) $(LIB)
 

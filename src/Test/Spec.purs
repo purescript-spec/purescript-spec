@@ -24,8 +24,10 @@ import Control.Monad.Eff.Exception
 import Control.Monad.Extras
 
 type Name = String
+
 data Result = Success
             | Failure Error
+
 data Group = Describe Name [Group]
            | It Name Result
            | Pending Name

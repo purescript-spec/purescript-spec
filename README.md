@@ -69,6 +69,12 @@ make run-tests
 make docs
 ```
 
+## CTags
+
+```bash
+make ctags
+```
+
 ### Generate Example
 
 Generating the `example.png` requires:
