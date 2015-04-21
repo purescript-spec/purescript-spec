@@ -52,15 +52,16 @@ printEntry (It name (S.Failure err)) = do
   withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
   trace ""
   withAttrs [31] $ writeln $ "  " ++ showAssertionError err
-  trace ""
-printEntry (Describe []) = return unit
-printEntry (Describe [last]) =
-  withAttrs [1, 35] $ writeln last
-printEntry (Describe (name : names)) = do
-  withAttrs [1] do
-    write name
-    write " » "
-  printEntry $ Describe names
+printEntry (Describe n) = do
+  writeln ""
+  printNames n
+  where printNames [] = return unit
+        printNames [last] = withAttrs [1, 35] $ writeln last
+        printNames (name : names) = do
+          withAttrs [1] do
+            write name
+            write " » "
+          printNames names
 
 countDescribes :: [Entry] -> Number
 countDescribes groups = foldl f 0 groups
@@ -80,6 +81,5 @@ collapse (S.Describe name groups) =
 
 report :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
 report groups = do
-  writeln ""
   mapM_ printEntry $ concatMap collapse groups
   printSummary groups
