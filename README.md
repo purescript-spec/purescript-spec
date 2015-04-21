@@ -14,7 +14,7 @@ bower install purescript-spec
 Then in a `Main.purs` file you can start writing your tests. Note that you
 can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
 seemlessly with `purescript-spec`. However, QuickCheck does it's own output
-so reporting becomes a bit confusing. **This should be fixed soon.**
+so reporting becomes a bit confusing. [This should be fixed soon](https://github.com/owickstrom/purescript-spec/issues/7).
 
 ```purescript
 module Main where
