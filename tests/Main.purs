@@ -12,7 +12,7 @@ successTest =
       it "works" do
         1 `shouldEqual` 1
 
-successSharedDescribeTest =
+sharedDescribeTest =
   describe "a" do
     describe "b" do
       it "works" do
@@ -29,7 +29,7 @@ main = runNode $
           results <- collect successTest
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success]]]
         it "collects \"it\" and \"pending\" with shared Describes" do
-          results <- collect successSharedDescribeTest
+          results <- collect sharedDescribeTest
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success],
                                                Describe "c" [It "also works" Success]]]
       describe "Reporter" do
@@ -40,7 +40,7 @@ main = runNode $
               R.It "works" Success
             ]
         it "collapses groups into entries with shared describes" do
-          results <- collect successSharedDescribeTest
+          results <- collect sharedDescribeTest
           concatMap R.collapse results `shouldEqual` [
               R.Describe ["a", "b"],
               R.It "works" Success,
