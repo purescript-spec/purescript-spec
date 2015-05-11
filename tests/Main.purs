@@ -1,6 +1,7 @@
 module Main where
 
 import Data.Array
+import Control.Monad.Eff.Exception
 import Test.Spec
 import Test.Spec.Node
 import Test.Spec.Assertions
@@ -20,6 +21,10 @@ sharedDescribeTest =
     describe "c" do
       it "also works" do
         1 `shouldEqual` 1
+
+failureTest = it "fails" $ 1 `shouldEqual` 2
+
+pendingTest = pending "is not written yet"
 
 main = runNode $
   describe "Test" do
@@ -47,5 +52,13 @@ main = runNode $
               R.Describe ["a", "c"],
               R.It "also works" Success
             ]
-        pending "reports errors"
-        pending "reports pending"
+        it "reports failured tests" do
+          results <- collect failureTest
+          concatMap R.collapse results `shouldEqual` [
+            R.It "fails" (Failure (error "1 ≠ 2"))
+          ]
+        it "reports pending tests" do
+          results <- collect pendingTest
+          concatMap R.collapse results `shouldEqual` [
+            R.Pending "is not written yet"
+          ]
