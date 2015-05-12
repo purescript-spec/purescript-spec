@@ -34,10 +34,6 @@ main = runNode do
     additionSpec
     describe "Multiplication" do
       pending "will do multiplication in the future"
-  describe "Tools" $
-    describe "QuickCheck" $
-      it "works too" $
-        quickCheck \n -> n + 1 /== n
 ```
 
 In this example `additionSpec` is embedded into the `Math` specification. This
@@ -52,10 +48,6 @@ main = suite do
   ...
 ```
 
-*Note that you can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
-together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
-adapter.*
-
 Then run the test suite using `psc-make` and NodeJS. Not that `$TESTS`, `$SRC`
 and `$LIB` contains all the Purescript source paths needed.
 
@@ -63,6 +55,12 @@ and `$LIB` contains all the Purescript source paths needed.
 psc-make -o output/tests $TESTS $SRC $LIB
 NODE_PATH=output/tests node -e "require('Main').main();"
 ```
+
+## QuickCheck
+
+You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
+together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
+adapter to get nice output formatting for QuickCheck tests.
 
 ## API
 

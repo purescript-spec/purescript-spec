@@ -17,7 +17,3 @@ main = runNode do
     additionSpec
     describe "Multiplication" do
       pending "will do multiplication in the future"
-  describe "Tools" $
-    describe "QuickCheck" $
-      it "works too" $
-        quickCheck \n -> n + 1 > n
