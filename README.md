@@ -11,10 +11,11 @@ inspired by [hspec](http://hspec.github.io/).
 bower install purescript-spec
 ```
 
-Then in a `Main.purs` file you can start writing your tests. Note that you
-can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
-seemlessly with `purescript-spec`. However, QuickCheck does it's own output
-so reporting becomes a bit confusing. [This should be fixed soon](https://github.com/owickstrom/purescript-spec/issues/7).
+Then in a `Main.purs` file you can start writing your tests.
+
+Note that you can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
+together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
+adapter.
 
 ```purescript
 module Main where
@@ -22,7 +23,8 @@ module Main where
 import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
-import Test.QuickCheck
+import Test.Spec.QuickCheck
+import Test.QuickCheck ((/==))
 
 additionSpec =
   describe "Addition" do
@@ -39,7 +41,7 @@ main = runNode do
   describe "Tools" $
     describe "QuickCheck" $
       it "works too" $
-        quickCheck \n -> n + 1 > n
+        quickCheck \n -> n + 1 /== n
 ```
 
 In this example `additionSpec` is embedded into the `Math` specification. This
