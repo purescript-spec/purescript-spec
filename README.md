@@ -13,10 +13,6 @@ bower install purescript-spec
 
 Then in a `Main.purs` file you can start writing your tests.
 
-Note that you can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
-together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
-adapter.
-
 ```purescript
 module Main where
 
@@ -55,6 +51,10 @@ main = suite do
   arraySpec
   ...
 ```
+
+*Note that you can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
+together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
+adapter.*
 
 Then run the test suite using `psc-make` and NodeJS. Not that `$TESTS`, `$SRC`
 and `$LIB` contains all the Purescript source paths needed.
