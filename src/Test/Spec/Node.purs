@@ -6,6 +6,7 @@ module Test.Spec.Node (
 import Debug.Trace
 import Control.Monad
 import Control.Monad.Eff
+import Control.Monad.Aff
 import Test.Spec
 import Test.Spec.Console
 import Test.Spec.Summary
@@ -25,9 +26,9 @@ foreign import exit
 runNode :: forall r. Spec (trace :: Trace, process :: Process | r) Unit
         -> Eff (trace :: Trace, process :: Process | r) Unit
 runNode r = do
-  results <- collect r
-  -- TODO: Separate console printing as a pluggable "Reporter"
-  report $ results
-  when (not $ successful results) $
-    exit 1
-
+  runAff
+    print
+    -- TODO: Separate console printing as a pluggable "Reporter"
+    (\results -> do report $ results
+                    when (not $ successful results) $ exit 1)
+    (collect r)

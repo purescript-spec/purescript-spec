@@ -36,8 +36,10 @@ example.png: build-examples
 watch-examples:
 	nodemon --watch src --watch examples -e purs --exec make run-examples
 
-run-tests:
+build-tests: $(OUTPUT)
 	psc-make -o $(OUTPUT)/tests $(TESTS) $(SRC) $(LIB)
+
+run-tests: build-tests
 	@NODE_PATH=$(OUTPUT)/tests node -e "require('Main').main();"
 
 watch-tests:

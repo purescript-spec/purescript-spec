@@ -16,11 +16,11 @@ Then in a `Main.purs` file you can start writing your tests.
 ```purescript
 module Main where
 
+import Control.Monad.Aff
 import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
-import Test.Spec.QuickCheck
-import Test.QuickCheck ((/==))
+import Test.QuickCheck
 
 additionSpec =
   describe "Addition" do
@@ -34,6 +34,10 @@ main = runNode do
     additionSpec
     describe "Multiplication" do
       pending "will do multiplication in the future"
+  describe "Async" do
+    it "asserts in the future" do
+      res <- later' 100 $ return "Alligator"
+      res `shouldEqual` "Alligator"
 ```
 
 In this example `additionSpec` is embedded into the `Math` specification. This

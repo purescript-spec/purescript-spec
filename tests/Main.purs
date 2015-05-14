@@ -1,7 +1,11 @@
 module Main where
 
+import Debug.Trace
 import Data.Array
+import Control.Monad.Eff
 import Control.Monad.Eff.Exception
+import Control.Monad.Trans
+import Control.Monad.Aff
 import Test.Spec
 import Test.Spec.Node
 import Test.Spec.Assertions
@@ -37,6 +41,9 @@ main = runNode $
           results <- collect sharedDescribeTest
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success],
                                                Describe "c" [It "also works" Success]]]
+        it "supports async" do
+          res <- later' 10 $ return 1
+          res `shouldEqual` 1
       describe "Reporter" do
         it "collapses groups into entries with names" do
           results <- collect successTest

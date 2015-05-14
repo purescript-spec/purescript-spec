@@ -14,7 +14,8 @@
     "purescript-arrays": "0.3.7",
     "purescript-transformers": "0.5.5",
     "purescript-strings": "0.4.5",
-    "purescript-exceptions": "0.2.3"
+    "purescript-exceptions": "0.2.3",
+    "purescript-aff": "~0.10.1"
   },
   "resolutions": {
     "purescript-arrays": "0.3.7",
