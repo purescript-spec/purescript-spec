@@ -44,6 +44,9 @@ In this example `additionSpec` is embedded into the `Math` specification. This
 is useful if you want to split specifications into multiple files and combine
 them in `Main`.
 
+The last test demonstrates how you can use [Aff](https://github.com/slamdata/purescript-aff)
+to write async tests.
+
 ```purescript
 main = suite do
   mathSpec

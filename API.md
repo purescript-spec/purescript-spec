@@ -15,14 +15,14 @@ mapM_ :: forall m a b. (Monad m) => (a -> m b) -> [a] -> m Unit
 #### `shouldEqual`
 
 ``` purescript
-shouldEqual :: forall r t. (Show t, Eq t) => t -> t -> Eff (err :: Exception | r) Unit
+shouldEqual :: forall r t. (Show t, Eq t) => t -> t -> Aff r Unit
 ```
 
 
 #### `shouldNotEqual`
 
 ``` purescript
-shouldNotEqual :: forall r t. (Show t, Eq t) => t -> t -> Eff (err :: Exception | r) Unit
+shouldNotEqual :: forall r t. (Show t, Eq t) => t -> t -> Aff r Unit
 ```
 
 
@@ -61,6 +61,23 @@ reset :: forall e. Eff (trace :: Trace | e) Unit
 
 ``` purescript
 withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :: Trace | r) Unit
+```
+
+
+
+## Module Test.Spec.Node
+
+#### `Process`
+
+``` purescript
+data Process :: !
+```
+
+
+#### `runNode`
+
+``` purescript
+runNode :: forall r. Spec (process :: Process, trace :: Trace | r) Unit -> Eff (process :: Process, trace :: Trace | r) Unit
 ```
 
 
@@ -112,72 +129,6 @@ collapse :: S.Group -> [Entry]
 
 ``` purescript
 report :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
-```
-
-
-
-## Module Test.Spec.Runner
-
-#### `Process`
-
-``` purescript
-data Process :: !
-```
-
-
-#### `exit`
-
-``` purescript
-exit :: forall eff. Number -> Eff (process :: Process | eff) Unit
-```
-
-
-#### `Runner`
-
-``` purescript
-type Runner r t = StateT [Group] (Eff r) t
-```
-
-
-#### `describe`
-
-``` purescript
-describe :: forall r. String -> Runner r Unit -> Runner r Unit
-```
-
-
-#### `run`
-
-``` purescript
-run :: forall r. String -> Eff (err :: Exception | r) Unit -> Runner r Group
-```
-
-
-#### `pending`
-
-``` purescript
-pending :: forall r. String -> Runner r Unit
-```
-
-
-#### `it`
-
-``` purescript
-it :: forall r. String -> Eff (err :: Exception | r) Unit -> Runner r Unit
-```
-
-
-#### `collect`
-
-``` purescript
-collect :: forall r. Runner r Unit -> Eff r [Group]
-```
-
-
-#### `suite`
-
-``` purescript
-suite :: forall r. Runner (process :: Process, trace :: Trace | r) Unit -> Eff (process :: Process, trace :: Trace | r) Unit
 ```
 
 
@@ -267,6 +218,41 @@ instance showGroup :: Show Group
 
 ``` purescript
 instance eqGroup :: Eq Group
+```
+
+
+#### `Spec`
+
+``` purescript
+type Spec r t = StateT [Group] (Aff r) t
+```
+
+
+#### `describe`
+
+``` purescript
+describe :: forall r. String -> Spec r Unit -> Spec r Unit
+```
+
+
+#### `pending`
+
+``` purescript
+pending :: forall r. String -> Spec r Unit
+```
+
+
+#### `it`
+
+``` purescript
+it :: forall r. String -> Aff r Unit -> Spec r Unit
+```
+
+
+#### `collect`
+
+``` purescript
+collect :: forall r. Spec r Unit -> Aff r [Group]
 ```
 
 
