@@ -77,22 +77,29 @@ data Process :: !
 #### `runNode`
 
 ``` purescript
-runNode :: forall r. Spec (process :: Process, trace :: Trace | r) Unit -> Eff (process :: Process, trace :: Trace | r) Unit
+runNode :: forall e r. [[Group] -> Eff (process :: Process | e) Unit] -> Spec (process :: Process | e) Unit -> Eff (process :: Process | e) Unit
 ```
 
 
 
-## Module Test.Spec.Reporter.Summary
+## Module Test.Spec.Reporter.Console
 
-#### `printSummary`
+#### `consoleReporter`
 
 ``` purescript
-printSummary :: forall r. [Group] -> Eff (trace :: Trace | r) Unit
+consoleReporter :: forall e. Reporter (trace :: Trace | e)
 ```
 
 
 
 ## Module Test.Spec.Reporter
+
+#### `showAssertionError`
+
+``` purescript
+showAssertionError :: Error -> String
+```
+
 
 #### `Entry`
 
@@ -118,17 +125,17 @@ instance showEntry :: Show Entry
 ```
 
 
+#### `Reporter`
+
+``` purescript
+type Reporter e = [S.Group] -> Eff e Unit
+```
+
+
 #### `collapse`
 
 ``` purescript
 collapse :: S.Group -> [Entry]
-```
-
-
-#### `report`
-
-``` purescript
-report :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
 ```
 
 

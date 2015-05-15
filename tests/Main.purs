@@ -10,6 +10,7 @@ import Test.Spec
 import Test.Spec.Node
 import Test.Spec.Assertions
 import qualified Test.Spec.Reporter as R
+import Test.Spec.Reporter.Console
 
 successTest =
   describe "a" do
@@ -30,7 +31,7 @@ failureTest = it "fails" $ 1 `shouldEqual` 2
 
 pendingTest = pending "is not written yet"
 
-main = runNode $
+main = runNode [consoleReporter] $
   describe "Test" do
     describe "Spec" do
       describe "Runner" do

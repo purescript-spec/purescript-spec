@@ -1,7 +1,8 @@
 module Test.Spec.Reporter (
   Entry(..),
+  Reporter(),
   collapse,
-  report
+  showAssertionError
   ) where
 
 import Debug.Trace
@@ -14,7 +15,7 @@ import Control.Monad.Extras
 import qualified Test.Spec as S
 import Test.Spec.Console
 import Test.Spec.Summary
-import Test.Spec.Reporter.Summary
+import Test.Spec.Reporter
 
 foreign import showAssertionError
   """
@@ -42,26 +43,7 @@ instance showEntry :: Show Entry where
   show (It name (S.Failure err)) = "It \"" ++ name ++ "\" (Failure \"" ++ showAssertionError err ++ "\")"
   show (Pending name) = "Pending \"" ++ name ++ "\""
 
-printEntry :: forall r. Entry
-           -> Eff (trace :: Trace | r) Unit
-printEntry (It name S.Success) = do
-  withAttrs [32] $ writeln $  "✓︎ " ++ name
-printEntry (Pending name) = do
-  withAttrs [33] $ writeln $  "~ " ++ name
-printEntry (It name (S.Failure err)) = do
-  withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
-  trace ""
-  withAttrs [31] $ writeln $ "  " ++ showAssertionError err
-printEntry (Describe n) = do
-  writeln ""
-  printNames n
-  where printNames [] = return unit
-        printNames [last] = withAttrs [1, 35] $ writeln last
-        printNames (name : names) = do
-          withAttrs [1] do
-            write name
-            write " » "
-          printNames names
+type Reporter e = ([S.Group] -> Eff e Unit)
 
 countDescribes :: [Entry] -> Number
 countDescribes groups = foldl f 0 groups
@@ -78,8 +60,3 @@ collapse (S.Describe name groups) =
       c = countDescribes sub
   in if c == 0 then (Describe [name]) : sub
                else map prependName sub
-
-report :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
-report groups = do
-  mapM_ printEntry $ concatMap collapse groups
-  printSummary groups

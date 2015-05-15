@@ -3,14 +3,16 @@ module Test.Spec.Node (
   runNode
   ) where
 
-import Debug.Trace
+import Data.Foldable
+import Data.Array
 import Control.Monad
 import Control.Monad.Eff
 import Control.Monad.Aff
+import Control.Monad.Extras
 import Test.Spec
 import Test.Spec.Console
 import Test.Spec.Summary
-import Test.Spec.Reporter (report)
+import qualified Test.Spec.Reporter as R
 
 foreign import data Process :: !
 
@@ -23,12 +25,13 @@ foreign import exit
   }
   """ :: forall eff. Number -> Eff (process :: Process | eff) Unit
 
-runNode :: forall r. Spec (trace :: Trace, process :: Process | r) Unit
-        -> Eff (trace :: Trace, process :: Process | r) Unit
-runNode r = do
+runNode :: forall e r.
+        [([Group] -> Eff (process :: Process | e) Unit)]
+        -> Spec (process :: Process | e) Unit
+        -> Eff (process :: Process | e) Unit
+runNode rs spec = do
   runAff
-    print
-    -- TODO: Separate console printing as a pluggable "Reporter"
-    (\results -> do report $ results
+    (const $ exit 1)
+    (\results -> do sequence_ (map (\f -> f results) rs)
                     when (not $ successful results) $ exit 1)
-    (collect r)
+    (collect spec)

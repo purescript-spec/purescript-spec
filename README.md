@@ -11,7 +11,7 @@ inspired by [hspec](http://hspec.github.io/).
 bower install purescript-spec
 ```
 
-Then in a `Main.purs` file you can start writing your tests.
+### Example
 
 ```purescript
 module Main where
@@ -20,6 +20,7 @@ import Control.Monad.Aff
 import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
+import Test.Spec.Reporter.Console
 import Test.QuickCheck
 
 additionSpec =
@@ -29,7 +30,7 @@ additionSpec =
     it "fails as well" do
       (1 + 1) `shouldEqual` 3
 
-main = runNode do
+main = runNode [consoleReporter] do
   describe "Math" do
     additionSpec
     describe "Multiplication" do
@@ -43,7 +44,9 @@ main = runNode do
 *The last test demonstrates how you can use [Aff](https://github.com/slamdata/purescript-aff)
 to write async tests.*
 
-In this example `additionSpec` is embedded into the `Math` specification. This
+### Embedding Specs
+
+In the example `additionSpec` is embedded into the `Math` specification. This
 is useful if you want to split specifications into multiple files and combine
 them in `Main`.
 
@@ -55,7 +58,15 @@ main = suite do
   ...
 ```
 
-Then run the test suite using `psc-make` and NodeJS. Note that `$TESTS`, `$SRC`
+### Reporters
+
+Reporters can plugged in to the runner, e.g.
+`runNode [reporter1, ..., reporterN] spec`. More reporters are planned to be
+added in the future. For now there's only [`Test.Spec.Reporter.Console.consoleReporter`](API.md#module-consolereporter).
+
+### Running Tests
+
+Run the test suite using `psc-make` and NodeJS. Note that `$TESTS`, `$SRC`
 and `$LIB` contain all the Purescript source paths needed.
 
 ```bash
@@ -84,12 +95,6 @@ make run-tests
 make docs
 ```
 
-## CTags
-
-```bash
-make ctags
-```
-
 ### Generate Example
 
 Generating the `example.png` requires:
@@ -101,6 +106,19 @@ Generating the `example.png` requires:
 ```
 make example.png
 ```
+
+## CTags
+
+```bash
+make ctags
+```
+
+## Changelog
+
+* **0.5.0**
+  * Make reporters pluggable.
+* **0.4.0**
+  * Add async support in `it` using `Aff`.
 
 ## Contribute
 

@@ -4,6 +4,7 @@ import Control.Monad.Aff
 import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
+import Test.Spec.Reporter.Console
 import Test.QuickCheck
 
 additionSpec =
@@ -13,7 +14,7 @@ additionSpec =
     it "fails as well" do
       (1 + 1) `shouldEqual` 3
 
-main = runNode do
+main = runNode [consoleReporter] do
   describe "Math" do
     additionSpec
     describe "Multiplication" do
