@@ -70,11 +70,6 @@ pending :: forall r. String
         -> Spec r Unit
 pending name = modify $ \p -> p ++ [Pending name]
 
--- it :: forall r. String
---    -> Eff (err :: Exception | r) Unit
---    -> Spec r Unit
--- it description tests = it' description (return tests)
-
 runCatch :: forall r. String
          -> Aff r Unit
          -> Aff r Group
