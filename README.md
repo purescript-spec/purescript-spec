@@ -51,7 +51,7 @@ is useful if you want to split specifications into multiple files and combine
 them in `Main`.
 
 ```purescript
-main = suite do
+main = runNode [consoleReporter] do
   mathSpec
   stringsSpec
   arraySpec
@@ -60,9 +60,9 @@ main = suite do
 
 ### Reporters
 
-Reporters can plugged in to the runner, e.g.
-`runNode [reporter1, ..., reporterN] spec`. More reporters are planned to be
-added in the future. For now there's only [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter).
+Reporters can be passed to the runner, e.g. `runNode [reporter1, ..., reporterN]
+spec`. More reporters are planned to be added in the future. For now there's
+only [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter).
 
 ### Running Tests
 
