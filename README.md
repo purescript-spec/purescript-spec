@@ -62,7 +62,7 @@ main = suite do
 
 Reporters can plugged in to the runner, e.g.
 `runNode [reporter1, ..., reporterN] spec`. More reporters are planned to be
-added in the future. For now there's only [`Test.Spec.Reporter.Console.consoleReporter`](API.md#module-consolereporter).
+added in the future. For now there's only [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter).
 
 ### Running Tests
 
