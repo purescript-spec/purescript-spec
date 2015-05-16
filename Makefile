@@ -5,6 +5,8 @@ LIB = $(shell find bower_components/purescript-*/src -type f -name '*.purs')
 
 TESTS = $(shell find tests -type f -name '*.purs')
 
+NODEMON=node_modules/.bin/nodemon
+
 EXAMPLES = $(shell find examples -type f -name '*.purs')
 EXAMPLE_OUT=/tmp/purescript-spec-example-output.out
 EXAMPLE_HTML=/tmp/purescript-spec-example-output.html
@@ -33,8 +35,11 @@ example.png: build-examples
 	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
 	convert example.png -trim example.png
 
+$(NODEMON):
+	npm install nodemon@1.2
+
 watch-examples:
-	nodemon --watch src --watch examples -e purs --exec make run-examples
+	$(NODEMON) --watch src --watch examples -e purs --exec make run-examples
 
 build-tests: $(OUTPUT)
 	psc-make -o $(OUTPUT)/tests $(TESTS) $(SRC) $(LIB)
@@ -43,4 +48,4 @@ run-tests: build-tests
 	@NODE_PATH=$(OUTPUT)/tests node -e "require('Main').main();"
 
 watch-tests:
-	nodemon --watch src --watch tests -e purs --exec make run-tests
+	$(NODEMON) -V --watch src --watch tests -e purs --exec make run-tests

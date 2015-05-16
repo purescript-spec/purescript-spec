@@ -3,6 +3,7 @@ module Test.Spec.Node (
   runNode
   ) where
 
+import Debug.Trace
 import Data.Foldable
 import Data.Array
 import Control.Monad
@@ -26,12 +27,13 @@ foreign import exit
   """ :: forall eff. Number -> Eff (process :: Process | eff) Unit
 
 runNode :: forall e r.
-        [([Group] -> Eff (process :: Process | e) Unit)]
-        -> Spec (process :: Process | e) Unit
-        -> Eff (process :: Process | e) Unit
+        [([Group] -> Eff (process :: Process, trace :: Trace | e) Unit)]
+        -> Spec (process :: Process, trace :: Trace | e) Unit
+        -> Eff (process :: Process, trace :: Trace | e) Unit
 runNode rs spec = do
   runAff
-    (const $ exit 1)
+    (\err -> do withAttrs [31] $ print err
+                exit 1)
     (\results -> do sequence_ (map (\f -> f results) rs)
                     when (not $ successful results) $ exit 1)
     (collect spec)

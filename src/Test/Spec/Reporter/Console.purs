@@ -11,6 +11,7 @@ import Control.Monad.Eff
 import Control.Monad.Eff.Exception
 import Control.Monad.Extras
 import qualified Test.Spec as S
+import Test.Spec.Errors
 import Test.Spec.Console
 import Test.Spec.Summary
 import Test.Spec.Reporter
@@ -55,7 +56,7 @@ printEntry (Pending name) = do
 printEntry (It name (S.Failure err)) = do
   withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
   trace ""
-  withAttrs [31] $ writeln $ "  " ++ showAssertionError err
+  withAttrs [31] $ writeln $ "  " ++ errorMessage err
 printEntry (Describe n) = do
   writeln ""
   printNames n
