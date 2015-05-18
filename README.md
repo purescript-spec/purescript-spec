@@ -41,9 +41,6 @@ main = runNode [consoleReporter] do
       pending "browser support!"
 ```
 
-*The last test demonstrates how you can use [Aff](https://github.com/slamdata/purescript-aff)
-to write async tests.*
-
 ### Embedding Specs
 
 In the example `additionSpec` is embedded into the `Math` specification. This
@@ -65,6 +62,11 @@ spec`. Currently there are these reporters available:
 
 * [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter)
 * [`Test.Spec.Reporter.Xunit.xunitReporter`](API.md#xunitreporter)
+
+### Async
+
+Specs can be async as the test body type of `it` is
+[forall e. Aff e Unit](https://github.com/slamdata/purescript-aff)
 
 ### Running Tests
 
