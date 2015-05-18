@@ -63,8 +63,8 @@ main = runNode [consoleReporter] do
 Reporters can be passed to the runner, e.g. `runNode [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
-* [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter).
-* [`Test.Spec.Reporter.Xunit.xunitReporter`](API.md#xunitreporter).
+* [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter)
+* [`Test.Spec.Reporter.Xunit.xunitReporter`](API.md#xunitreporter)
 
 ### Running Tests
 
