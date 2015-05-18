@@ -9,6 +9,7 @@ NODEMON=node_modules/.bin/nodemon
 
 EXAMPLES = $(shell find examples -type f -name '*.purs')
 EXAMPLE_OUT=/tmp/purescript-spec-example-output.out
+EXAMPLE_CSS=/tmp/purescript-spec-example.css
 EXAMPLE_HTML=/tmp/purescript-spec-example-output.html
 
 build: $(OUTPUT)
@@ -29,9 +30,12 @@ build-examples: $(OUTPUT)
 run-examples: build-examples
 	@! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
 
-example.png: build-examples
+$(EXAMPLE_CSS): tools/styles.css
+	cp tools/styles.css $(EXAMPLE_CSS)
+
+example.png: build-examples $(EXAMPLE_CSS)
 	@! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
-	aha -f $(EXAMPLE_OUT) > $(EXAMPLE_HTML)
+	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
 	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
 	convert example.png -trim example.png
 

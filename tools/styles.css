@@ -1,0 +1,24 @@
+body {
+  color: #444;
+}
+.reset     {color: inherit;}
+.bg-reset  {background-color: white;}
+.black     {color: inherit;}
+.red       {color: #f93232;}
+.green     {color: #009926;}
+.yellow    {color: #a98833 ;}
+.blue      {color: #0086b3;}
+.purple    {color: #a71d5d;}
+.cyan      {color: #795da3;}
+.white     {color: #668934;}
+.bg-black  {background-color: black;}
+.bg-red    {background-color: red;}
+.bg-green  {background-color: green;}
+.bg-yellow {background-color: olive;}
+.bg-blue   {background-color: blue;}
+.bg-purple {background-color: purple;}
+.bg-cyan   {background-color: teal;}
+.bg-white  {background-color: gray;}
+.underline {text-decoration: underline;}
+.bold      {font-weight: bold;}
+.blink     {text-decoration: blink;}
