@@ -26,7 +26,7 @@ reporterSpec =
               R.Describe ["a", "c"],
               R.It "also works" Success
             ]
-        it "reports failured tests" do
+        it "reports failed tests" do
           results <- collect failureTest
           concatMap R.collapse results `shouldEqual` [
             R.It "fails" (Failure (error "1 ≠ 2"))
