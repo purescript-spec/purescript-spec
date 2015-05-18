@@ -10,7 +10,191 @@ mapM_ :: forall m a b. (Monad m) => (a -> m b) -> [a] -> m Unit
 
 
 
+## Module Data.XML.PrettyPrint
+
+#### `Indent`
+
+``` purescript
+type Indent = Number
+```
+
+
+#### `CurrentIndent`
+
+``` purescript
+type CurrentIndent = Number
+```
+
+
+#### `PrinterState`
+
+``` purescript
+data PrinterState
+  = PrinterState Indent CurrentIndent
+```
+
+The number of spaces in an indent and the current number of indents made.
+`PrinterState 2 6` represents 12 spaces.
+
+#### `Printer`
+
+``` purescript
+type Printer v = StateT PrinterState (Writer String) v
+```
+
+
+#### `indent`
+
+``` purescript
+indent :: Printer Unit
+```
+
+
+#### `dedent`
+
+``` purescript
+dedent :: Printer Unit
+```
+
+
+#### `indentSpaces`
+
+``` purescript
+indentSpaces :: Printer String
+```
+
+
+#### `appendLine`
+
+``` purescript
+appendLine :: String -> Printer Unit
+```
+
+
+#### `enclosed`
+
+``` purescript
+enclosed :: String -> String -> String -> String
+```
+
+
+#### `openTag`
+
+``` purescript
+openTag :: String -> [Attr] -> String
+```
+
+
+#### `closeTag`
+
+``` purescript
+closeTag :: String -> String
+```
+
+
+#### `escape`
+
+``` purescript
+escape :: String -> String
+```
+
+
+#### `printNode`
+
+``` purescript
+printNode :: Node -> Printer Unit
+```
+
+
+#### `showAttrs`
+
+``` purescript
+showAttrs :: [Attr] -> String
+```
+
+
+#### `printDocument`
+
+``` purescript
+printDocument :: Document -> Printer Unit
+```
+
+
+#### `print`
+
+``` purescript
+print :: Indent -> Document -> String
+```
+
+
+
+## Module Data.XML
+
+#### `Version`
+
+``` purescript
+type Version = String
+```
+
+#### `Encoding`
+
+``` purescript
+type Encoding = String
+```
+
+
+#### `Document`
+
+``` purescript
+data Document
+  = Document Version Encoding Node
+```
+
+
+#### `TagName`
+
+``` purescript
+type TagName = String
+```
+
+
+#### `Node`
+
+``` purescript
+data Node
+  = Element TagName [Attr] [Node]
+  | Text String
+  | Comment String
+```
+
+
+#### `Attr`
+
+``` purescript
+data Attr
+  = Attr String String
+```
+
+
+
+## Module Test.Spec.Assertions.String
+
+#### `shouldContain`
+
+``` purescript
+shouldContain :: forall r. String -> String -> Aff r Unit
+```
+
+
+
 ## Module Test.Spec.Assertions
+
+#### `fail`
+
+``` purescript
+fail :: forall r. String -> Aff r Unit
+```
+
 
 #### `shouldEqual`
 
@@ -23,6 +207,13 @@ shouldEqual :: forall r t. (Show t, Eq t) => t -> t -> Aff r Unit
 
 ``` purescript
 shouldNotEqual :: forall r t. (Show t, Eq t) => t -> t -> Aff r Unit
+```
+
+
+#### `shouldContain`
+
+``` purescript
+shouldContain :: forall r f a. (Show a, Eq a, Show (f a), Foldable f) => f a -> a -> Aff r Unit
 ```
 
 
@@ -65,6 +256,30 @@ withAttrs :: forall r. [Number] -> Eff (trace :: Trace | r) Unit -> Eff (trace :
 
 
 
+## Module Test.Spec.Errors
+
+#### `errorMessage`
+
+``` purescript
+errorMessage :: Error -> String
+```
+
+
+#### `errorName`
+
+``` purescript
+errorName :: Error -> String
+```
+
+
+#### `errorStackTrace`
+
+``` purescript
+errorStackTrace :: Error -> String
+```
+
+
+
 ## Module Test.Spec.Node
 
 #### `Process`
@@ -77,7 +292,7 @@ data Process :: !
 #### `runNode`
 
 ``` purescript
-runNode :: forall e r. [[Group] -> Eff (process :: Process | e) Unit] -> Spec (process :: Process | e) Unit -> Eff (process :: Process | e) Unit
+runNode :: forall e r. [[Group] -> Eff (trace :: Trace, process :: Process | e) Unit] -> Spec (trace :: Trace, process :: Process | e) Unit -> Eff (trace :: Trace, process :: Process | e) Unit
 ```
 
 
@@ -92,14 +307,19 @@ consoleReporter :: forall e. Reporter (trace :: Trace | e)
 
 
 
-## Module Test.Spec.Reporter
+## Module Test.Spec.Reporter.Xunit
 
-#### `showAssertionError`
+#### `xunitReporter`
 
 ``` purescript
-showAssertionError :: Error -> String
+xunitReporter :: forall e. FilePath -> Reporter (err :: Exception, fs :: FS | e)
 ```
 
+Outputs an XML file at the given path that can be consumed by Xunit
+readers, e.g. the Jenkins plugin.
+
+
+## Module Test.Spec.Reporter
 
 #### `Entry`
 

@@ -43,6 +43,8 @@ removeIfExists path = do
   e <- exists path
   when e $ unlink path
 
+-- | Outputs an XML file at the given path that can be consumed by Xunit
+-- | readers, e.g. the Jenkins plugin.
 xunitReporter :: forall e. FilePath -> Reporter (fs :: FS, err :: Exception | e)
 xunitReporter path groups = do
   let xml = encodeSuite groups
