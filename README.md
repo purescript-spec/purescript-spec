@@ -13,6 +13,8 @@ bower install purescript-spec
 
 ### Example
 
+The specs shown in the image above:
+
 ```purescript
 module Main where
 

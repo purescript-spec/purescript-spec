@@ -28,13 +28,13 @@ build-examples: $(OUTPUT)
 	psc-make -o $(OUTPUT)/examples $(EXAMPLES) $(SRC) $(LIB)
 
 run-examples: build-examples
-	@! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
+	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
 
 $(EXAMPLE_CSS): tools/styles.css
 	cp tools/styles.css $(EXAMPLE_CSS)
 
 example.png: build-examples $(EXAMPLE_CSS)
-	@! NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
+	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();" > $(EXAMPLE_OUT)
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
 	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
 	convert example.png -trim example.png

@@ -7,19 +7,17 @@ import Test.Spec.Assertions
 import Test.Spec.Reporter.Console
 import Test.QuickCheck
 
-additionSpec =
-  describe "Addition" do
-    it "does addition" do
-      (1 + 1) `shouldEqual` 2
-    it "fails as well" do
-      (1 + 1) `shouldEqual` 3
-
 main = runNode [consoleReporter] do
-  describe "Math" do
-    additionSpec
-    describe "Multiplication" do
-      pending "will do multiplication in the future"
-  describe "Async" do
-    it "asserts in the future" do
-      res <- later' 100 $ return "Alligator"
-      res `shouldEqual` "Alligator"
+  describe "purescript-spec" do
+    describe "What is it?" do
+      it "awesome" do
+        let isAwesome = true
+        isAwesome `shouldEqual` true
+    describe "Features" do
+      it "run specs in NodeJS" $ return unit
+      it "supports async specs" do
+        res <- later' 100 $ return "Alligator"
+        res `shouldEqual` "Alligator"
+      it "can output Xunit reports" $ return unit
+    describe "TODO" do
+      pending "browser support!"
