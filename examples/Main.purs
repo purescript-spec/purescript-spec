@@ -18,6 +18,5 @@ main = runNode [consoleReporter] do
       it "supports async specs" do
         res <- later' 100 $ return "Alligator"
         res `shouldEqual` "Alligator"
-      it "can output Xunit reports" $ return unit
     describe "TODO" do
       pending "browser support!"
