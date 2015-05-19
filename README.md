@@ -36,7 +36,6 @@ main = runNode [consoleReporter] do
       it "supports async specs" do
         res <- later' 100 $ return "Alligator"
         res `shouldEqual` "Alligator"
-      it "can output Xunit reports" $ return unit
     describe "TODO" do
       pending "browser support!"
 ```
@@ -61,7 +60,7 @@ Reporters can be passed to the runner, e.g. `runNode [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
 * [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter)
-* [`Test.Spec.Reporter.Xunit.xunitReporter`](API.md#xunitreporter)
+* [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
 
 ### Async
 
