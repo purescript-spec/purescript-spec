@@ -16,9 +16,9 @@ import Control.Monad.Eff.Exception (Error())
 import Control.Monad.State.Class   (modify)
 import Control.Monad.State.Trans   (StateT(), runStateT)
 import Control.Monad.Trans         (lift)
+import Data.Either                 (either)
 import Data.Monoid                 (Monoid)
 import Data.Tuple                  (snd)
-import Data.Either                 (either)
 
 type Name = String
 

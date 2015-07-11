@@ -2,14 +2,14 @@ module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
 
-import Control.Monad.Eff         (Eff())
-import Control.Monad.Eff.Console (CONSOLE(), log)
-import Data.Array                (concatMap)
-import Data.Foldable             (intercalate, traverse_)
+import Control.Monad.Eff           (Eff())
+import Control.Monad.Eff.Console   (CONSOLE(), log)
+import Control.Monad.Eff.Exception (message)
+import Data.Array                  (concatMap)
+import Data.Foldable               (intercalate, traverse_)
 
 import Test.Spec          (Group(), Result(..))
 import Test.Spec.Console  (withAttrs, write, writeln)
-import Test.Spec.Errors   (errorMessage)
 import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
 import Test.Spec.Summary  (Summary(..), summarize)
 
@@ -53,7 +53,7 @@ printEntry (Pending name) = do
 printEntry (It name (Failure err)) = do
   withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
   log ""
-  withAttrs [31] $ writeln $ "  " ++ errorMessage err
+  withAttrs [31] $ writeln $ "  " ++ message err
 printEntry (Describe n) = do
   writeln ""
   printNames n
