@@ -1,24 +1,9 @@
 module Test.Spec.Errors where
 
-import Control.Monad.Eff.Exception
+import Control.Monad.Eff.Exception (Error())
 
-foreign import errorMessage
-  """
-  function errorMessage(err) {
-    return err.message;
-  }
-  """ :: Error -> String
+foreign import errorMessage :: Error -> String
 
-foreign import errorName
-  """
-  function errorName(err) {
-    return err.name;
-  }
-  """ :: Error -> String
+foreign import errorName :: Error -> String
 
-foreign import errorStackTrace
-  """
-  function errorStackTrace(err) {
-    return err.stack;
-  }
-  """ :: Error -> String
+foreign import errorStackTrace :: Error -> String

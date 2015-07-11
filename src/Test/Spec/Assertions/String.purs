@@ -1,13 +1,14 @@
-module Test.Spec.Assertions.String where
+module Test.Spec.Assertions.String (shouldContain) where
 
-import Data.Maybe
-import Data.String
-import Control.Monad
-import Control.Monad.Aff
-import Control.Monad.Eff.Exception
-import Control.Monad.Error.Class
+import Prelude
+
+import Control.Monad               (when)
+import Control.Monad.Aff           (Aff())
+import Control.Monad.Error.Class   (throwError)
+import Control.Monad.Eff.Exception (error)
+import Data.String                 (contains)
 
 shouldContain :: forall r. String -> String -> Aff r Unit
 shouldContain s subs =
-  when (indexOf subs s < 0) $
+  when (contains subs s) $
     throwError $ error $ show subs ++ " ∉ " ++ show s

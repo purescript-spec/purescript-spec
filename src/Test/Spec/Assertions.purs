@@ -1,10 +1,12 @@
 module Test.Spec.Assertions where
 
-import Data.Foldable
-import Control.Monad
-import Control.Monad.Aff
-import Control.Monad.Eff.Exception
-import Control.Monad.Error.Class
+import Prelude
+
+import Control.Monad               (when)
+import Control.Monad.Aff           (Aff())
+import Control.Monad.Eff.Exception (error)
+import Control.Monad.Error.Class   (throwError)
+import Data.Foldable               (Foldable, notElem)
 
 fail :: forall r. String -> Aff r Unit
 fail msg = throwError $ error $ msg

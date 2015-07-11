@@ -1,7 +1,9 @@
 module Test.Spec.Fixtures where
 
-import Test.Spec
-import Test.Spec.Assertions
+import Prelude
+
+import Test.Spec            (describe, it, pending)
+import Test.Spec.Assertions (shouldEqual)
 
 successTest =
   describe "a" do

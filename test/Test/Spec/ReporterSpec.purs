@@ -1,12 +1,24 @@
 module Test.Spec.ReporterSpec where
 
-import Data.Array (concatMap)
-import Control.Monad.Eff.Exception
-import Test.Spec
-import Test.Spec.Node
-import Test.Spec.Assertions
-import Test.Spec.Fixtures
-import qualified Test.Spec.Reporter as R
+import Prelude
+
+import Control.Monad.Eff.Exception (error)
+import Data.Array                  (concatMap)
+
+import           Test.Spec            ( Group(..)
+                                      , Result(..)
+                                      , collect
+                                      , describe
+                                      , it
+                                      )
+import           Test.Spec.Assertions (shouldEqual)
+import qualified Test.Spec.Reporter   as R
+
+import Test.Spec.Fixtures ( failureTest
+                          , pendingTest
+                          , sharedDescribeTest
+                          , successTest
+                          )
 
 reporterSpec =
   describe "Test" $

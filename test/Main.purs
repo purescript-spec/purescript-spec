@@ -1,9 +1,12 @@
-module Main where
+module Test.Main where
 
-import Test.Spec.Node
-import Test.Spec.Reporter.Console
-import Test.Spec.RunnerSpec
-import Test.Spec.ReporterSpec
+import Prelude
+
+import Test.Spec.Node             (runNode)
+import Test.Spec.Reporter.Console (consoleReporter)
+
+import Test.Spec.ReporterSpec (reporterSpec)
+import Test.Spec.RunnerSpec   (runnerSpec)
 
 main = runNode [consoleReporter] do
   runnerSpec
