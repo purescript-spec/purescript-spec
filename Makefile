@@ -3,7 +3,7 @@ OUTPUT = output
 SRC = $(shell find src -type f -name '*.purs')
 LIB = $(shell find bower_components/purescript-*/src -type f -name '*.purs')
 
-TESTS = $(shell find tests -type f -name '*.purs')
+TESTS = $(shell find test -type f -name '*.purs')
 
 NODEMON=node_modules/.bin/nodemon
 
@@ -46,10 +46,10 @@ watch-examples:
 	$(NODEMON) --watch src --watch examples -e purs --exec make run-examples
 
 build-tests: $(OUTPUT)
-	psc-make -o $(OUTPUT)/tests $(TESTS) $(SRC) $(LIB)
+	psc-make -o $(OUTPUT)/test $(TESTS) $(SRC) $(LIB)
 
 run-tests: build-tests
-	@NODE_PATH=$(OUTPUT)/tests node -e "require('Main').main();"
+	@NODE_PATH=$(OUTPUT)/test node -e "require('Main').main();"
 
 watch-tests:
-	$(NODEMON) -V --watch src --watch tests -e purs --exec make run-tests
+	$(NODEMON) -V --watch src --watch test -e purs --exec make run-tests
