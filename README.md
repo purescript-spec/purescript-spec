@@ -85,15 +85,15 @@ adapter to get nice output formatting for QuickCheck tests.
 
 ## API
 
-[Test.Spec](docs/Test/Spec.md)
-[Test.Spec.Assertions](docs/Test/Spec/Assertions.md)
-[Test.Spec.Assertions.String](docs/Test/Spec/Assertions/String.md)
-[Test.Spec.Console](docs/Test/Spec/Console.md)
-[Test.Spec.Errors](docs/Test/Spec/Errors.md)
-[Test.Spec.Node](docs/Test/Spec/Node.md)
-[Test.Spec.Reporter](docs/Test/Spec/Reporter.md)
-[Test.Spec.Reporter.Console](docs/Test/Spec/Reporter/Console.md)
-[Test.Spec.Summary](docs/Test/Spec/Summary.md)
+- [Test.Spec](docs/Test/Spec.md)
+- [Test.Spec.Assertions](docs/Test/Spec/Assertions.md)
+- [Test.Spec.Assertions.String](docs/Test/Spec/Assertions/String.md)
+- [Test.Spec.Console](docs/Test/Spec/Console.md)
+- [Test.Spec.Errors](docs/Test/Spec/Errors.md)
+- [Test.Spec.Node](docs/Test/Spec/Node.md)
+- [Test.Spec.Reporter](docs/Test/Spec/Reporter.md)
+- [Test.Spec.Reporter.Console](docs/Test/Spec/Reporter/Console.md)
+- [Test.Spec.Summary](docs/Test/Spec/Summary.md)
 
 ## Build
 
