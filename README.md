@@ -59,7 +59,7 @@ main = runNode [consoleReporter] do
 Reporters can be passed to the runner, e.g. `runNode [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
-* [`Test.Spec.Reporter.Console.consoleReporter`](API.md#consolereporter)
+* [`Test.Spec.Reporter.Console.consoleReporter`](docs/Test/Spec/Reporter/Console.md#consolereporter)
 * [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
 
 ### Async
@@ -85,7 +85,15 @@ adapter to get nice output formatting for QuickCheck tests.
 
 ## API
 
-See [API](API.md).
+[Test.Spec](docs/Test/Spec.md)
+[Test.Spec.Assertions](docs/Test/Spec/Assertions.md)
+[Test.Spec.Assertions.String](docs/Test/Spec/Assertions/String.md)
+[Test.Spec.Console](docs/Test/Spec/Console.md)
+[Test.Spec.Errors](docs/Test/Spec/Errors.md)
+[Test.Spec.Node](docs/Test/Spec/Node.md)
+[Test.Spec.Reporter](docs/Test/Spec/Reporter.md)
+[Test.Spec.Reporter.Console](docs/Test/Spec/Reporter/Console.md)
+[Test.Spec.Summary](docs/Test/Spec/Summary.md)
 
 ## Build
 
@@ -96,6 +104,17 @@ make
 make run-tests
 # Generate docs
 make docs
+```
+
+Alternatively, using [pulp](https://github.com/bodil/pulp):
+
+```bash
+# Build the library
+pulp build
+# Run tests
+pulp test
+# Generate docs
+pulp docs
 ```
 
 ### Generate Example
@@ -127,7 +146,7 @@ make ctags
 
 If you have any issues or possible improvements please file them as
 [GitHub Issues](https://github.com/owickstrom/purescript-spec/issues). Pull
-requests requests are encouraged.
+requests are encouraged.
 
 ## License
 
