@@ -1,4 +1,9 @@
-module Test.Spec.Assertions where
+module Test.Spec.Assertions
+  ( fail
+  , shouldEqual
+  , shouldNotEqual
+  , shouldContain
+  ) where
 
 import Prelude
 

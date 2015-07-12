@@ -1,4 +1,9 @@
-module Test.Spec.Console where
+module Test.Spec.Console
+  ( writeln
+  , setAttr
+  , reset
+  , withAttrs
+  ) where
 
 import Prelude
 
