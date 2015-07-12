@@ -57,17 +57,7 @@ printEntry (It name (Failure err)) = do
 printEntry (Describe n) = do
   writeln ""
   printNames n
-  -- TODO: use fold instead of cons pattern
   where printNames ns = withAttrs [1, 35] $ writeln $ intercalate " » " ns
-        {-
-      printNames [] = return unit
-        printNames [last] = withAttrs [1, 35] $ writeln last
-        printNames (name : names) = do
-          withAttrs [1] do
-            write name
-            write " » "
-          printNames names
-          -}
 
 consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do

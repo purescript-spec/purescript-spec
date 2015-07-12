@@ -29,5 +29,5 @@ summarize = foldMap \g -> case g of
 successful :: Array Group -> Boolean
 successful groups =
   case summarize groups of
-    (Count _ 0 _) ->  true
-    _ -> false
+    (Count _ 0 _) -> true
+    _             -> false

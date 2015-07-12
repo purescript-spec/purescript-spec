@@ -1,5 +1,6 @@
 module Test.Spec.Console
-  ( writeln
+  ( write
+  , writeln
   , setAttr
   , reset
   , withAttrs
