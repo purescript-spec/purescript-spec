@@ -1,11 +1,12 @@
 module Main where
 
+import Prelude
+
 import Control.Monad.Aff
 import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
 import Test.Spec.Reporter.Console
-import Test.QuickCheck
 
 main = runNode [consoleReporter] do
   describe "purescript-spec" do
@@ -18,5 +19,6 @@ main = runNode [consoleReporter] do
       it "supports async specs" do
         res <- later' 100 $ return "Alligator"
         res `shouldEqual` "Alligator"
+      it "supports PureScript 0.7" $ return unit
     describe "TODO" do
       pending "browser support!"

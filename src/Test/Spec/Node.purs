@@ -3,33 +3,27 @@ module Test.Spec.Node (
   runNode
   ) where
 
-import Debug.Trace
-import Data.Foldable
-import Data.Array
-import Control.Monad
-import Control.Monad.Eff
-import Control.Monad.Aff
-import Control.Monad.Extras
-import Test.Spec
-import Test.Spec.Console
-import Test.Spec.Summary
-import qualified Test.Spec.Reporter as R
+import Prelude
+
+import Control.Monad             (when)
+import Control.Monad.Aff         (runAff)
+import Control.Monad.Eff         (Eff())
+import Control.Monad.Eff.Console (CONSOLE(), print)
+import Data.Foldable             (sequence_)
+
+import Test.Spec          (Spec(), collect)
+import Test.Spec.Console  (withAttrs)
+import Test.Spec.Summary  (successful)
+import Test.Spec.Reporter (Reporter())
 
 foreign import data Process :: !
 
-foreign import exit
-  """
-  function exit(code) {
-    return function() {
-      process.exit(code);
-    };
-  }
-  """ :: forall eff. Number -> Eff (process :: Process | eff) Unit
+foreign import exit :: forall eff. Int -> Eff (process :: Process | eff) Unit
 
 runNode :: forall e r.
-        [([Group] -> Eff (process :: Process, trace :: Trace | e) Unit)]
-        -> Spec (process :: Process, trace :: Trace | e) Unit
-        -> Eff (process :: Process, trace :: Trace | e) Unit
+        Array (Reporter (process :: Process, console :: CONSOLE | e))
+        -> Spec (process :: Process, console :: CONSOLE | e) Unit
+        -> Eff  (process :: Process, console :: CONSOLE | e) Unit
 runNode rs spec = do
   runAff
     (\err -> do withAttrs [31] $ print err

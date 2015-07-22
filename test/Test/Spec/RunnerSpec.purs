@@ -1,10 +1,13 @@
 module Test.Spec.RunnerSpec where
 
-import Control.Monad.Aff
-import Test.Spec
-import Test.Spec.Node
-import Test.Spec.Assertions
-import Test.Spec.Fixtures
+import Prelude
+
+import Control.Monad.Aff (later')
+
+import Test.Spec            (Group(..), Result(..), collect, describe, it)
+import Test.Spec.Assertions (shouldEqual)
+
+import Test.Spec.Fixtures (successTest, sharedDescribeTest)
 
 runnerSpec =
   describe "Test" $

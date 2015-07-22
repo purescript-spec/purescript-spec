@@ -1,26 +1,23 @@
-module Test.Spec.Reporter.Console (
-  consoleReporter
-  )
-  where
+module Test.Spec.Reporter.Console (consoleReporter) where
 
-import Debug.Trace
-import Data.String
-import Data.Array (map, concatMap)
-import Data.Foldable
-import Control.Monad.Eff
-import Control.Monad.Eff.Exception
-import Control.Monad.Extras
-import qualified Test.Spec as S
-import Test.Spec.Errors
-import Test.Spec.Console
-import Test.Spec.Summary
-import Test.Spec.Reporter
+import Prelude
 
-pluralize :: String -> Number -> String
+import Control.Monad.Eff           (Eff())
+import Control.Monad.Eff.Console   (CONSOLE(), log)
+import Control.Monad.Eff.Exception (message)
+import Data.Array                  (concatMap)
+import Data.Foldable               (intercalate, traverse_)
+
+import Test.Spec          (Group(), Result(..))
+import Test.Spec.Console  (withAttrs, write, writeln)
+import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
+import Test.Spec.Summary  (Summary(..), summarize)
+
+pluralize :: String -> Int -> String
 pluralize s 1 = s
-pluralize s _ = s ++ "s"
+pluralize s _ = s <> "s"
 
-printPassedFailed :: forall r. Number -> Number -> Eff (trace :: Trace | r) Unit
+printPassedFailed :: forall r. Int -> Int -> Eff (console :: CONSOLE | r) Unit
 printPassedFailed p f = do
   let total = p + f
       testStr = pluralize "test" total
@@ -28,7 +25,7 @@ printPassedFailed p f = do
       attrs = if f > 0 then [31] else [32]
   withAttrs attrs $ writeln amount
 
-printPending :: forall r. Number -> Eff (trace :: Trace | r) Unit
+printPending :: forall r. Int -> Eff (console :: CONSOLE | r) Unit
 printPending p =
   if p > 0 then withAttrs [33] do write $ show p
                                   write " "
@@ -36,7 +33,7 @@ printPending p =
                                   writeln " pending"
            else return unit
 
-printSummary' :: forall r. Summary -> Eff (trace :: Trace | r) Unit
+printSummary' :: forall r. Summary -> Eff (console :: CONSOLE | r) Unit
 printSummary' (Count passed failed pending) = do
   writeln ""
   withAttrs [1] $ writeln "Summary"
@@ -44,31 +41,25 @@ printSummary' (Count passed failed pending) = do
   printPending pending
   writeln ""
 
-printSummary :: forall r. [S.Group] -> Eff (trace :: Trace | r) Unit
+printSummary :: forall r. Array Group -> Eff (console :: CONSOLE | r) Unit
 printSummary groups = printSummary' $ summarize groups
 
 printEntry :: forall r. Entry
-           -> Eff (trace :: Trace | r) Unit
-printEntry (It name S.Success) = do
+           -> Eff (console :: CONSOLE | r) Unit
+printEntry (It name Success) = do
   withAttrs [32] $ writeln $  "✓︎ " ++ name
 printEntry (Pending name) = do
   withAttrs [33] $ writeln $  "~ " ++ name
-printEntry (It name (S.Failure err)) = do
+printEntry (It name (Failure err)) = do
   withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
-  trace ""
-  withAttrs [31] $ writeln $ "  " ++ errorMessage err
+  log ""
+  withAttrs [31] $ writeln $ "  " ++ message err
 printEntry (Describe n) = do
   writeln ""
   printNames n
-  where printNames [] = return unit
-        printNames [last] = withAttrs [1, 35] $ writeln last
-        printNames (name : names) = do
-          withAttrs [1] do
-            write name
-            write " » "
-          printNames names
+  where printNames ns = withAttrs [1, 35] $ writeln $ intercalate " » " ns
 
-consoleReporter :: forall e. Reporter (trace :: Trace | e)
+consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do
-  mapM_ printEntry $ concatMap collapse groups
+  traverse_ printEntry $ concatMap collapse groups
   printSummary groups
