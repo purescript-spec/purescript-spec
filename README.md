@@ -23,7 +23,6 @@ import Test.Spec (describe, pending, it)
 import Test.Spec.Node
 import Test.Spec.Assertions
 import Test.Spec.Reporter.Console
-import Test.QuickCheck
 
 main = runNode [consoleReporter] do
   describe "purescript-spec" do
