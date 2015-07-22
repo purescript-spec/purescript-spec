@@ -4,7 +4,7 @@
   "ignore": [
     "**/.*",
     "bower_components",
-    "tests",
+    "test",
     "externs",
     "tmp",
     "output",

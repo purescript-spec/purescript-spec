@@ -1,19 +1,22 @@
 OUTPUT = output
 
-SRC = $(shell find src -type f -name '*.purs')
-LIB = $(shell find bower_components/purescript-*/src -type f -name '*.purs')
+SRC = 'src/**/*.purs'
+LIB = 'bower_components/purescript-*/src/**/*.purs'
+SRC_FFI = 'src/**/*.js'
+LIB_FFI = 'bower_components/purescript-*/src/**/*.js'
+TESTS = 'test/**/*.purs'
+EXAMPLES = 'examples/Main.purs'
 
-TESTS = $(shell find test -type f -name '*.purs')
+DEFAULT_PSC_ARGS = $(SRC) $(LIB) --ffi $(SRC_FFI) --ffi $(LIB_FFI)
 
 NODEMON=node_modules/.bin/nodemon
 
-EXAMPLES = $(shell find examples -type f -name '*.purs')
 EXAMPLE_OUT=/tmp/purescript-spec-example-output.out
 EXAMPLE_CSS=/tmp/purescript-spec-example.css
 EXAMPLE_HTML=/tmp/purescript-spec-example-output.html
 
 build: $(OUTPUT)
-	psc-make -o output/lib $(SRC) $(LIB)
+	psc $(DEFAULT_PSC_ARGS) -o $(OUTPUT)/lib
 
 $(OUTPUT):
 	mkdir -p $@
@@ -25,7 +28,7 @@ ctags:
 	psc-docs --format ctags $(SRC) $(LIB) > tags
 
 build-examples: $(OUTPUT)
-	psc-make -o $(OUTPUT)/examples $(EXAMPLES) $(SRC) $(LIB)
+	psc $(EXAMPLES) $(DEFAULT_PSC_ARGS) -o $(OUTPUT)/examples
 
 run-examples: build-examples
 	@NODE_PATH=$(OUTPUT)/examples node -e "require('Main').main();"
@@ -46,10 +49,10 @@ watch-examples:
 	$(NODEMON) --watch src --watch examples -e purs --exec make run-examples
 
 build-tests: $(OUTPUT)
-	psc-make -o $(OUTPUT)/test $(TESTS) $(SRC) $(LIB)
+	psc $(TESTS) $(DEFAULT_PSC_ARGS) -o $(OUTPUT)/test
 
 run-tests: build-tests
-	@NODE_PATH=$(OUTPUT)/test node -e "require('Main').main();"
+	@NODE_PATH=$(OUTPUT)/test node -e "require('Test.Main').main();"
 
 watch-tests:
 	$(NODEMON) -V --watch src --watch test -e purs --exec make run-tests
