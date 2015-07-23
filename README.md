@@ -69,12 +69,12 @@ Specs can be async as the test body type of `it` is
 
 ### Running Tests
 
-Run the test suite using `psc-make` and NodeJS. Note that `$TESTS`, `$SRC`
-and `$LIB` contain all the Purescript source paths needed.
+Run the test suite using `pulp` or with `psc` and NodeJS. Note that `$TESTS`,
+`$SRC` and `$LIB` contain all the Purescript source paths needed.
 
 ```bash
-psc-make -o output/tests $TESTS $SRC $LIB
-NODE_PATH=output/tests node -e "require('Main').main();"
+psc -o output/tests $TESTS $SRC $LIB
+NODE_PATH=output/tests node -e "require('Test.Main').main();"
 ```
 
 ## QuickCheck
