@@ -32,11 +32,11 @@ build-example: $(OUTPUT)
 run-example: build-example
 	@NODE_PATH=$(OUTPUT)/example node -e "require('Main').main();"
 
-$(EXAMPLE_CSS): tools/styles.css
-	cp tools/styles.css $(EXAMPLE_CSS)
+$(EXAMPLE_CSS): example/styles.css
+	cp example/styles.css $(EXAMPLE_CSS)
 
 example.png: build-example $(EXAMPLE_CSS)
 	@NODE_PATH=$(OUTPUT)/example node -e "require('Main').main();" > $(EXAMPLE_OUT)
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
-	phantomjs tools/rasterize.js $(EXAMPLE_HTML) example.png 200 2
+	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 1.5
 	convert example.png -trim example.png
