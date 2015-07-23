@@ -69,11 +69,16 @@ Specs can be async as the test body type of `it` is
 
 ### Running Tests
 
-Run the test suite using `pulp` or with `psc` and NodeJS. Note that `$TESTS`,
-`$SRC` and `$LIB` contain all the Purescript source paths needed.
+When using `runNode` you can follow the conventions of
+[pulp](https://github.com/bodil/pulp) and run your tests with `pulp test`.
+
+If you're not using pulp you can compile using `psc` and run the compiled
+Javascript with `node`.
 
 ```bash
-psc -o output/tests $TESTS $SRC $LIB
+# compile with psc (modify the command to include all your sources)
+psc -o output/tests 'test/**/*.purs' src/**/*.purs --ffi src/**/*.purs
+# run using node
 NODE_PATH=output/tests node -e "require('Test.Main').main();"
 ```
 
