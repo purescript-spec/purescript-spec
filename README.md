@@ -77,7 +77,7 @@ Javascript with `node`.
 
 ```bash
 # compile with psc (modify the command to include all your sources)
-psc -o output/tests 'test/**/*.purs' src/**/*.purs --ffi src/**/*.js
+psc -o output/tests 'test/**/*.purs' 'src/**/*.purs' --ffi 'src/**/*.js'
 # run using node
 NODE_PATH=output/tests node -e "require('Test.Main').main();"
 ```
