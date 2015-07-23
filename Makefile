@@ -38,5 +38,5 @@ $(EXAMPLE_CSS): example/styles.css
 example.png: build-example $(EXAMPLE_CSS)
 	@NODE_PATH=$(OUTPUT)/example node -e "require('Main').main();" > $(EXAMPLE_OUT)
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
-	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 1.5
+	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 4
 	convert example.png -trim example.png
