@@ -97,19 +97,11 @@ adapter to get nice output formatting for QuickCheck tests.
 
 ## Build
 
+This projects uses [pulp](https://github.com/bodil/pulp) for most of its
+build. For stuff not supported by pulp we use Make.
+
 ```bash
 # Make the library
-make
-# Run tests
-make run-tests
-# Generate docs
-make docs
-```
-
-Alternatively, using [pulp](https://github.com/bodil/pulp):
-
-```bash
-# Build the library
 pulp build
 # Run tests
 pulp test
@@ -121,15 +113,18 @@ pulp docs
 
 Generating the `example.png` requires:
 
+* make
 * phantomjs
 * aha
 * imagemagick
 
-```
+```bash
 make example.png
 ```
 
 ## CTags
+
+This target generates a CTags file `tags`.
 
 ```bash
 make ctags
@@ -137,6 +132,10 @@ make ctags
 
 ## Changelog
 
+* **0.6.1**
+  * Fix bug in `shouldContain` assertion for strings
+* **0.6.0**
+  * Adapt for PureScript 0.7 compatibility
 * **0.5.0**
   * Make reporters pluggable.
 * **0.4.0**
