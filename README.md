@@ -93,6 +93,7 @@ adapter to get nice output formatting for QuickCheck tests.
 - [Test.Spec](docs/Test/Spec.md)
 - [Test.Spec.Assertions](docs/Test/Spec/Assertions.md)
 - [Test.Spec.Assertions.String](docs/Test/Spec/Assertions/String.md)
+- [Test.Spec.Assertions.Aff](docs/Test/Spec/Assertions/Aff.md)
 - [Test.Spec.Console](docs/Test/Spec/Console.md)
 - [Test.Spec.Errors](docs/Test/Spec/Errors.md)
 - [Test.Spec.Node](docs/Test/Spec/Node.md)
