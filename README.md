@@ -137,6 +137,8 @@ make ctags
 
 ## Changelog
 
+* **0.6.2**
+  * Add more assertions
 * **0.6.1**
   * Fix bug in `shouldContain` assertion for strings
 * **0.6.0**
