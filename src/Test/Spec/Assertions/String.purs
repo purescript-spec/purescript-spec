@@ -10,5 +10,5 @@ import Data.String                 (contains)
 
 shouldContain :: forall r. String -> String -> Aff r Unit
 shouldContain s subs =
-  when (contains subs s) $
+  when (not $ contains subs s) $
     throwError $ error $ show subs ++ " ∉ " ++ show s
