@@ -3,8 +3,8 @@ module Test.Spec.AssertionSpec where
 import Prelude
 
 import Control.Monad.Eff.Exception (error)
-import Control.Monad.Eff.Exception  (error)
-import Control.Monad.Error.Class    (throwError)
+import Control.Monad.Eff.Exception (error)
+import Control.Monad.Error.Class   (throwError)
 
 import Test.Spec                    (describe, it)
 import Test.Spec.Assertions         (shouldEqual)
