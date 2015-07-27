@@ -1,6 +1,6 @@
-module Test.Spec.Node (
+module Test.Spec.Runner (
   Process(..),
-  runNode
+  run
   ) where
 
 import Prelude
@@ -20,11 +20,14 @@ foreign import data Process :: !
 
 foreign import exit :: forall eff. Int -> Eff (process :: Process | eff) Unit
 
-runNode :: forall e r.
-        Array (Reporter (process :: Process, console :: CONSOLE | e))
-        -> Spec (process :: Process, console :: CONSOLE | e) Unit
-        -> Eff  (process :: Process, console :: CONSOLE | e) Unit
-runNode rs spec = do
+-- Runs the tests and invoke all reporters.
+-- If run in a NodeJS environment any failed test will cause the
+-- process to exit with a non-zero exit code.
+run :: forall e r.
+    Array (Reporter (process :: Process, console :: CONSOLE | e))
+    -> Spec (process :: Process, console :: CONSOLE | e) Unit
+    -> Eff  (process :: Process, console :: CONSOLE | e) Unit
+run rs spec = do
   runAff
     (\err -> do withAttrs [31] $ print err
                 exit 1)
