@@ -18,26 +18,27 @@ The specs shown in the image above:
 ```purescript
 module Main where
 
-import Control.Monad.Aff
-import Test.Spec (describe, pending, it)
-import Test.Spec.Node
-import Test.Spec.Assertions
-import Test.Spec.Reporter.Console
+import Prelude
 
-main = runNode [consoleReporter] do
+import Control.Monad.Aff
+import Test.Spec                  (describe, pending, it)
+import Test.Spec.Runner           (run)
+import Test.Spec.Assertions       (shouldEqual)
+import Test.Spec.Reporter.Console (consoleReporter)
+
+main = run [consoleReporter] do
   describe "purescript-spec" do
     describe "What is it?" do
       it "awesome" do
         let isAwesome = true
         isAwesome `shouldEqual` true
     describe "Features" do
-      it "run specs in NodeJS" $ return unit
+      it "runs in NodeJS" $ return unit
+      it "runs in the browser" $ return unit
       it "supports async specs" do
         res <- later' 100 $ return "Alligator"
         res `shouldEqual` "Alligator"
       it "is PureScript 0.7 compatible" $ return unit
-    describe "TODO" do
-      pending "browser support!"
 ```
 
 ### Embedding Specs
@@ -82,6 +83,13 @@ psc -o output/tests 'test/**/*.purs' 'src/**/*.purs' --ffi 'src/**/*.js'
 NODE_PATH=output/tests node -e "require('Test.Main').main();"
 ```
 
+### Browser Testing
+
+Compile and bundle your tests using `pulp browserify -I test --main Test.Main`
+and run the bundled Javascript using `mocha` or `karma`. For more information,
+see [purescript-spec-reporter-mocha](
+https://github.com/owickstrom/purescript-spec-reporter-mocha).
+
 ## QuickCheck
 
 You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
@@ -96,7 +104,7 @@ adapter to get nice output formatting for QuickCheck tests.
 - [Test.Spec.Assertions.Aff](docs/Test/Spec/Assertions/Aff.md)
 - [Test.Spec.Console](docs/Test/Spec/Console.md)
 - [Test.Spec.Errors](docs/Test/Spec/Errors.md)
-- [Test.Spec.Node](docs/Test/Spec/Node.md)
+- [Test.Spec.Runner](docs/Test/Spec/Runner.md)
 - [Test.Spec.Reporter](docs/Test/Spec/Reporter.md)
 - [Test.Spec.Reporter.Console](docs/Test/Spec/Reporter/Console.md)
 - [Test.Spec.Summary](docs/Test/Spec/Summary.md)
@@ -138,12 +146,15 @@ make ctags
 
 ## Changelog
 
+* **0.7.0**
+  * Rename `runNode` to `run` and place it in `Test.Spec.Runner`.
+  * Support browser testing.
 * **0.6.2**
-  * Add more assertions
+  * Add more assertions.
 * **0.6.1**
-  * Fix bug in `shouldContain` assertion for strings
+  * Fix bug in `shouldContain` assertion for strings.
 * **0.6.0**
-  * Adapt for PureScript 0.7 compatibility
+  * Adapt for PureScript 0.7 compatibility.
 * **0.5.0**
   * Make reporters pluggable.
 * **0.4.0**
