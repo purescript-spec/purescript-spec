@@ -57,11 +57,12 @@ main = runNode [consoleReporter] do
 
 ### Reporters
 
-Reporters can be passed to the runner, e.g. `runNode [reporter1, ..., reporterN]
+Reporters can be passed to the runner, e.g. `run [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
 * [`Test.Spec.Reporter.Console.consoleReporter`](docs/Test/Spec/Reporter/Console.md#consolereporter)
 * [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
+* [purescript-spec-reporter-mocha](https://github.com/owickstrom/purescript-spec-reporter-mocha)
 
 ### Async
 
