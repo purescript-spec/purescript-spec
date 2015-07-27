@@ -5,7 +5,9 @@
 
 exports.write = function(s) {
   return function () {
-    if (process) {
+    if (process &&
+        process.stdout &&
+        typeof process.stdout.write === 'function') {
       process.stdout.write(s);
     }
   };
