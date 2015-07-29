@@ -41,14 +41,13 @@ main = run [consoleReporter] do
       it "is PureScript 0.7 compatible" $ return unit
 ```
 
-### Embedding Specs
+### Combining Specs
 
-In the example `additionSpec` is embedded into the `Math` specification. This
-is useful if you want to split specifications into multiple files and combine
-them in `Main`.
+You can split test specs into multiple files and combine
+them in `Test.Main` using a do expression.
 
 ```purescript
-main = runNode [consoleReporter] do
+main = run [consoleReporter] do
   mathSpec
   stringsSpec
   arraySpec
@@ -71,7 +70,7 @@ Specs can be async as the test body type of `it` is
 
 ### Running Tests
 
-When using `runNode` you can follow the conventions of
+When using `run` you can follow the conventions of
 [pulp](https://github.com/bodil/pulp) and run your tests with `pulp test`.
 
 If you're not using pulp you can compile using `psc` and run the compiled
