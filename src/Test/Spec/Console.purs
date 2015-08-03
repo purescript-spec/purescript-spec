@@ -18,8 +18,11 @@ foreign import write :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 writeln :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 writeln s = write $ s <> "\n"
 
+-- This needs a foreign function to support the escape sequence.
+foreign import _setAttr :: forall e. String -> Eff (console :: CONSOLE | e) Unit
+
 setAttr :: forall e. Int -> Eff (console :: CONSOLE | e) Unit
-setAttr code = write $ "\x1b[" <> show code <> "m"
+setAttr code = _setAttr (show code)
 
 reset :: forall e. Eff (console :: CONSOLE | e) Unit
 reset = setAttr 0

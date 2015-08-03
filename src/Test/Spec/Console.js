@@ -11,4 +11,9 @@ exports.write = function(s) {
       process.stdout.write(s);
     }
   };
-}
+};
+
+// This needs a foreign function to support the escape sequence.
+exports._setAttr = function (codeStr) {
+  return exports.write("\x1b[" + codeStr + "m");
+};
