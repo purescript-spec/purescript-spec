@@ -37,7 +37,6 @@ instance eqResult :: Eq Result where
   eq Success Success = true
   eq (Failure _) (Failure _) = true
   eq _ _ = false
-  eq r1 r2 = not (r1 == r2)
 
 instance showGroup :: Show Group where
   show (Describe name groups) = "Describe " ++ show name ++ " " ++ show groups

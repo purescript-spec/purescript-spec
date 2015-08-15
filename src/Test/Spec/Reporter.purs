@@ -22,8 +22,8 @@ instance eqEntry :: Eq Entry where
   eq (It n1 S.Success) (It n2 S.Success) = n1 == n2
   eq (It n1 (S.Failure e1)) (It n2 (S.Failure e2)) =
     n1 == n2 && (message e1) == (message e2)
-  eq (It n1 _) (It n2 _) = false
   eq (Pending n1) (Pending n2) = n1 == n2
+  eq _ _ = false
 
 instance showEntry :: Show Entry where
   show (Describe names) = "Describe \"" ++ (intercalate " » " names) ++ "\""
