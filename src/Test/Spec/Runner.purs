@@ -23,7 +23,7 @@ foreign import exit :: forall eff. Int -> Eff (process :: Process | eff) Unit
 -- Runs the tests and invoke all reporters.
 -- If run in a NodeJS environment any failed test will cause the
 -- process to exit with a non-zero exit code.
-run :: forall e r.
+run :: forall e.
     Array (Reporter (process :: Process, console :: CONSOLE | e))
     -> Spec (process :: Process, console :: CONSOLE | e) Unit
     -> Eff  (process :: Process, console :: CONSOLE | e) Unit
