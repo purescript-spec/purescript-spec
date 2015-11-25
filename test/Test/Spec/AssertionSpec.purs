@@ -9,7 +9,6 @@ import Control.Monad.Error.Class   (throwError)
 import Control.Monad.State.Trans   (StateT())
 
 import Test.Spec                    (Group(), describe, it)
-import Test.Spec.Assertions         (shouldEqual)
 import Test.Spec.Assertions.Aff     (expectError)
 import Test.Spec.Assertions.String  (shouldContain, shouldNotContain)
 
