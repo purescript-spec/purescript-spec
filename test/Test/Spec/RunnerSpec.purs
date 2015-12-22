@@ -2,13 +2,15 @@ module Test.Spec.RunnerSpec where
 
 import Prelude
 
-import Control.Monad.Aff (later')
+import Control.Monad.Aff         (Aff(), later')
+import Control.Monad.State.Trans (StateT())
 
 import Test.Spec            (Group(..), Result(..), collect, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 import Test.Spec.Fixtures (successTest, sharedDescribeTest)
 
+runnerSpec :: forall eff. StateT (Array Group) (Aff eff) Unit
 runnerSpec =
   describe "Test" $
     describe "Spec" $

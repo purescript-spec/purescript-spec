@@ -2,10 +2,12 @@ module Test.Spec.ReporterSpec where
 
 import Prelude
 
+import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (error)
+import Control.Monad.State.Trans   (StateT())
 import Data.Array                  (concatMap)
 
-import           Test.Spec            ( Group(..)
+import           Test.Spec            ( Group()
                                       , Result(..)
                                       , collect
                                       , describe
@@ -20,6 +22,7 @@ import Test.Spec.Fixtures ( failureTest
                           , successTest
                           )
 
+reporterSpec :: forall eff. StateT (Array Group) (Aff eff) Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $
