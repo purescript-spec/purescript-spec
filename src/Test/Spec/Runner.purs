@@ -33,12 +33,8 @@ run rs spec = do
     (\err -> do withAttrs [31] $ print err
                 exit 1)
     (\results -> do sequence_ (map (\f -> f results) rs)
-                    exitWithCode (successful results))
+                    if (successful results)
+                      then exit 0
+                      else exit 1)
     (collect spec)
 
-exitWithCode :: forall t5.
-  Boolean
-  -> Eff ( process :: Process | t5) Unit
-exitWithCode success = exit (code success)
-  where code true  = 0
-	code false = 1
