@@ -1,7 +1,8 @@
 module Test.Spec.ConsoleForeign
   ( write
   , _setAttr
-  , supportedEnvironment) where
+  , supportedEnvironment
+  , consoleLog) where
 
 import Prelude                     (Unit)
 
@@ -14,3 +15,5 @@ foreign import write :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 foreign import _setAttr :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 
 foreign import supportedEnvironment :: Boolean
+
+foreign import consoleLog :: forall e. String -> Eff (console :: CONSOLE | e) Unit

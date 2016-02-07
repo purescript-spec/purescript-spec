@@ -9,7 +9,7 @@ function hasProcessWrite() {
       typeof process.stdout.write === 'function'
 }
 
-exports.supportedEnvironment = false;
+exports.supportedEnvironment = hasProcessWrite();
 
 exports.write = function(s) {
   return function () {
@@ -18,6 +18,12 @@ exports.write = function(s) {
     }
   };
 };
+
+exports.consoleLog = function(s) {
+  return function() {
+    console.log(s);
+  }
+}
 
 // This needs a foreign function to support the escape sequence.
 exports._setAttr = function (codeStr) {
