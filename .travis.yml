@@ -13,3 +13,7 @@ install:
 script:
   - make run-example
   - pulp test
+
+cache:
+  directories:
+    - output
