@@ -19,9 +19,9 @@ exports.write = function(s) {
   };
 };
 
-exports.consoleLog = function(s) {
+exports.consoleWarn = function(s) {
   return function() {
-    console.log(s);
+    console.warn(s);
   }
 }
 

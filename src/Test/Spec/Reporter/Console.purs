@@ -2,6 +2,7 @@ module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
 
+import Control.Monad               (unless)
 import Control.Monad.Eff           (Eff())
 import Control.Monad.Eff.Console   (CONSOLE(), log)
 import Control.Monad.Eff.Exception (message)
@@ -10,7 +11,7 @@ import Data.Foldable               (intercalate, traverse_)
 
 import Test.Spec          (Group(), Result(..))
 import Test.Spec.Console  (withAttrs, writeln)
-import Test.Spec.ConsoleForeign  (write, supportedEnvironment, consoleLog)
+import Test.Spec.ConsoleForeign  (write, supportedEnvironment, consoleWarn)
 import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
 import Test.Spec.Summary  (Summary(..), summarize)
 
@@ -62,12 +63,11 @@ printEntry (Describe n) = do
 
 consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do
-  if not supportedEnvironment
-    then
-      consoleLog """Unsupported environment. The console reporter can only be run in a node-like
+  unless supportedEnvironment do
+    consoleWarn """WARNING: Unsupported environment. The console reporter can only be run in a node-like
 environment with access to process.stdout.write(). If you are running in the browser,
 please see the mocha and xunit reporters. If using webpack, make sure you are targeting
 node instead of the browser."""
-    else do
-      traverse_ printEntry $ concatMap collapse groups
-      printSummary groups
+
+  traverse_ printEntry $ concatMap collapse groups
+  printSummary groups
