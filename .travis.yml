@@ -1,0 +1,14 @@
+language: node_js
+sudo: false
+node_js:
+  - "5.5"
+env:
+  - PATH=$HOME/purescript:$PATH
+install:
+  - wget -O $HOME/purescript.tar.gz https://github.com/purescript/purescript/releases/download/v0.8.0/linux64.tar.gz
+  - tar -xvf $HOME/purescript.tar.gz -C $HOME/
+  - chmod a+x $HOME/purescript
+  - bower install
+script:
+  - pulp test
+  - make run-example
