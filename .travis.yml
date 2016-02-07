@@ -11,5 +11,5 @@ install:
   - npm install -g bower pulp
   - bower install
 script:
-  - pulp test
   - make run-example
+  - pulp test
