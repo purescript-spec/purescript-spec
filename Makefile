@@ -32,6 +32,9 @@ build-example: $(OUTPUT)
 run-example: build-example
 	@NODE_PATH=$(OUTPUT)/example node -e "require('Main').main();"
 
+regenerate-docs:
+	./regenerate-docs.sh
+
 $(EXAMPLE_CSS): example/styles.css
 	cp example/styles.css $(EXAMPLE_CSS)
 
