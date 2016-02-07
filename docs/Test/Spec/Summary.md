@@ -9,8 +9,8 @@ data Summary
 
 ##### Instances
 ``` purescript
-instance semigroupCount :: Semigroup Summary
-instance monoidCount :: Monoid Summary
+Semigroup Summary
+Monoid Summary
 ```
 
 #### `summarize`
