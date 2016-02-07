@@ -9,7 +9,8 @@ import Data.Array                  (concatMap)
 import Data.Foldable               (intercalate, traverse_)
 
 import Test.Spec          (Group(), Result(..))
-import Test.Spec.Console  (withAttrs, write, writeln)
+import Test.Spec.Console  (withAttrs, writeln)
+import Test.Spec.ConsoleForeign  (write, supportedEnvironment)
 import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
 import Test.Spec.Summary  (Summary(..), summarize)
 

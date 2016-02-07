@@ -1,6 +1,5 @@
 module Test.Spec.Console
-  ( write
-  , writeln
+  ( writeln
   , setAttr
   , reset
   , withAttrs
@@ -13,13 +12,10 @@ import Control.Monad.Eff         (Eff())
 import Control.Monad.Eff.Console (CONSOLE())
 import Data.Foldable             (foldr)
 
-foreign import write :: forall e. String -> Eff (console :: CONSOLE | e) Unit
+import Test.Spec.ConsoleForeign  (write, _setAttr)
 
 writeln :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 writeln s = write $ s <> "\n"
-
--- This needs a foreign function to support the escape sequence.
-foreign import _setAttr :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 
 setAttr :: forall e. Int -> Eff (console :: CONSOLE | e) Unit
 setAttr code = _setAttr (show code)

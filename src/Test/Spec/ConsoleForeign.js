@@ -1,13 +1,19 @@
 /* global exports */
 "use strict";
 
-// module Test.Spec.Console
+// module Test.Spec.ConsoleForeign
+
+function hasProcessWrite() {
+  return process &&
+      process.stdout &&
+      typeof process.stdout.write === 'function'
+}
+
+exports.supportedEnvironment = false;
 
 exports.write = function(s) {
   return function () {
-    if (process &&
-        process.stdout &&
-        typeof process.stdout.write === 'function') {
+    if (hasProcessWrite()) {
       process.stdout.write(s);
     }
   };
