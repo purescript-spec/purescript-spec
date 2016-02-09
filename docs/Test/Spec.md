@@ -16,8 +16,8 @@ data Result
 
 ##### Instances
 ``` purescript
-instance showResult :: Show Result
-instance eqResult :: Eq Result
+Show Result
+Eq Result
 ```
 
 #### `Group`
@@ -31,8 +31,8 @@ data Group
 
 ##### Instances
 ``` purescript
-instance showGroup :: Show Group
-instance eqGroup :: Eq Group
+Show Group
+Eq Group
 ```
 
 #### `Spec`

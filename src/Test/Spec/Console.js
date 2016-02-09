@@ -3,11 +3,15 @@
 
 // module Test.Spec.Console
 
-exports.write = function(s) {
+function hasProcessWrite() {
+  return process &&
+      process.stdout &&
+      typeof process.stdout.write === 'function'
+}
+
+function write(s) {
   return function () {
-    if (process &&
-        process.stdout &&
-        typeof process.stdout.write === 'function') {
+    if (hasProcessWrite()) {
       process.stdout.write(s);
     }
   };
@@ -15,5 +19,5 @@ exports.write = function(s) {
 
 // This needs a foreign function to support the escape sequence.
 exports._setAttr = function (codeStr) {
-  return exports.write("\x1b[" + codeStr + "m");
+  return write("\x1b[" + codeStr + "m");
 };

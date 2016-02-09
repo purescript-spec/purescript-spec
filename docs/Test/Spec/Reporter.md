@@ -11,8 +11,8 @@ data Entry
 
 ##### Instances
 ``` purescript
-instance eqEntry :: Eq Entry
-instance showEntry :: Show Entry
+Eq Entry
+Show Entry
 ```
 
 #### `Reporter`
