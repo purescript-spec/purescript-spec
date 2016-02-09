@@ -9,7 +9,7 @@ import Data.Array                  (concatMap)
 import Data.Foldable               (intercalate, traverse_)
 
 import Test.Spec          (Group(), Result(..))
-import Test.Spec.Console  (withAttrs, writeln)
+import Test.Spec.Console  (withAttrs)
 import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
 import Test.Spec.Summary  (Summary(..), summarize)
 
@@ -23,20 +23,20 @@ printPassedFailed p f = do
       testStr = pluralize "test" total
       amount = show p ++ "/" ++ (show total) ++ " " ++ testStr ++ " passed"
       attrs = if f > 0 then [31] else [32]
-  withAttrs attrs $ writeln amount
+  withAttrs attrs $ log amount
 
 printPending :: forall r. Int -> Eff (console :: CONSOLE | r) Unit
 printPending p
-  | p > 0     = withAttrs [33] $ writeln (show p <> " " <> pluralize "test" p <> " pending")
+  | p > 0     = withAttrs [33] $ log (show p <> " " <> pluralize "test" p <> " pending")
   | otherwise = return unit
 
 printSummary' :: forall r. Summary -> Eff (console :: CONSOLE | r) Unit
 printSummary' (Count passed failed pending) = do
-  writeln ""
-  withAttrs [1] $ writeln "Summary"
+  log ""
+  withAttrs [1] $ log "Summary"
   printPassedFailed passed failed
   printPending pending
-  writeln ""
+  log ""
 
 printSummary :: forall r. Array Group -> Eff (console :: CONSOLE | r) Unit
 printSummary groups = printSummary' $ summarize groups
@@ -44,17 +44,17 @@ printSummary groups = printSummary' $ summarize groups
 printEntry :: forall r. Entry
            -> Eff (console :: CONSOLE | r) Unit
 printEntry (It name Success) = do
-  withAttrs [32] $ writeln $  "✓︎ " ++ name
+  withAttrs [32] $ log $  "✓︎ " ++ name
 printEntry (Pending name) = do
-  withAttrs [33] $ writeln $  "~ " ++ name
+  withAttrs [33] $ log $  "~ " ++ name
 printEntry (It name (Failure err)) = do
-  withAttrs [31] $ writeln $ "✗ " ++ name ++ ":"
+  withAttrs [31] $ log $ "✗ " ++ name ++ ":"
   log ""
-  withAttrs [31] $ writeln $ "  " ++ message err
+  withAttrs [31] $ log $ "  " ++ message err
 printEntry (Describe n) = do
-  writeln ""
+  log ""
   printNames n
-  where printNames ns = withAttrs [1, 35] $ writeln $ intercalate " » " ns
+  where printNames ns = withAttrs [1, 35] $ log $ intercalate " » " ns
 
 consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do

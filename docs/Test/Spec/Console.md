@@ -1,11 +1,5 @@
 ## Module Test.Spec.Console
 
-#### `writeln`
-
-``` purescript
-writeln :: forall e. String -> Eff (console :: CONSOLE | e) Unit
-```
-
 #### `setAttr`
 
 ``` purescript

@@ -17,12 +17,6 @@ function write(s) {
   };
 };
 
-exports.consoleLog = function(s) {
-  return function() {
-    console.log(s);
-  }
-}
-
 // This needs a foreign function to support the escape sequence.
 exports._setAttr = function (codeStr) {
   return write("\x1b[" + codeStr + "m");
