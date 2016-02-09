@@ -1,4 +1,4 @@
-# purescript-spec
+# purescript-spec [![Build Status](https://travis-ci.org/owickstrom/purescript-spec.svg?branch=master)](https://travis-ci.org/owickstrom/purescript-spec)
 
 purescript-spec is a simple testing framework for Purescript using NodeJS. It's
 inspired by [hspec](http://hspec.github.io/).
