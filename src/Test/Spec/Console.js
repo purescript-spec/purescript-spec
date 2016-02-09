@@ -1,7 +1,7 @@
 /* global exports */
 "use strict";
 
-// module Test.Spec.ConsoleForeign
+// module Test.Spec.Console
 
 function hasProcessWrite() {
   return process &&
@@ -9,9 +9,7 @@ function hasProcessWrite() {
       typeof process.stdout.write === 'function'
 }
 
-exports.supportedEnvironment = hasProcessWrite();
-
-exports.write = function(s) {
+function write(s) {
   return function () {
     if (hasProcessWrite()) {
       process.stdout.write(s);
@@ -19,13 +17,13 @@ exports.write = function(s) {
   };
 };
 
-exports.consoleWarn = function(s) {
+exports.consoleLog = function(s) {
   return function() {
-    console.warn(s);
+    console.log(s);
   }
 }
 
 // This needs a foreign function to support the escape sequence.
 exports._setAttr = function (codeStr) {
-  return exports.write("\x1b[" + codeStr + "m");
+  return write("\x1b[" + codeStr + "m");
 };

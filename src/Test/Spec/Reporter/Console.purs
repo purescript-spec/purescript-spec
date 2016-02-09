@@ -2,7 +2,6 @@ module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
 
-import Control.Monad               (unless)
 import Control.Monad.Eff           (Eff())
 import Control.Monad.Eff.Console   (CONSOLE(), log)
 import Control.Monad.Eff.Exception (message)
@@ -11,7 +10,6 @@ import Data.Foldable               (intercalate, traverse_)
 
 import Test.Spec          (Group(), Result(..))
 import Test.Spec.Console  (withAttrs, writeln)
-import Test.Spec.ConsoleForeign  (write, supportedEnvironment, consoleWarn)
 import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
 import Test.Spec.Summary  (Summary(..), summarize)
 
@@ -28,12 +26,9 @@ printPassedFailed p f = do
   withAttrs attrs $ writeln amount
 
 printPending :: forall r. Int -> Eff (console :: CONSOLE | r) Unit
-printPending p =
-  if p > 0 then withAttrs [33] do write $ show p
-                                  write " "
-                                  write (pluralize "test" p)
-                                  writeln " pending"
-           else return unit
+printPending p
+  | p > 0     = withAttrs [33] $ writeln (show p <> " " <> pluralize "test" p <> " pending")
+  | otherwise = return unit
 
 printSummary' :: forall r. Summary -> Eff (console :: CONSOLE | r) Unit
 printSummary' (Count passed failed pending) = do
@@ -63,11 +58,5 @@ printEntry (Describe n) = do
 
 consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do
-  unless supportedEnvironment do
-    consoleWarn """WARNING: Unsupported environment. The console reporter can only be run in a node-like
-environment with access to process.stdout.write(). If you are running in the browser,
-please see the mocha and xunit reporters. If using webpack, make sure you are targeting
-node instead of the browser."""
-
   traverse_ printEntry $ concatMap collapse groups
   printSummary groups
