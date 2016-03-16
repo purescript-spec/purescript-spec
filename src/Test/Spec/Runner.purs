@@ -1,5 +1,5 @@
 module Test.Spec.Runner (
-  Process(..),
+  PROCESS(..),
   run
   ) where
 
@@ -15,9 +15,9 @@ import Test.Spec.Console  (withAttrs)
 import Test.Spec.Summary  (successful)
 import Test.Spec.Reporter (Reporter())
 
-foreign import data Process :: !
+foreign import data PROCESS :: !
 
-foreign import exit :: forall eff. Int -> Eff (process :: Process | eff) Unit
+foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
 
 -- Runs the tests and invoke all reporters.
 -- If run in a NodeJS environment any failed test will cause the
@@ -25,9 +25,9 @@ foreign import exit :: forall eff. Int -> Eff (process :: Process | eff) Unit
 -- exit with a zero exit code explicitly, so passing integration tests that still have
 -- connections open can run in CI successfully.
 run :: forall e.
-    Array (Reporter (process :: Process, console :: CONSOLE | e))
-    -> Spec (process :: Process, console :: CONSOLE | e) Unit
-    -> Eff  (process :: Process, console :: CONSOLE | e) Unit
+    Array (Reporter (process :: PROCESS, console :: CONSOLE | e))
+    -> Spec (process :: PROCESS, console :: CONSOLE | e) Unit
+    -> Eff  (process :: PROCESS, console :: CONSOLE | e) Unit
 run rs spec = do
   runAff
     (\err -> do withAttrs [31] $ print err
@@ -37,4 +37,3 @@ run rs spec = do
                       then exit 0
                       else exit 1)
     (collect spec)
-
