@@ -15,8 +15,7 @@ import Test.Spec.Summary  (successful)
 import Test.Spec.Reporter (Reporter())
 
 import Node.Process (PROCESS())
-
-foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
+import Node.Process as Process
 
 -- Runs the tests and invoke all reporters.
 -- If run in a NodeJS environment any failed test will cause the
@@ -30,9 +29,9 @@ run :: forall e.
 run rs spec = do
   runAff
     (\err -> do withAttrs [31] $ print err
-                exit 1)
+                Process.exit 1)
     (\results -> do sequence_ (map (\f -> f results) rs)
                     if (successful results)
-                      then exit 0
-                      else exit 1)
+                      then Process.exit 0
+                      else Process.exit 1)
     (collect spec)
