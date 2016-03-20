@@ -1,5 +1,4 @@
 module Test.Spec.Runner (
-  PROCESS(..),
   run
   ) where
 
@@ -15,7 +14,7 @@ import Test.Spec.Console  (withAttrs)
 import Test.Spec.Summary  (successful)
 import Test.Spec.Reporter (Reporter())
 
-foreign import data PROCESS :: !
+import Node.Process (PROCESS())
 
 foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
 
