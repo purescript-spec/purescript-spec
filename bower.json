@@ -20,6 +20,7 @@
     "purescript-exceptions": ">=0.3.0",
     "purescript-strings": ">=0.7.0",
     "purescript-prelude": ">=0.1.2",
-    "purescript-transformers": "~0.8.2"
+    "purescript-transformers": "~0.8.2",
+    "purescript-node-process": "~0.4.1"
   }
 }
