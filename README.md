@@ -146,10 +146,12 @@ make ctags
 
 ## Changelog
 
+* **0.7.4**
+  * Use `purescript-node-process` instead of custom PROCESS effect.
 * **0.7.2**
-  * Update purescript-strings for PS 0.7.4 compatibility
-  * Make all dependencies flexible
-  * Fix case statements to remove warnings
+  * Update purescript-strings for PS 0.7.4 compatibility.
+  * Make all dependencies flexible.
+  * Fix case statements to remove warnings.
 * **0.7.1**
   * Workaround for escape sequence bug in `psc-bundle`, see:
     * https://github.com/owickstrom/purescript-spec/issues/12
