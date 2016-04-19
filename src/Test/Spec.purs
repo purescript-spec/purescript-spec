@@ -11,7 +11,7 @@ module Test.Spec (
 
 import Prelude
 
-import Control.Monad.Aff           (Aff(), attempt)
+import Control.Monad.Aff           (Aff(), attempt, later)
 import Control.Monad.Eff.Exception (Error())
 import Control.Monad.State.Class   (modify)
 import Control.Monad.State.Trans   (StateT(), runStateT)
@@ -78,7 +78,7 @@ it :: forall r. String
     -> Spec r Unit
 it description tests =
   do
-    result <- lift $ runCatch description tests
+    result <- lift $ later $ runCatch description tests
     modify $ \p -> p ++ [result]
     return unit
 
