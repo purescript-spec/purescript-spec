@@ -20,8 +20,8 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Aff
-import Test.Spec                  (describe, pending, it)
+import Control.Monad.Aff          (later')
+import Test.Spec                  (describe, it)
 import Test.Spec.Runner           (run)
 import Test.Spec.Assertions       (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
@@ -33,12 +33,12 @@ main = run [consoleReporter] do
         let isAwesome = true
         isAwesome `shouldEqual` true
     describe "Features" do
-      it "runs in NodeJS" $ return unit
-      it "runs in the browser" $ return unit
+      it "runs in NodeJS" $ pure unit
+      it "runs in the browser" $ pure unit
       it "supports async specs" do
-        res <- later' 100 $ return "Alligator"
+        res <- later' 100 $ pure "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.7 compatible" $ return unit
+      it "is PureScript 0.9.1 compatible" $ pure unit
 ```
 
 ### Combining Specs
