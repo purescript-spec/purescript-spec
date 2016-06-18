@@ -17,7 +17,6 @@ import Control.Monad.State.Class   (modify)
 import Control.Monad.State.Trans   (StateT(), runStateT)
 import Control.Monad.Trans         (lift)
 import Data.Either                 (either)
-import Data.Monoid                 (Monoid)
 import Data.Tuple                  (snd)
 
 type Name = String
@@ -39,9 +38,9 @@ instance eqResult :: Eq Result where
   eq _ _ = false
 
 instance showGroup :: Show Group where
-  show (Describe name groups) = "Describe " ++ show name ++ " " ++ show groups
-  show (It name result) = "It " ++ show name ++ " " ++ show result
-  show (Pending name) = "Describe " ++ show name
+  show (Describe name groups) = "Describe " <> show name <> " " <> show groups
+  show (It name result) = "It " <> show name <> " " <> show result
+  show (Pending name) = "Describe " <> show name
 
 instance eqGroup :: Eq Group where
   eq (Describe n1 g1) (Describe n2 g2) = n1 == n2 && g1 == g2
@@ -56,12 +55,12 @@ describe :: forall r. String
          -> Spec r Unit
 describe name its = do
   results <- lift $ collect its
-  modify $ \r -> r ++ [Describe name results]
-  return unit
+  modify $ \r -> r <> [Describe name results]
+  pure unit
 
 pending :: forall r. String
         -> Spec r Unit
-pending name = modify $ \p -> p ++ [Pending name]
+pending name = modify $ \p -> p <> [Pending name]
 
 runCatch :: forall r. String
          -> Aff r Unit
@@ -70,8 +69,8 @@ runCatch name tests = do
   e <- attempt tests
   either onError onSuccess e
   where
-  onError e = return $ It name $ Failure e
-  onSuccess _ = return $ It name Success
+  onError e = pure $ It name $ Failure e
+  onSuccess _ = pure $ It name Success
 
 it :: forall r. String
     -> Aff r Unit
@@ -79,11 +78,11 @@ it :: forall r. String
 it description tests =
   do
     result <- lift $ later $ runCatch description tests
-    modify $ \p -> p ++ [result]
-    return unit
+    modify $ \p -> p <> [result]
+    pure unit
 
 collect :: forall r. Spec r Unit
         -> Aff r (Array Group)
 collect r = do
   c <- runStateT r []
-  return $ snd c
+  pure $ snd c

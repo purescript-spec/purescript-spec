@@ -1,6 +1,6 @@
 {
   "name": "purescript-spec",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "ignore": [
     "**/.*",
     "bower_components",
@@ -15,12 +15,14 @@
     "url": "git://github.com/owickstrom/purescript-spec.git"
   },
   "dependencies": {
-    "purescript-console": ">=0.1.0",
-    "purescript-aff": ">=0.13.0",
-    "purescript-exceptions": ">=0.3.0",
-    "purescript-strings": ">=0.7.0",
-    "purescript-prelude": ">=0.1.2",
-    "purescript-transformers": "~0.8.2",
-    "purescript-node-process": "~0.4.1"
+    "purescript-console": "^1.0.0",
+    "purescript-aff": "^1.0.0",
+    "purescript-exceptions": "^1.0.0",
+    "purescript-strings": "^1.0.0",
+    "purescript-prelude": "^1.0.0",
+    "purescript-transformers": "^1.0.0",
+    "purescript-node-process": "^1.0.0",
+    "purescript-monoid": "^1.0.0",
+    "purescript-foldable-traversable": "^1.0.0"
   }
 }

@@ -11,7 +11,7 @@ import Control.Monad.Eff.Exception (message)
 import Data.Array                  (concatMap, cons)
 import Data.Foldable               (foldl, intercalate)
 
-import qualified Test.Spec as S
+import Test.Spec as S
 
 data Entry = Describe (Array S.Name)
            | It S.Name S.Result
@@ -26,10 +26,10 @@ instance eqEntry :: Eq Entry where
   eq _ _ = false
 
 instance showEntry :: Show Entry where
-  show (Describe names) = "Describe \"" ++ (intercalate " » " names) ++ "\""
-  show (It name S.Success) = "It \"" ++ name ++ "\" Success"
-  show (It name (S.Failure err)) = "It \"" ++ name ++ "\" (Failure \"" ++ message err ++ "\")"
-  show (Pending name) = "Pending \"" ++ name ++ "\""
+  show (Describe names) = "Describe \"" <> (intercalate " » " names) <> "\""
+  show (It name S.Success) = "It \"" <> name <> "\" Success"
+  show (It name (S.Failure err)) = "It \"" <> name <> "\" (Failure \"" <> message err <> "\")"
+  show (Pending name) = "Pending \"" <> name <> "\""
 
 type Reporter e = Array S.Group -> Eff e Unit
 

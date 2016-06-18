@@ -36,4 +36,4 @@ assertionSpec =
             it "returns unit when given an error" $
               expectError $ throwError $ error "omg"
             it "returns an error when given a non-error" $
-              expectError $ expectError $ return "ok"
+              expectError $ expectError $ pure "ok"

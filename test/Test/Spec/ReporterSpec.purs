@@ -7,14 +7,14 @@ import Control.Monad.Eff.Exception (error)
 import Control.Monad.State.Trans   (StateT())
 import Data.Array                  (concatMap)
 
-import           Test.Spec            ( Group()
-                                      , Result(..)
-                                      , collect
-                                      , describe
-                                      , it
-                                      )
-import           Test.Spec.Assertions (shouldEqual)
-import qualified Test.Spec.Reporter   as R
+import Test.Spec ( Group()
+                 , Result(..)
+                 , collect
+                 , describe
+                 , it
+                 )
+import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Reporter   as R
 
 import Test.Spec.Fixtures ( failureTest
                           , pendingTest
