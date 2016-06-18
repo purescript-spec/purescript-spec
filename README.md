@@ -148,7 +148,7 @@ make ctags
 
 * **0.8.0**
   * Compatibility with PureScript 0.9.1
-* **0.7.5&&
+* **0.7.5**
   * Bump dependency versions.
 * **0.7.4**
   * Use `purescript-node-process` instead of custom PROCESS effect.
