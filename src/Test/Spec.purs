@@ -17,7 +17,6 @@ import Control.Monad.State.Class   (modify)
 import Control.Monad.State.Trans   (StateT(), runStateT)
 import Control.Monad.Trans         (lift)
 import Data.Either                 (either)
-import Data.Monoid                 (class Monoid)
 import Data.Tuple                  (snd)
 
 type Name = String
