@@ -1,3 +1,4 @@
+
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
@@ -21,14 +22,14 @@ printPassedFailed :: forall r. Int -> Int -> Eff (console :: CONSOLE | r) Unit
 printPassedFailed p f = do
   let total = p + f
       testStr = pluralize "test" total
-      amount = show p ++ "/" ++ (show total) ++ " " ++ testStr ++ " passed"
+      amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
       attrs = if f > 0 then [31] else [32]
   withAttrs attrs $ log amount
 
 printPending :: forall r. Int -> Eff (console :: CONSOLE | r) Unit
 printPending p
   | p > 0     = withAttrs [33] $ log (show p <> " " <> pluralize "test" p <> " pending")
-  | otherwise = return unit
+  | otherwise = pure unit
 
 printSummary' :: forall r. Summary -> Eff (console :: CONSOLE | r) Unit
 printSummary' (Count passed failed pending) = do
@@ -44,13 +45,13 @@ printSummary groups = printSummary' $ summarize groups
 printEntry :: forall r. Entry
            -> Eff (console :: CONSOLE | r) Unit
 printEntry (It name Success) = do
-  withAttrs [32] $ log $  "✓︎ " ++ name
+  withAttrs [32] $ log $  "✓︎ " <> name
 printEntry (Pending name) = do
-  withAttrs [33] $ log $  "~ " ++ name
+  withAttrs [33] $ log $  "~ " <> name
 printEntry (It name (Failure err)) = do
-  withAttrs [31] $ log $ "✗ " ++ name ++ ":"
+  withAttrs [31] $ log $ "✗ " <> name <> ":"
   log ""
-  withAttrs [31] $ log $ "  " ++ message err
+  withAttrs [31] $ log $ "  " <> message err
 printEntry (Describe n) = do
   log ""
   printNames n

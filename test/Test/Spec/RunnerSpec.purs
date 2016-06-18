@@ -23,5 +23,5 @@ runnerSpec =
           results `shouldEqual` [Describe "a" [Describe "b" [It "works" Success],
                                                Describe "c" [It "also works" Success]]]
         it "supports async" do
-          res <- later' 10 $ return 1
+          res <- later' 10 $ pure 1
           res `shouldEqual` 1

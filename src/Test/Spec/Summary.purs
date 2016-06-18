@@ -7,9 +7,9 @@ module Test.Spec.Summary (
 import Prelude
 
 import Data.Foldable (foldMap)
-import Data.Monoid   (Monoid)
+import Data.Monoid   (class Monoid)
 
-import Test.Spec
+import Test.Spec (Group(..), Result(..))
 
 data Summary = Count Int Int Int
 
