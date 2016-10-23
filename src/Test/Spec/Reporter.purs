@@ -31,14 +31,14 @@ instance showEntry :: Show Entry where
   show (It name (S.Failure err)) = "It \"" <> name <> "\" (Failure \"" <> message err <> "\")"
   show (Pending name) = "Pending \"" <> name <> "\""
 
-type Reporter e = Array S.Group -> Eff e Unit
+type Reporter e = (Array (S.Group S.Result)) -> Eff e Unit
 
 countDescribes :: Array Entry -> Int
 countDescribes groups = foldl f 0 groups
   where f c (Describe _) = c + 1
         f c _ = c
 
-collapse :: S.Group -> Array Entry
+collapse :: S.Group S.Result -> Array Entry
 collapse (S.It name result) = [It name result]
 collapse (S.Pending name) = [Pending name]
 collapse (S.Describe name groups) =

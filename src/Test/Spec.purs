@@ -11,22 +11,21 @@ module Test.Spec (
 
 import Prelude
 
-import Control.Monad.Aff           (Aff(), attempt, later)
+import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (Error())
-import Control.Monad.State.Class   (modify)
-import Control.Monad.State.Trans   (StateT(), runStateT)
-import Control.Monad.Trans.Class   (lift)
-import Data.Either                 (either)
+import Control.Monad.State         (State(), modify, runState)
 import Data.Tuple                  (snd)
 
 type Name = String
 
-data Result = Success
-            | Failure Error
+data Group t
+  = Describe Name (Array (Group t))
+  | It Name t
+  | Pending Name
 
-data Group = Describe Name (Array Group)
-           | It Name Result
-           | Pending Name
+data Result
+  = Success
+  | Failure Error
 
 instance showResult :: Show Result where
   show Success = "Success"
@@ -37,52 +36,43 @@ instance eqResult :: Eq Result where
   eq (Failure _) (Failure _) = true
   eq _ _ = false
 
-instance showGroup :: Show Group where
+instance showGroup :: Show t => Show (Group t) where
   show (Describe name groups) = "Describe " <> show name <> " " <> show groups
-  show (It name result) = "It " <> show name <> " " <> show result
+  show (It name test) = "It " <> show name <> " " <> show test
   show (Pending name) = "Describe " <> show name
 
-instance eqGroup :: Eq Group where
+instance eqGroup :: Eq t => Eq (Group t) where
   eq (Describe n1 g1) (Describe n2 g2) = n1 == n2 && g1 == g2
-  eq (It n1 r1)       (It n2 r2)       = n1 == n2 && r1 == r2
+  eq (It n1 t1)       (It n2 t2)       = n1 == n2 && t1 == t2
   eq (Pending n1)     (Pending n2)     = n1 == n2
   eq _                _                = false
 
-type Spec r t = StateT (Array Group) (Aff r) t
+-- Specifications with unevaluated tests.
+type Spec r t = State (Array (Group (Aff r Unit))) t
+
+collect :: forall r. Spec r Unit
+        -> Array (Group (Aff r Unit))
+collect r = snd $ runState r []
+
+---------------------
+--       DSL       --
+---------------------
 
 describe :: forall r. String
          -> Spec r Unit
          -> Spec r Unit
 describe name its = do
-  results <- lift $ collect its
-  modify $ \r -> r <> [Describe name results]
+  modify $ \r -> r <> [Describe name (collect its)]
   pure unit
 
 pending :: forall r. String
         -> Spec r Unit
 pending name = modify $ \p -> p <> [Pending name]
 
-runCatch :: forall r. String
-         -> Aff r Unit
-         -> Aff r Group
-runCatch name tests = do
-  e <- attempt tests
-  either onError onSuccess e
-  where
-  onError e = pure $ It name $ Failure e
-  onSuccess _ = pure $ It name Success
-
 it :: forall r. String
-    -> Aff r Unit
-    -> Spec r Unit
+   -> Aff r Unit
+   -> Spec r Unit
 it description tests =
   do
-    result <- lift $ later $ runCatch description tests
-    modify $ \p -> p <> [result]
+    modify $ \p -> p <> [It description tests]
     pure unit
-
-collect :: forall r. Spec r Unit
-        -> Aff r (Array Group)
-collect r = do
-  c <- runStateT r []
-  pure $ snd c
