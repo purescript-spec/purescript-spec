@@ -39,7 +39,7 @@ printSummary' (Count passed failed pending) = do
   printPending pending
   log ""
 
-printSummary :: forall r. Array Group -> Eff (console :: CONSOLE | r) Unit
+printSummary :: forall r. Array (Group Result) -> Eff (console :: CONSOLE | r) Unit
 printSummary groups = printSummary' $ summarize groups
 
 printEntry :: forall r. Entry

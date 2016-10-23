@@ -2,19 +2,17 @@ module Test.Spec.ReporterSpec where
 
 import Prelude
 
-import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (error)
-import Control.Monad.State.Trans   (StateT())
 import Data.Array                  (concatMap)
 
-import Test.Spec ( Group()
-                 , Result(..)
-                 , collect
+import Test.Spec ( Result(..)
+                 , Spec
                  , describe
                  , it
                  )
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter   as R
+import Test.Spec.Runner     (runSpec)
 
 import Test.Spec.Fixtures ( failureTest
                           , pendingTest
@@ -22,19 +20,19 @@ import Test.Spec.Fixtures ( failureTest
                           , successTest
                           )
 
-reporterSpec :: forall eff. StateT (Array Group) (Aff eff) Unit
+reporterSpec :: forall r. Spec r Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $
       describe "Reporter" do
         it "collapses groups into entries with names" do
-          results <- collect successTest
+          results <- runSpec successTest
           concatMap R.collapse results `shouldEqual` [
               R.Describe ["a", "b"],
               R.It "works" Success
             ]
         it "collapses groups into entries with shared describes" do
-          results <- collect sharedDescribeTest
+          results <- runSpec sharedDescribeTest
           concatMap R.collapse results `shouldEqual` [
               R.Describe ["a", "b"],
               R.It "works" Success,
@@ -42,12 +40,12 @@ reporterSpec =
               R.It "also works" Success
             ]
         it "reports failed tests" do
-          results <- collect failureTest
+          results <- runSpec failureTest
           concatMap R.collapse results `shouldEqual` [
             R.It "fails" (Failure (error "1 ≠ 2"))
           ]
         it "reports pending tests" do
-          results <- collect pendingTest
+          results <- runSpec pendingTest
           concatMap R.collapse results `shouldEqual` [
             R.Pending "is not written yet"
           ]

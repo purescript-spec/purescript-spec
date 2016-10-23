@@ -19,14 +19,14 @@ instance semigroupCount :: Semigroup Summary where
 instance monoidCount :: Monoid Summary where
   mempty = Count 0 0 0
 
-summarize :: Array Group -> Summary
+summarize :: Array (Group Result) -> Summary
 summarize = foldMap \g -> case g of
     (It _ Success)     -> Count 1 0 0
     (It _ (Failure _)) -> Count 0 1 0
     (Pending _)        -> Count 0 0 1
     (Describe _ dgs)   -> summarize dgs
 
-successful :: Array Group -> Boolean
+successful :: Array (Group Result) -> Boolean
 successful groups =
   case summarize groups of
     (Count _ 0 _) -> true
