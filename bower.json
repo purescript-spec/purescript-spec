@@ -1,6 +1,7 @@
 {
   "name": "purescript-spec",
   "version": "0.8.0",
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "bower_components",
