@@ -38,7 +38,7 @@ main = run [consoleReporter] do
       it "supports async specs" do
         res <- later' 100 $ pure "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.9.1 compatible" $ pure unit
+      it "is PureScript 0.10.1 compatible" $ pure unit
 ```
 
 ### Combining Specs
