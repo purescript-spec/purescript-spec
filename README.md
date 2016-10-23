@@ -146,6 +146,12 @@ make ctags
 
 ## Changelog
 
+* **0.10.0**
+  * Defer test execution with Aff to have greater control. Test runners can
+    either collect and run all tests, and then report their results, using
+    the provided `run` and `Reporter` interface, or they can implement the
+    test run in another way by `collect`ing a `Spec` and running the `Aff`s in
+    some special way.
 * **0.9.0**
   * Upgrade dependencies to 2.x
   * Require PureScript 0.10.x
