@@ -6,7 +6,6 @@ module Test.Spec.Console
 
 import Prelude
 
-import Control.Apply             ((*>))
 import Control.Monad.Eff         (Eff())
 import Control.Monad.Eff.Console (CONSOLE)
 import Data.Foldable             (foldr)
