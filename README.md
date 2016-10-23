@@ -146,6 +146,9 @@ make ctags
 
 ## Changelog
 
+* **0.9.0**
+  * Upgrade dependencies to 2.x
+  * Require PureScript 0.10.x
 * **0.8.0**
   * Compatibility with PureScript 0.9.1
 * **0.7.5**
