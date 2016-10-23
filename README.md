@@ -61,7 +61,6 @@ spec`. Currently there are these reporters available:
 
 * [`Test.Spec.Reporter.Console.consoleReporter`](docs/Test/Spec/Reporter/Console.md#consolereporter)
 * [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
-* [purescript-spec-reporter-mocha](https://github.com/owickstrom/purescript-spec-reporter-mocha)
 
 ### Async
 
@@ -87,8 +86,8 @@ NODE_PATH=output/tests node -e "require('Test.Main').main();"
 
 Compile and bundle your tests using `pulp browserify -I test --main Test.Main`
 and run the bundled Javascript using `mocha` or `karma`. For more information,
-see [purescript-spec-reporter-mocha](
-https://github.com/owickstrom/purescript-spec-reporter-mocha).
+see [purescript-spec-mocha](
+https://github.com/owickstrom/purescript-spec-mocha).
 
 ## QuickCheck
 
@@ -98,16 +97,7 @@ adapter to get nice output formatting for QuickCheck tests.
 
 ## API
 
-- [Test.Spec](docs/Test/Spec.md)
-- [Test.Spec.Assertions](docs/Test/Spec/Assertions.md)
-- [Test.Spec.Assertions.String](docs/Test/Spec/Assertions/String.md)
-- [Test.Spec.Assertions.Aff](docs/Test/Spec/Assertions/Aff.md)
-- [Test.Spec.Console](docs/Test/Spec/Console.md)
-- [Test.Spec.Errors](docs/Test/Spec/Errors.md)
-- [Test.Spec.Runner](docs/Test/Spec/Runner.md)
-- [Test.Spec.Reporter](docs/Test/Spec/Reporter.md)
-- [Test.Spec.Reporter.Console](docs/Test/Spec/Reporter/Console.md)
-- [Test.Spec.Summary](docs/Test/Spec/Summary.md)
+See the [docs on Pursuit](https://pursuit.purescript.org/packages/purescript-spec).
 
 ## Build
 
