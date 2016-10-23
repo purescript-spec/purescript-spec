@@ -15,7 +15,7 @@ import Control.Monad.Aff           (Aff(), attempt, later)
 import Control.Monad.Eff.Exception (Error())
 import Control.Monad.State.Class   (modify)
 import Control.Monad.State.Trans   (StateT(), runStateT)
-import Control.Monad.Trans         (lift)
+import Control.Monad.Trans.Class   (lift)
 import Data.Either                 (either)
 import Data.Tuple                  (snd)
 
