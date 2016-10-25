@@ -1,51 +1,48 @@
 module Test.Spec.ReporterSpec where
 
 import Prelude
-
 import Control.Monad.Eff.Exception (error)
-import Data.Array                  (concatMap)
-
-import Test.Spec ( Result(..)
-                 , Spec
-                 , describe
-                 , it
-                 )
+import Data.Map (fromFoldable)
+import Data.Tuple (Tuple(Tuple))
+import Test.Spec (Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.Reporter   as R
-import Test.Spec.Runner     (runSpec)
-
-import Test.Spec.Fixtures ( failureTest
-                          , pendingTest
-                          , sharedDescribeTest
-                          , successTest
-                          )
+import Test.Spec.Fixtures (failureTest, pendingTest, sharedDescribeTest, duplicatedDescribeTest, successTest)
+import Test.Spec.Reporter (collapseAll, Entry(..))
+import Test.Spec.Runner (runSpec)
 
 reporterSpec :: forall r. Spec r Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $
-      describe "Reporter" do
+      describe "Reporter" $ do
         it "collapses groups into entries with names" do
           results <- runSpec successTest
-          concatMap R.collapse results `shouldEqual` [
-              R.Describe ["a", "b"],
-              R.It "works" Success
-            ]
+          collapseAll results
+            `shouldEqual`
+            (fromFoldable [Tuple ["a", "b"] [It "works" Success]])
         it "collapses groups into entries with shared describes" do
           results <- runSpec sharedDescribeTest
-          concatMap R.collapse results `shouldEqual` [
-              R.Describe ["a", "b"],
-              R.It "works" Success,
-              R.Describe ["a", "c"],
-              R.It "also works" Success
-            ]
+          collapseAll results
+            `shouldEqual`
+            (fromFoldable
+             [ (Tuple ["a", "b"] [It "works" Success])
+             , (Tuple ["a", "c"] [It "also works" Success])
+             ])
+        it "collapses groups into entries with duplicated describes" do
+          results <- runSpec duplicatedDescribeTest
+          collapseAll results
+            `shouldEqual`
+            (fromFoldable
+             [ (Tuple ["a", "b", "c"] [It "first" Success
+                                      , It "second" Success])
+             ])
         it "reports failed tests" do
           results <- runSpec failureTest
-          concatMap R.collapse results `shouldEqual` [
-            R.It "fails" (Failure (error "1 ≠ 2"))
-          ]
+          collapseAll results
+            `shouldEqual`
+            (fromFoldable [(Tuple [] [It "fails" (Failure (error "1 ≠ 2"))])])
         it "reports pending tests" do
           results <- runSpec pendingTest
-          concatMap R.collapse results `shouldEqual` [
-            R.Pending "is not written yet"
-          ]
+          collapseAll results
+            `shouldEqual`
+            (fromFoldable [(Tuple [] [Pending "is not written yet"])])

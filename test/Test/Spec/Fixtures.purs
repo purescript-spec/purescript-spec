@@ -22,6 +22,18 @@ sharedDescribeTest =
       it "also works" do
         1 `shouldEqual` 1
 
+duplicatedDescribeTest :: forall r. Spec r Unit
+duplicatedDescribeTest =
+  describe "a" do
+    describe "b" do
+      describe "c" do
+        it "first" do
+          1 `shouldEqual` 1
+    describe "b" do
+      describe "c" do
+        it "second" do
+          1 `shouldEqual` 1
+        
 failureTest :: forall r. Spec r Unit
 failureTest = it "fails" $ 1 `shouldEqual` 2
 

@@ -1,18 +1,16 @@
-
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-
-import Control.Monad.Eff           (Eff())
-import Control.Monad.Eff.Console   (CONSOLE(), log)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (message)
-import Data.Array                  (concatMap)
-import Data.Foldable               (intercalate, traverse_)
-
-import Test.Spec          (Group(), Result(..))
-import Test.Spec.Console  (withAttrs)
-import Test.Spec.Reporter (Entry(..), Reporter(), collapse)
-import Test.Spec.Summary  (Summary(..), summarize)
+import Data.Foldable (intercalate, traverse_)
+import Data.Map (toList)
+import Data.Tuple (Tuple(Tuple))
+import Test.Spec (Group, Result(..))
+import Test.Spec.Console (withAttrs)
+import Test.Spec.Reporter (collapseAll, EntryPath, Entry(..), Reporter)
+import Test.Spec.Summary (Summary(..), summarize)
 
 pluralize :: String -> Int -> String
 pluralize s 1 = s
@@ -39,8 +37,9 @@ printSummary' (Count passed failed pending) = do
   printPending pending
   log ""
 
-printSummary :: forall r. Array (Group Result) -> Eff (console :: CONSOLE | r) Unit
-printSummary groups = printSummary' $ summarize groups
+printSummary :: forall r. Array (Group Result)
+                -> Eff (console :: CONSOLE | r) Unit
+printSummary = printSummary' <<< summarize
 
 printEntry :: forall r. Entry
            -> Eff (console :: CONSOLE | r) Unit
@@ -52,12 +51,16 @@ printEntry (It name (Failure err)) = do
   withAttrs [31] $ log $ "✗ " <> name <> ":"
   log ""
   withAttrs [31] $ log $ "  " <> message err
-printEntry (Describe n) = do
+
+printEntries :: forall r. Tuple EntryPath (Array Entry)
+                -> Eff (console :: CONSOLE | r) Unit
+printEntries (Tuple path entries) = do
+  let printNames ns = withAttrs [1, 35] $ log $ intercalate " » " ns
   log ""
-  printNames n
-  where printNames ns = withAttrs [1, 35] $ log $ intercalate " » " ns
+  printNames path
+  traverse_ printEntry entries
 
 consoleReporter :: forall e. Reporter (console :: CONSOLE | e)
 consoleReporter groups = do
-  traverse_ printEntry $ concatMap collapse groups
+  traverse_ printEntries (toList (collapseAll groups))
   printSummary groups

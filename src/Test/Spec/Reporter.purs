@@ -1,50 +1,54 @@
 module Test.Spec.Reporter (
   Entry(..),
+  EntryPath,
+  Entries,
   Reporter(),
-  collapse
+  collapse,
+  collapseAll
   ) where
 
 import Prelude
-
-import Control.Monad.Eff           (Eff())
-import Control.Monad.Eff.Exception (message)
-import Data.Array                  (concatMap, cons)
-import Data.Foldable               (foldl, intercalate)
-
 import Test.Spec as S
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Exception (message)
+import Data.Array (foldl, head, concat)
+import Data.Foldable (fold, foldMap)
+import Data.Map (unionWith, empty, singleton, Map)
+import Data.NonEmpty (foldl1)
+import Test.Spec (Name, Group(Describe), Result(Failure, Success))
 
-data Entry = Describe (Array S.Name)
-           | It S.Name S.Result
-           | Pending S.Name
+data Entry = It Name Result
+           | Pending Name
 
 instance eqEntry :: Eq Entry where
-  eq (Describe n1) (Describe n2) = n1 == n2
-  eq (It n1 S.Success) (It n2 S.Success) = n1 == n2
-  eq (It n1 (S.Failure e1)) (It n2 (S.Failure e2)) =
+  eq (It n1 Success) (It n2 Success) = n1 == n2
+  eq (It n1 (Failure e1)) (It n2 (Failure e2)) =
     n1 == n2 && (message e1) == (message e2)
   eq (Pending n1) (Pending n2) = n1 == n2
   eq _ _ = false
 
 instance showEntry :: Show Entry where
-  show (Describe names) = "Describe \"" <> (intercalate " » " names) <> "\""
-  show (It name S.Success) = "It \"" <> name <> "\" Success"
-  show (It name (S.Failure err)) = "It \"" <> name <> "\" (Failure \"" <> message err <> "\")"
+  show (It name Success) = "It \"" <> name <> "\" Success"
+  show (It name (Failure err)) = "It \"" <> name <> "\" (Failure \"" <> message err <> "\")"
   show (Pending name) = "Pending \"" <> name <> "\""
 
-type Reporter e = (Array (S.Group S.Result)) -> Eff e Unit
+type Reporter e = (Array (Group Result)) -> Eff e Unit
 
-countDescribes :: Array Entry -> Int
-countDescribes groups = foldl f 0 groups
-  where f c (Describe _) = c + 1
-        f c _ = c
+type EntryPath = Array Name
+type Entries = Map EntryPath (Array Entry)
 
-collapse :: S.Group S.Result -> Array Entry
-collapse (S.It name result) = [It name result]
-collapse (S.Pending name) = [Pending name]
-collapse (S.Describe name groups) =
-  let sub = concatMap collapse groups
-      prependName (Describe names) = Describe $ cons name names
-      prependName e = e
-      c = countDescribes sub
-  in if c == 0 then cons (Describe [name]) sub
-               else map prependName sub
+collapseAt :: EntryPath -> Group Result -> Entries
+collapseAt path group =
+  case group of
+    S.It name result -> singleton path [It name result]
+    S.Pending name -> singleton path [Pending name]
+    S.Describe name groups -> collapseAllAt (path <> [name]) groups
+
+collapseAllAt :: EntryPath -> Array (Group Result) -> Entries
+collapseAllAt path = foldl (unionWith (<>)) empty <<< map (collapseAt path)
+
+collapse :: Group Result -> Entries
+collapse = collapseAt []
+
+collapseAll :: Array (Group Result) -> Entries
+collapseAll = collapseAllAt []

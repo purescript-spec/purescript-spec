@@ -14,10 +14,10 @@ import Data.Either               (either)
 import Data.Foldable             (sequence_)
 import Data.Traversable          (sequence)
 
-import Test.Spec          (Spec(), Group(..), Result(..), collect)
-import Test.Spec.Console  (withAttrs)
-import Test.Spec.Summary  (successful)
-import Test.Spec.Reporter (Reporter())
+import Test.Spec                (Spec(), Group(..), Result(..), collect)
+import Test.Spec.Console        (withAttrs)
+import Test.Spec.Summary        (successful)
+import Test.Spec.Reporter       (Reporter())
 
 import Node.Process (PROCESS())
 import Node.Process as Process
@@ -39,7 +39,7 @@ runCatch group =
 
 runSpec :: forall r. Spec r Unit
          -> Aff r (Array (Group Result))
-runSpec spec = sequence (map runCatch (collect spec))
+runSpec = sequence <<< map runCatch <<< collect
 
 -- Runs the tests and invoke all reporters.
 -- If run in a NodeJS environment any failed test will cause the
