@@ -60,6 +60,9 @@ main = run [consoleReporter] do
   ...
 ```
 
+If you are running your specs in an NodeJS environment, e.g. with `pulp test`,
+you can automatically scan for spec modules using [purescript-spec-discovery](https://github.com/owickstrom/purescript-spec-discovery).
+
 ### Reporters
 
 Reporters can be passed to the runner, e.g. `run [reporter1, ..., reporterN]
