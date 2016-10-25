@@ -11,11 +11,9 @@ import Prelude
 import Test.Spec as S
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (message)
-import Data.Array (foldl, head, concat)
-import Data.Foldable (fold, foldMap)
+import Data.Array (foldl)
 import Data.Map (unionWith, empty, singleton, Map)
-import Data.NonEmpty (foldl1)
-import Test.Spec (Name, Group(Describe), Result(Failure, Success))
+import Test.Spec (Name, Group, Result(Failure, Success))
 
 data Entry = It Name Result
            | Pending Name
