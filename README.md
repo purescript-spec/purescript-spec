@@ -35,13 +35,13 @@ main = run [consoleReporter] do
         let isAwesome = true
         isAwesome `shouldEqual` true
         pending "feature complete"
-describe "Features" do
-  it "runs in NodeJS" $ pure unit
-    it "runs in the browser" $ pure unit
-      it "supports async specs" do
-        res <- later' 100 $ pure "Alligator"
-        res `shouldEqual` "Alligator"
-      it "is PureScript 0.10.1 compatible" $ pure unit
+  describe "Features" do
+    it "runs in NodeJS" $ pure unit
+      it "runs in the browser" $ pure unit
+        it "supports async specs" do
+          res <- later' 100 $ pure "Alligator"
+          res `shouldEqual` "Alligator"
+        it "is PureScript 0.10.1 compatible" $ pure unit
 ```
 
 For more details on DSL functions, see the `Test.Spec` module
