@@ -1,6 +1,6 @@
 {
   "name": "purescript-spec",
-  "version": "0.8.0",
+  "version": "0.9.1",
   "license": "MIT",
   "ignore": [
     "**/.*",
