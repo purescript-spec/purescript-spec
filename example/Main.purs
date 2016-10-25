@@ -1,19 +1,19 @@
 module Main where
 
 import Prelude
-
-import Control.Monad.Aff          (later')
-import Test.Spec                  (describe, it)
-import Test.Spec.Runner           (run)
-import Test.Spec.Assertions       (shouldEqual)
+import Control.Monad.Aff (later')
+import Test.Spec (pending, describe, it)
+import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (run)
 
 main = run [consoleReporter] do
   describe "purescript-spec" do
-    describe "What is it?" do
+    describe "Attributes" do
       it "awesome" do
         let isAwesome = true
         isAwesome `shouldEqual` true
+      pending "feature complete"
     describe "Features" do
       it "runs in NodeJS" $ pure unit
       it "runs in the browser" $ pure unit

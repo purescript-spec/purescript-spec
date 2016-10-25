@@ -1,6 +1,6 @@
 # purescript-spec [![Build Status](https://travis-ci.org/owickstrom/purescript-spec.svg?branch=master)](https://travis-ci.org/owickstrom/purescript-spec)
 
-purescript-spec is a simple testing framework for Purescript using NodeJS. It's
+purescript-spec is a simple testing framework for Purescript. It is
 inspired by [hspec](http://hspec.github.io/).
 
 <img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
@@ -13,7 +13,9 @@ bower install purescript-spec
 
 ### Example
 
-The specs shown in the image above:
+The purescript-spec DSL features a number functions that you can use to
+write and organize specs. The specs shown in the image above looks like
+this:
 
 ```purescript
 module Main where
@@ -28,18 +30,22 @@ import Test.Spec.Reporter.Console (consoleReporter)
 
 main = run [consoleReporter] do
   describe "purescript-spec" do
-    describe "What is it?" do
+    describe "Attributes" do
       it "awesome" do
         let isAwesome = true
         isAwesome `shouldEqual` true
-    describe "Features" do
-      it "runs in NodeJS" $ pure unit
-      it "runs in the browser" $ pure unit
+        pending "feature complete"
+describe "Features" do
+  it "runs in NodeJS" $ pure unit
+    it "runs in the browser" $ pure unit
       it "supports async specs" do
         res <- later' 100 $ pure "Alligator"
         res `shouldEqual` "Alligator"
       it "is PureScript 0.10.1 compatible" $ pure unit
 ```
+
+For more details on DSL functions, see the `Test.Spec` module
+on [Pursuit](https://pursuit.purescript.org/packages/purescript-spec).
 
 ### Combining Specs
 
@@ -95,7 +101,7 @@ You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
 together with the [`purescript-spec-quickcheck`](https://github.com/owickstrom/purescript-spec-quickcheck)
 adapter to get nice output formatting for QuickCheck tests.
 
-## API
+## API Documentation
 
 See the [docs on Pursuit](https://pursuit.purescript.org/packages/purescript-spec).
 
