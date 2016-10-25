@@ -58,6 +58,7 @@ collect r = snd $ runState r []
 --       DSL       --
 ---------------------
 
+-- | Combine a group of specs into a described hierarchy.
 describe :: forall r. String
          -> Spec r Unit
          -> Spec r Unit
@@ -65,10 +66,20 @@ describe name its = do
   modify $ \r -> r <> [Describe name (collect its)]
   pure unit
 
+-- | Create a pending spec.
 pending :: forall r. String
         -> Spec r Unit
 pending name = modify $ \p -> p <> [Pending name]
 
+-- | Create a pending spec with a body that is ignored by
+-- | the runner. It can be useful for documenting what the
+-- | spec should test when non-pending.
+pending' :: forall r. String
+        -> Aff r Unit
+        -> Spec r Unit
+pending' name _ = pending name
+
+-- | Create a spec with a description.
 it :: forall r. String
    -> Aff r Unit
    -> Spec r Unit
