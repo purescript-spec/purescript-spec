@@ -5,11 +5,11 @@ body {
 
   max-width: 700px;
   margin: 0 auto;
-  padding: 1em;
+  padding: 10px;
 
   line-height: 1.4;
+  font-size: 15px;
   font-family: sans-serif;
-  font-size: 18px;
 
   color: #111;
   -webkit-text-size-adjust: 100%;
@@ -44,15 +44,24 @@ li > a + ol {
 
 pre {
   position: relative;
-  padding: 1em 2em;
+  padding: 1em;
   overflow: auto;
+  background: #eee;
 }
+
+@media screen and (max-width: 800px) {
+  body > .sourceCode,
+  body > pre {
+    margin-left: -10px;
+    margin-right: -10px;
+  }
+}
+
 pre,
 code,
 .controls .output {
   font-family: monospace;
   line-height: inherit;
-  font-size: 17px;
 }
 
 pre, .hljs, .hljs-subst {
@@ -104,32 +113,14 @@ body > table {
   padding: 2em;
 }
 
-@media screen and (max-width: 700px) {
-  body {
-    font-size: 16px;
-  }
-  pre {
-    padding: 1.5em 0;
-  }
-  code, pre {
-    font-size: 14px;
-  }
-  pre:before,
-  table caption {
-    font-size: 14px;
-  }
-}
-
 a {
-  color: #2a7ae2;
-  text-decoration: none;
+  color: #706ec3;
 }
 a:visited {
-  color: #1756a9;
+  color: #80808e;
 }
 a:hover {
-  color: #333;
-  text-decoration: underline;
+  color: #8583d4;
 }
 
 p {
@@ -155,7 +146,12 @@ h4,
 h5,
 h6 {
   font-weight: 800;
-  margin: 1em 0 .5em 0;
+  margin: 1.5em 0 .5em 0;
+}
+
+h2 {
+  padding-bottom: .25em;
+  border-bottom: 1px solid #ddd;
 }
 
 .main-figure {
