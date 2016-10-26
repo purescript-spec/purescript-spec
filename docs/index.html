@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <meta name="author" content="Oskar Wickström">
   <title>PureScript Spec - The Guide</title>
-  <style type="text/css">code{white-space: pre;}</style>
+<link href="https://fonts.googleapis.com/css?family=Source+Code+Pro|Source+Sans+Pro:400,400i,700" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/styles/tomorrow.min.css">
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
@@ -55,7 +55,7 @@
   1 + 1 `shouldEqual` 2</code></pre>
 <p>Specs can also be <em>pending</em>, which means that they are not testing anything yet - they are like placeholders. We use <code>pending</code> to write a pending spec.</p>
 <pre class="purescript"><code>pending &quot;calculates the answer to Life, the Universe and Everything&quot;</code></pre>
-<p>Pending specs can also contain a spec body. These are used to give a hint what the spec should assert in the future, but the body is never evaluated. Use <code>pending'</code> (note the <code>'</code> at the end) to create such a pending spec.</p>
+<p>Pending specs can also contain a spec body. These are used to give a hint what the spec should assert in the future, without actually doing the assert. Use <code>pending'</code> (note the <code>'</code> at the end) to create such a pending spec.</p>
 <pre class="purescript"><code>pending&#39; &quot;calculates the answer to Life, the Universe and Everything&quot; do
   answerTo theUltimateQuestion `shouldBe` 42</code></pre>
 <p>To group multiple specs in a larger, logically related group of specs, we use <code>describe</code>.</p>
@@ -133,7 +133,6 @@ NODE_PATH=output/tests node -e &quot;require(&#39;Test.Main&#39;).main();&quot;<
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/purescript.min.js"></script>
 <script src="highlight.js"></script>
 </body>
 </html>

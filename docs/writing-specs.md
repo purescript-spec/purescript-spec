@@ -24,7 +24,7 @@ pending "calculates the answer to Life, the Universe and Everything"
 ```
 
 Pending specs can also contain a spec body. These are used to give a hint what
-the spec should assert in the future, but the body is never evaluated. Use
+the spec should assert in the future, without actually doing the assert. Use
 `pending'` (note the `'` at the end) to create such a pending spec.
 
 ```purescript

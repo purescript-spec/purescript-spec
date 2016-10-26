@@ -7,9 +7,9 @@ body {
   margin: 0 auto;
   padding: 10px;
 
-  line-height: 1.4;
+  line-height: 1.5;
   font-size: 16px;
-  font-family: 'Century Gothic', Arial, sans-serif;
+  font-family: 'Source Sans Pro', 'Helvetica', 'Arial', sans-serif;
 
   color: #111;
   -webkit-text-size-adjust: 100%;
@@ -44,8 +44,8 @@ li > a + ol {
 
 pre,
 code {
-  font-family: monospace;
-  font-size: 15px;
+  font-family: 'Source Code Pro', 'Menlo', 'Consolas', 'Ubuntu Mono', Courier, monospace;
+  font-size: 14px;
   line-height: inherit;
   color: #111;
 }
@@ -65,8 +65,8 @@ pre {
 p code {
   display: inline-block;
   background: #eee;
-  padding: 0 3px;
-  line-height: 1.2;
+  padding: 0 2px;
+  line-height: 1.3;
 }
 
 pre:before {
@@ -153,6 +153,10 @@ h6 {
 h2 {
   padding-bottom: .25em;
   border-bottom: 1px solid #ddd;
+}
+
+.author {
+  font-style: normal;
 }
 
 #header-image {
