@@ -154,3 +154,9 @@ h2 {
 #header-image {
   margin: 3em 0;
 }
+
+footer {
+  padding: 1em;
+  text-align: center;
+  color: #888;
+}
