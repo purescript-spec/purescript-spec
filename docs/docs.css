@@ -51,18 +51,12 @@ code {
 
 pre {
   position: relative;
-  padding: 1em;
   overflow: auto;
-  background: #eee;
-  font-size: 13px;
 }
 
-@media screen and (max-width: 800px) {
-  body > .sourceCode,
-  body > pre {
-    margin-left: -10px;
-    margin-right: -10px;
-  }
+.hljs {
+  background: #fff;
+  padding: 1em;
 }
 
 p code {

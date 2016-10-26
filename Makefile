@@ -53,6 +53,7 @@ docs/index.html: $(MD_SOURCES) docs/template.html docs/docs.css
 		--toc \
 		--chapters \
 		"--metadata=subtitle:$(VERSION)" \
+		--no-highlight \
 		-c docs.css \
 		-o docs/index.html \
 		--base-header-level=2 \
