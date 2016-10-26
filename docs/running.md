@@ -1,15 +1,27 @@
 # Running
 
-When using `run` you can follow the conventions of
-[pulp](https://github.com/bodil/pulp) and run your tests with `pulp test`.
-
-If you're not using pulp you can compile using `psc` and run the compiled
-Javascript with `node`.
+When you have a spec, you need a runner to actually run it and get the results.
+PureScript Spec comes with a default runner, `run`, which takes an array of
+*reporters* and a spec to run. What you get back is a test-running program of
+type `Eff r ()`. The effect rows in `r` depend on what you do in your specs and
+what reporters you are using. The program can be run using
+[Pulp](https://github.com/bodil/pulp).
 
 ```bash
-# compile with psc (modify the command to include all your sources)
-psc -o output/tests 'test/**/*.purs' 'src/**/*.purs' --ffi 'src/**/*.js'
-# run using node
+pulp test
+```
+
+If you're not using pulp, you can compile the test program using `psc`. The
+following command compiles all PureScript modules in `test` and `src`.
+
+
+```bash
+psc -o output/tests 'test/**/*.purs' 'src/**/*.purs'
+```
+
+After that has finished, you can run the test program using NodeJS.
+
+```
 NODE_PATH=output/tests node -e "require('Test.Main').main();"
 ```
 
@@ -36,7 +48,6 @@ will be combined into a single large spec by `discover`.
 
 ## Browser Testing
 
-You can run tests in a browser environment, instead of NodeJS. Compile and
-bundle your tests using `pulp browserify -I test --main Test.Main` and run the
-bundled Javascript using `mocha` or `karma`. For more information, see
-[purescript-spec-mocha]( https://github.com/owickstrom/purescript-spec-mocha).
+You can run tests in a browser environment, instead of NodeJS, using `mocha`
+or `karma`. For more information, see [purescript-spec-mocha](
+https://github.com/owickstrom/purescript-spec-mocha).
