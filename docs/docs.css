@@ -8,8 +8,8 @@ body {
   padding: 10px;
 
   line-height: 1.4;
-  font-size: 15px;
-  font-family: sans-serif;
+  font-size: 16px;
+  font-family: 'Century Gothic', Arial, sans-serif;
 
   color: #111;
   -webkit-text-size-adjust: 100%;
@@ -45,6 +45,7 @@ li > a + ol {
 pre,
 code {
   font-family: monospace;
+  font-size: 15px;
   line-height: inherit;
   color: #111;
 }
@@ -52,17 +53,20 @@ code {
 pre {
   position: relative;
   overflow: auto;
+  padding: 1em;
 }
 
 .hljs {
   background: #fff;
-  padding: 1em;
+  padding: 0;
+  overflow: visible;
 }
 
 p code {
   display: inline-block;
   background: #eee;
-  padding: 0 5px;
+  padding: 0 3px;
+  line-height: 1.2;
 }
 
 pre:before {
@@ -159,4 +163,5 @@ footer {
   padding: 1em;
   text-align: center;
   color: #888;
+  font-size: 13px;
 }
