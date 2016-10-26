@@ -114,12 +114,12 @@ main = run [consoleReporter] do
 <h3 id="quickcheck">QuickCheck</h3>
 <p>You can use <a href="https://github.com/purescript/purescript-quickcheck">QuickCheck</a> together with the <a href="https://github.com/owickstrom/purescript-spec-quickcheck">purescript-spec-quickcheck</a> adapter to get nice output formatting for QuickCheck tests.</p>
 <h2 id="running">Running</h2>
-<p>When using <code>run</code> you can follow the conventions of <a href="https://github.com/bodil/pulp">pulp</a> and run your tests with <code>pulp test</code>.</p>
-<p>If you’re not using pulp you can compile using <code>psc</code> and run the compiled Javascript with <code>node</code>.</p>
-<pre class="bash"><code># compile with psc (modify the command to include all your sources)
-psc -o output/tests &#39;test/**/*.purs&#39; &#39;src/**/*.purs&#39; --ffi &#39;src/**/*.js&#39;
-# run using node
-NODE_PATH=output/tests node -e &quot;require(&#39;Test.Main&#39;).main();&quot;</code></pre>
+<p>When you have a spec, you need a runner to actually run it and get the results. PureScript Spec comes with a default runner, <code>run</code>, which takes an array of <em>reporters</em> and a spec to run. What you get back is a test-running program of type <code>Eff r ()</code>. The effect rows in <code>r</code> depend on what you do in your specs and what reporters you are using. The program can be run using <a href="https://github.com/bodil/pulp">Pulp</a>.</p>
+<pre class="bash"><code>pulp test</code></pre>
+<p>If you’re not using pulp, you can compile the test program using <code>psc</code>. The following command compiles all PureScript modules in <code>test</code> and <code>src</code>.</p>
+<pre class="bash"><code>psc -o output/tests &#39;test/**/*.purs&#39; &#39;src/**/*.purs&#39;</code></pre>
+<p>After that has finished, you can run the test program using NodeJS.</p>
+<pre><code>NODE_PATH=output/tests node -e &quot;require(&#39;Test.Main&#39;).main();&quot;</code></pre>
 <h3 id="reporters">Reporters</h3>
 <p>Reporters can be passed to the runner, e.g. <code>run [reporter1, ..., reporterN] spec</code>. Currently there are these reporters available:</p>
 <ul>
@@ -131,7 +131,7 @@ NODE_PATH=output/tests node -e &quot;require(&#39;Test.Main&#39;).main();&quot;<
 <pre class="purescript"><code>main = discover &quot;My\\.Package\\..*Spec&quot; &gt;&gt;= run [consoleReporter]</code></pre>
 <p>All modules matching the pattern, that has a <code>spec :: Spec r ()</code> definition will be combined into a single large spec by <code>discover</code>.</p>
 <h3 id="browser-testing">Browser Testing</h3>
-<p>You can run tests in a browser environment, instead of NodeJS. Compile and bundle your tests using <code>pulp browserify -I test --main Test.Main</code> and run the bundled Javascript using <code>mocha</code> or <code>karma</code>. For more information, see <a href="https://github.com/owickstrom/purescript-spec-mocha">purescript-spec-mocha</a>.</p>
+<p>You can run tests in a browser environment, instead of NodeJS, using <code>mocha</code> or <code>karma</code>. For more information, see <a href="https://github.com/owickstrom/purescript-spec-mocha">purescript-spec-mocha</a>.</p>
 <h2 id="next-steps">Next Steps</h2>
 <p><a href="https://pursuit.purescript.org/packages/purescript-spec">purescript-spec on Pursuit</a> features version information and API documentation. For updates on the project, follow <a href="https://twitter.com/owickstrom">@owickstrom</a> at Twitter.</p>
 <p>The source code is available <a href="https://github.com/owickstrom/purescript-spec">on GitHub</a>.</p>
