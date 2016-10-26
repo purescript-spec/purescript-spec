@@ -18,7 +18,7 @@ NODE_PATH=output/tests node -e "require('Test.Main').main();"
 Reporters can be passed to the runner, e.g. `run [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
-* `Test.Spec.Reporter.Console.consoleReporter`
+* [Test.Spec.Reporter.Console.consoleReporter](https://pursuit.purescript.org/packages/purescript-spec/0.10.0/docs/Test.Spec.Reporter.Console#v:consoleReporter)
 * [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
 
 ## Automatically Discovering Specs
