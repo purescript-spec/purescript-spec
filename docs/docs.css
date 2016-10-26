@@ -42,11 +42,19 @@ li > a + ol {
   margin-top: .5em;
 }
 
+pre,
+code {
+  font-family: monospace;
+  line-height: inherit;
+  color: #111;
+}
+
 pre {
   position: relative;
   padding: 1em;
   overflow: auto;
   background: #eee;
+  font-size: 13px;
 }
 
 @media screen and (max-width: 800px) {
@@ -57,15 +65,10 @@ pre {
   }
 }
 
-pre,
-code,
-.controls .output {
-  font-family: monospace;
-  line-height: inherit;
-}
-
-pre, .hljs, .hljs-subst {
-    color: #111;
+p code {
+  display: inline-block;
+  background: #eee;
+  padding: 0 5px;
 }
 
 pre:before {
@@ -154,6 +157,6 @@ h2 {
   border-bottom: 1px solid #ddd;
 }
 
-.main-figure {
+#header-image {
   margin: 3em 0;
 }

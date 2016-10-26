@@ -54,7 +54,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h1 class="title" itemprop="name">PureScript Spec - The Guide</h1>
 <cite class="author" itemprop="author">By Oskar Wickström</cite>
 </header>
-<figure class="main-figure">
+<figure id="header-image">
   <img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
 </figure>
 <h2 id="contents">Contents</h2>
@@ -63,6 +63,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#writing-specs">Writing Specs</a><ul>
+<li><a href="#full-example">Full Example</a></li>
 <li><a href="#asynchronous-specs">Asynchronous Specs</a></li>
 <li><a href="#combining-specs">Combining Specs</a></li>
 <li><a href="#quickcheck">QuickCheck</a></li>
@@ -83,9 +84,52 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Given that you already have a PureScript project setup, the first thing to do is installing <code>purescript-spec</code> as a <em>development dependency</em>.</p>
 <div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">bower</span> install --save-dev purescript-spec</code></pre></div>
 <h2 id="writing-specs">Writing Specs</h2>
-<p>TODO!</p>
+<p>The basic building block of spec writing is <code>it</code>, which creates a spec with a <em>spec body</em>. In the following example we use <code>pure unit</code> as a body, which does nothing.</p>
+<pre class="purescript"><code>it &quot;does nothing&quot; $ pure unit</code></pre>
+<p>A more interesting test would assert something. Let’s check that addition works.</p>
+<pre class="purescript"><code>it &quot;adds 1 and 1&quot; do
+  1 + 1 `shouldEqual` 2</code></pre>
+<p>Specs can also be <em>pending</em>, which means that they are not testing anything yet - they are like placeholders. We use <code>pending</code> to write a pending spec.</p>
+<pre class="purescript"><code>pending &quot;calculates the answer to Life, the Universe and Everything&quot;</code></pre>
+<p>Pending specs can also contain a spec body. These are used to give a hint what the spec should assert in the future, but the body is never evaluated. Use <code>pending'</code> (note the <code>'</code> at the end) to create such a pending spec.</p>
+<pre class="purescript"><code>pending&#39; &quot;calculates the answer to Life, the Universe and Everything&quot; do
+  answerTo theUltimateQuestion `shouldBe` 42</code></pre>
+<p>To group multiple specs in a larger, logically related group of specs, we use <code>describe</code>.</p>
+<pre class="purescript"><code>describe &quot;MyModule&quot; do
+  it &quot;...&quot; do
+    ...
+  it &quot;...&quot; do
+    ...
+  it &quot;...&quot; do
+    ...</code></pre>
+<h3 id="full-example">Full Example</h3>
+<p>Let’s look at an example of a complete spec program, with the needed imports and a proper <code>main</code> function. The specs shown in the <a href="#header-image">header image</a> looks like this:</p>
+<pre class="purescript"><code>module Main where
+
+import Prelude
+
+import Control.Monad.Aff          (later&#39;)
+import Test.Spec                  (describe, it)
+import Test.Spec.Runner           (run)
+import Test.Spec.Assertions       (shouldEqual)
+import Test.Spec.Reporter.Console (consoleReporter)
+
+main = run [consoleReporter] do
+  describe &quot;purescript-spec&quot; do
+    describe &quot;Attributes&quot; do
+      it &quot;awesome&quot; do
+        let isAwesome = true
+        isAwesome `shouldEqual` true
+      pending &quot;feature complete&quot;
+    describe &quot;Features&quot; do
+      it &quot;runs in NodeJS&quot; $ pure unit
+      it &quot;runs in the browser&quot; $ pure unit
+      it &quot;supports async specs&quot; do
+        res &lt;- later&#39; 100 $ pure &quot;Alligator&quot;
+        res `shouldEqual` &quot;Alligator&quot;
+      it &quot;is PureScript 0.10.1 compatible&quot; $ pure unit</code></pre>
 <h3 id="asynchronous-specs">Asynchronous Specs</h3>
-<p>Specs can be async as the test body type of <code>it</code> is <a href="https://github.com/slamdata/purescript-aff">forall e. Aff e Unit</a></p>
+<p>Specs can be async as the spec body type of <code>it</code> and <code>pending'</code> is <a href="https://github.com/slamdata/purescript-aff">forall e. Aff e Unit</a>.</p>
 <h3 id="combining-specs">Combining Specs</h3>
 <p>You can split test specs into multiple files and combine them using <code>do</code> expressions.</p>
 <pre class="purescript"><code>baseSpecs = do
