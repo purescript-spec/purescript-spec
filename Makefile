@@ -35,3 +35,29 @@ example.png: build-example $(EXAMPLE_CSS)
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
 	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 4
 	convert example.png -trim example.png
+
+MD_SOURCES=\
+				docs/index.md \
+				docs/introduction.md \
+				docs/installation.md \
+				docs/writing-specs.md \
+				docs/running.md \
+				docs/next-steps.md
+
+
+docs/index.html: $(MD_SOURCES) docs/template.html docs/docs.css
+	pandoc $(SHARED_PANDOC_OPTIONS) \
+		-t html5 \
+		--standalone \
+		-S \
+		--toc \
+		--chapters \
+		"--metadata=subtitle:$(VERSION)" \
+		-c docs.css \
+		-o docs/index.html \
+		--base-header-level=2 \
+		--template=docs/template.html \
+	$(MD_SOURCES)
+
+.PHONY: docs
+docs: docs/index.html

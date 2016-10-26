@@ -1,0 +1,163 @@
+html, body {
+  height: 100%;
+}
+body {
+
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1em;
+
+  line-height: 1.4;
+  font-family: sans-serif;
+  font-size: 18px;
+
+  color: #111;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+p, pre, table, ul, ol {
+  margin: 1em 0;
+}
+
+ul ol,
+ul ul,
+ol ul,
+ol ol {
+  margin: 0 0 0;
+}
+
+ul li,
+ol li {
+  margin-bottom: .5em;
+}
+
+li > a + ul,
+li > a + ol {
+  margin-top: .5em;
+}
+
+pre {
+  position: relative;
+  padding: 1em 2em;
+  overflow: auto;
+}
+pre,
+code,
+.controls .output {
+  font-family: monospace;
+  line-height: inherit;
+  font-size: 17px;
+}
+
+pre, .hljs, .hljs-subst {
+    color: #111;
+}
+
+pre:before {
+  display: block;
+  content: attr(caption);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+pre:before,
+table caption {
+  font-style: italic;
+  font-size: 16px;
+  text-align: center;
+}
+table {
+  border-spacing: 0;
+  border-collapse: separate;
+}
+table caption {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+table th,
+table td {
+  padding: 4px;
+}
+table th {
+  padding: 6px 4px 4px;
+  border-top: 1px solid #111;
+  border-bottom: 1px solid #111;
+  font-weight: 400;
+}
+
+body > table {
+  position: relative;
+  width: 100%;
+  padding: 2em;
+}
+
+@media screen and (max-width: 700px) {
+  body {
+    font-size: 16px;
+  }
+  pre {
+    padding: 1.5em 0;
+  }
+  code, pre {
+    font-size: 14px;
+  }
+  pre:before,
+  table caption {
+    font-size: 14px;
+  }
+}
+
+a {
+  color: #2a7ae2;
+  text-decoration: none;
+}
+a:visited {
+  color: #1756a9;
+}
+a:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+p {
+  text-align: justify;
+}
+
+header {
+  text-align: center;
+}
+
+figure {
+  text-align: center;
+}
+
+img {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 800;
+  margin: 1em 0 .5em 0;
+}
+
+.main-figure {
+  margin: 3em 0;
+}

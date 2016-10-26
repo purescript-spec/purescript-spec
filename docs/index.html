@@ -1,10 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>purescript-spec</title>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="author" content="Oskar Wickström">
+  <title>PureScript Spec - The Guide</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <link rel="stylesheet" href="docs.css">
 </head>
-<body>
-  <h1>purescript-spec</h1>
+<body itemscope itemtype="http://schema.org/TechArticle">
+<header>
+<h1 class="title" itemprop="name">PureScript Spec - The Guide</h1>
+<cite class="author" itemprop="author">By Oskar Wickström</cite>
+</header>
+<figure class="main-figure">
+  <img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
+</figure>
+<h2 id="contents">Contents</h2>
+<nav id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#writing-specs">Writing Specs</a><ul>
+<li><a href="#asynchronous-specs">Asynchronous Specs</a></li>
+<li><a href="#combining-specs">Combining Specs</a></li>
+<li><a href="#quickcheck">QuickCheck</a></li>
+</ul></li>
+<li><a href="#running">Running</a><ul>
+<li><a href="#reporters">Reporters</a></li>
+<li><a href="#automatically-discovering-specs">Automatically Discovering Specs</a></li>
+<li><a href="#browser-testing">Browser Testing</a></li>
+</ul></li>
+<li><a href="#next-steps">Next Steps</a><ul>
+<li><a href="#contribute">Contribute</a></li>
+</ul></li>
+</ul>
+</nav>
+<h2 id="introduction">Introduction</h2>
+<p><em>PureScript Spec</em> is a simple testing framework for Purescript, inspired by <a href="http://hspec.github.io/">hspec</a>. Use PureScript Spec to write synchronous and asynchronous tests using a simple DSL, combine with other testing tools, and generate test output in various formats.</p>
+<h2 id="installation">Installation</h2>
+<p>Given that you already have a PureScript project setup, the first thing to do is installing <code>purescript-spec</code> as a <em>development dependency</em>.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">bower</span> install --save-dev purescript-spec</code></pre></div>
+<h2 id="writing-specs">Writing Specs</h2>
+<p>TODO!</p>
+<h3 id="asynchronous-specs">Asynchronous Specs</h3>
+<p>Specs can be async as the test body type of <code>it</code> is <a href="https://github.com/slamdata/purescript-aff">forall e. Aff e Unit</a></p>
+<h3 id="combining-specs">Combining Specs</h3>
+<p>You can split test specs into multiple files and combine them using <code>do</code> expressions.</p>
+<pre class="purescript"><code>baseSpecs = do
+  mathSpec
+  stringsSpec
+  arraySpec
+  ...</code></pre>
+<p>This is often used to combine all specs into a single spec that can be passed to the test runner.</p>
+<h3 id="quickcheck">QuickCheck</h3>
+<p>You can use <a href="https://github.com/purescript/purescript-quickcheck">QuickCheck</a> together with the <a href="https://github.com/owickstrom/purescript-spec-quickcheck"><code>purescript-spec-quickcheck</code></a> adapter to get nice output formatting for QuickCheck tests.</p>
+<h2 id="running">Running</h2>
+<p>When using <code>run</code> you can follow the conventions of <a href="https://github.com/bodil/pulp">pulp</a> and run your tests with <code>pulp test</code>.</p>
+<p>If you’re not using pulp you can compile using <code>psc</code> and run the compiled Javascript with <code>node</code>.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co"># compile with psc (modify the command to include all your sources)</span>
+<span class="ex">psc</span> -o output/tests <span class="st">&#39;test/**/*.purs&#39;</span> <span class="st">&#39;src/**/*.purs&#39;</span> --ffi <span class="st">&#39;src/**/*.js&#39;</span>
+<span class="co"># run using node</span>
+<span class="va">NODE_PATH=</span>output/tests <span class="ex">node</span> -e <span class="st">&quot;require(&#39;Test.Main&#39;).main();&quot;</span></code></pre></div>
+<h3 id="reporters">Reporters</h3>
+<p>Reporters can be passed to the runner, e.g. <code>run [reporter1, ..., reporterN] spec</code>. Currently there are these reporters available:</p>
+<ul>
+<li><code>Test.Spec.Reporter.Console.consoleReporter</code></li>
+<li><a href="https://github.com/owickstrom/purescript-spec-reporter-xunit">purescript-spec-reporter-xunit</a></li>
+</ul>
+<h3 id="automatically-discovering-specs">Automatically Discovering Specs</h3>
+<p>If you are running your specs in an NodeJS environment, e.g. with <code>pulp test</code>, you can automatically scan for spec modules using <a href="https://github.com/owickstrom/purescript-spec-discovery">purescript-spec-discovery</a>. Then your <code>main</code> function can be as simple as:</p>
+<pre class="purescript"><code>main = discover &quot;My\\.Package\\..*Spec&quot; &gt;&gt;= run [consoleReporter]</code></pre>
+<p>All modules matching the pattern, that has a <code>spec :: Spec r ()</code> definition will be combined into a single large spec by <code>discover</code>.</p>
+<h3 id="browser-testing">Browser Testing</h3>
+<p>You can run tests in a browser environment, instead of NodeJS. Compile and bundle your tests using <code>pulp browserify -I test --main Test.Main</code> and run the bundled Javascript using <code>mocha</code> or <code>karma</code>. For more information, see <a href="https://github.com/owickstrom/purescript-spec-mocha">purescript-spec-mocha</a>.</p>
+<h2 id="next-steps">Next Steps</h2>
+<p><a href="https://pursuit.purescript.org/packages/purescript-spec">purescript-spec on Pursuit</a> features version information and API documentation. For updates on the project, follow <a href="https://twitter.com/owickstrom">@owickstrom</a> at Twitter.</p>
+<h3 id="contribute">Contribute</h3>
+<p>If you have any issues or possible improvements please file them as <a href="https://github.com/owickstrom/purescript-spec/issues">GitHub Issues</a>. Pull requests are encouraged.</p>
 </body>
 </html>
