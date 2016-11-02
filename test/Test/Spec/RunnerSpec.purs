@@ -14,7 +14,7 @@ import Test.Spec            ( Group(..)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Runner     (runSpec)
 
-import Test.Spec.Fixtures (successTest, sharedDescribeTest, onlyTest)
+import Test.Spec.Fixtures
 
 runnerSpec :: forall r. Spec r Unit
 runnerSpec =
@@ -28,10 +28,13 @@ runnerSpec =
           results <- runSpec sharedDescribeTest
           results `shouldEqual` [Describe false "a" [Describe false "b" [It false "works" Success],
                                                      Describe false "c" [It false "also works" Success]]]
-        it "collects \"it\" and \"pending\" with \"only\" modifier" do
-          results <- runSpec onlyTest
+        it "filters using \"only\" modifier on \"describe\" block" do
+          results <- runSpec describeOnlyTest
           results `shouldEqual` [Describe true "a" [Describe false "b" [It false "works" Success],
-                                                    Describe false "c" [It true "also works" Success]]]
-        itOnly "supports async" do
+                                                    Describe false "c" [It false "also works" Success]]]
+        it "filters using \"only\" modifier on \"it\" block" do
+          results <- runSpec itOnlyTest
+          results `shouldEqual` [It true "works" Success]
+        it "supports async" do
           res <- later' 10 $ pure 1
           res `shouldEqual` 1

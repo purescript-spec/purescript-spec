@@ -34,14 +34,24 @@ duplicatedDescribeTest =
         it "second" do
           1 `shouldEqual` 1
 
-onlyTest :: forall r. Spec r Unit
-onlyTest =
+describeOnlyTest :: forall r. Spec r Unit
+describeOnlyTest =
   describeOnly "a" do
     describe "b" do
       it "works" do
         1 `shouldEqual` 1
     describe "c" do
-      itOnly "also works" do
+      it "also works" do
+        1 `shouldEqual` 1
+
+itOnlyTest :: forall r. Spec r Unit
+itOnlyTest =
+  describe "a" do
+    describe "b" do
+      itOnly "works" do
+        1 `shouldEqual` 1
+    describe "c" do
+      it "also works" do
         1 `shouldEqual` 1
 
 failureTest :: forall r. Spec r Unit
