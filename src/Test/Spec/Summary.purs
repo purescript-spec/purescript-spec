@@ -21,10 +21,10 @@ instance monoidCount :: Monoid Summary where
 
 summarize :: Array (Group Result) -> Summary
 summarize = foldMap \g -> case g of
-    (It _ Success)     -> Count 1 0 0
-    (It _ (Failure _)) -> Count 0 1 0
-    (Pending _)        -> Count 0 0 1
-    (Describe _ dgs)   -> summarize dgs
+    (It _ _ Success)     -> Count 1 0 0
+    (It _ _ (Failure _)) -> Count 0 1 0
+    (Pending _)          -> Count 0 0 1
+    (Describe _ _ dgs)   -> summarize dgs
 
 successful :: Array (Group Result) -> Boolean
 successful groups =

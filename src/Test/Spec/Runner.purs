@@ -26,14 +26,14 @@ runCatch :: forall r. Group (Aff r Unit)
          -> Aff r (Group Result)
 runCatch group =
   case group of
-    It name test -> do
-      let onError e = pure $ It name $ Failure e
-          onSuccess _ = pure $ It name Success
+    It only name test -> do
+      let onError e = pure $ It only name $ Failure e
+          onSuccess _ = pure $ It only name Success
       e <- attempt test
       either onError onSuccess e
-    Describe name groups -> do
+    Describe only name groups -> do
       results <- sequence (map runCatch groups)
-      pure (Describe name results)
+      pure (Describe only name results)
     Pending name -> pure (Pending name)
 
 
