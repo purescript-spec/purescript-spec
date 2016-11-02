@@ -39,20 +39,20 @@ runCatch group =
       pure (Describe only name results)
     Pending name -> pure (Pending name)
 
-findOnly :: forall r. Group r -> Maybe (Group r)
-findOnly g@(It true _ _) = pure g
-findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g
-                                                             else Nothing
-findOnly _ = Nothing
-
-findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
-findJust f = foldl go Nothing
-  where
-  go Nothing x = f x
-  go acc _     = acc
-
 trim :: ∀ r. Array (Group r) -> Array (Group r)
 trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
+  where
+  findOnly :: Group r -> Maybe (Group r)
+  findOnly g@(It true _ _) = pure g
+  findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g
+                                                               else Nothing
+  findOnly _ = Nothing
+
+  findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
+  findJust f = foldl go Nothing
+    where
+    go Nothing x = f x
+    go acc _     = acc
 
 runSpec :: forall r. Spec r Unit
          -> Aff r (Array (Group Result))
