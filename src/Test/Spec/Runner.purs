@@ -67,9 +67,7 @@ run :: forall e.
     Array (Reporter (process :: PROCESS, console :: CONSOLE | e))
     -> Spec (process :: PROCESS, console :: CONSOLE | e) Unit
     -> Eff  (process :: PROCESS, console :: CONSOLE | e) Unit
-run rs spec = do
-  _ <- runAff onError onSuccess (runSpec spec)
-  pure unit
+run rs spec = void $ runAff onError onSuccess (runSpec spec)
   where
     onError :: Error -> Eff (process :: PROCESS, console :: CONSOLE | e) Unit
     onError err = do withAttrs [31] $ logShow err

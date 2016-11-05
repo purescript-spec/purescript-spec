@@ -24,6 +24,7 @@ import Test.Spec.Summary (Summary(..), summarize)
 type NamedFailure = Tuple String Error
 type ReporterState = { failures :: Array NamedFailure }
 
+-- TODO: move these somewhere central (Test.Spec.Console?)
 red   = withAttrs [31]
 green = withAttrs [32]
 blue  = withAttrs [33]
