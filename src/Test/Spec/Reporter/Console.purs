@@ -11,7 +11,7 @@ import Test.Spec.Summary (Summary(..))
 import Test.Spec (Group, Result(..))
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Base (BaseReporter, reporter)
+import Test.Spec.Reporter.Base (BaseReporter, defaultReporter, onSummarize, onUpdate)
 
 -- TODO: move these somewhere central (Test.Spec.Console?)
 red   = withAttrs [31]
@@ -44,7 +44,11 @@ popCrumb s = s {
 }
 
 consoleReporter :: ∀ e. BaseReporter ConsoleReporterStateObj (Eff (console :: CONSOLE | e))
-consoleReporter = reporter initialState update summarize where
+consoleReporter = defaultReporter initialState
+  # onUpdate    update
+  # onSummarize summarize
+
+  where
   update s = case _ of
     Event.Suite name -> pure (pushCrumb name s)
     Event.SuiteEnd -> pure (popCrumb s)
