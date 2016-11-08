@@ -19,6 +19,7 @@ import Test.Spec (Name, Group, Result(Failure, Success))
 import Test.Spec.Reporter.Base (BaseReporter(), update, summarize) as Reexport
 import Test.Spec.Reporter.Spec (specReporter) as Reexport
 import Test.Spec.Reporter.Console (consoleReporter) as Reexport
+import Test.Spec.Reporter.Dot (dotReporter) as Reexport
 
 data Entry = It Name Result
            | Pending Name
