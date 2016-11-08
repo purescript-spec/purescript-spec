@@ -29,8 +29,7 @@ initialState :: SpecReporterStateObj
 initialState = { indent: 0, numFailures: 0 }
 
 specReporter :: ∀ e. BaseReporter SpecReporterStateObj (Eff (console :: CONSOLE | e))
-specReporter = defaultReporter initialState
-  # onUpdate update
+specReporter = defaultReporter initialState # onUpdate update
 
  where
   update s = case _ of

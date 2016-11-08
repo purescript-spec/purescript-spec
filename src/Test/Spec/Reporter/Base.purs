@@ -38,18 +38,30 @@ blue  = withAttrs [36]
 type Update s m r = s -> Event -> m r
 type Summarize s m = s -> Array (Group Result) -> m Unit
 
+-- A reporter is responsible for reporting test results in some monad `m`.
+-- Reporters keep a state `s` that is updated with each application of the
+-- `update` function. Finally a reporter may be asked to report a summary of
+-- the test results, given a set of test results as well as the latest `s` it
+-- built.
 newtype BaseReporter s m = BaseReporter {
   state     :: s
 , update    :: Update s m (BaseReporter s m)
 , summarize :: Summarize s m
 }
 
+-- Update the reporter, given events emitted by the runner.
+-- It returns a new reporter, which then in turn can be updated to
+-- effectively fold over the incoming events.
 update :: ∀ s m. Event -> BaseReporter s m -> m (BaseReporter s m)
 update e (BaseReporter { state: s, update: f }) = f s e
 
+-- Handle summarizing the results
+-- The effect runs in `m` and returns Unit, so is only useful for the
+-- side-effects it causes.
 summarize :: ∀ s m. Array (Group Result) -> BaseReporter s m -> m Unit
 summarize xs (BaseReporter { state, summarize: f }) = f state xs
 
+-- set the update handler for a reporter
 onUpdate
   :: ∀ s m
    . (Monad m)
@@ -58,6 +70,7 @@ onUpdate
   -> BaseReporter s m
 onUpdate update (BaseReporter s) = reporter s.state update s.summarize
 
+-- set the summary handler for a reporter
 onSummarize
   :: ∀ s m
    . Summarize s m
@@ -65,12 +78,13 @@ onSummarize
   -> BaseReporter s m
 onSummarize summarize (BaseReporter s) = BaseReporter $ s { summarize = summarize }
 
+-- implement a fresh reporter
 reporter
   :: ∀ s m
    . (Monad m)
-  => s
-  -> Update s m s
-  -> Summarize s m
+  => s                -- the initial state of the reporter
+  -> Update s m s     -- the update function
+  -> Summarize s m    -- 
   -> BaseReporter s m
 reporter state update summarize = BaseReporter { state, update: go, summarize }
   where
@@ -78,6 +92,8 @@ reporter state update summarize = BaseReporter { state, update: go, summarize }
     s' <- update s e
     pure $ BaseReporter { state: s', update: go, summarize }
 
+-- | A default reporter implementation that can be used as a base to build
+-- | other reporters on top of.
 defaultReporter :: ∀ s e. s -> BaseReporter s (Eff (console :: CONSOLE | e))
 defaultReporter s = reporter s defaultUpdate defaultSummary
   where
@@ -102,8 +118,8 @@ defaultReporter s = reporter s defaultUpdate defaultSummary
       -> StateT Int (Eff (console :: CONSOLE | e)) Unit
     go crumbs groups =
       for_ groups case _ of
-        S.Describe n xs -> go (n:crumbs) xs
-        S.It n (Failure err) ->
+        S.Describe _ n xs -> go (n:crumbs) xs
+        S.It _ n (Failure err) ->
           let label = intercalate " " (reverse $ n:crumbs)
             in do
                 State.modify (_ + 1)

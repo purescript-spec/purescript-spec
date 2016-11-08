@@ -51,6 +51,13 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
     go Nothing x = f x
     go acc _ = acc
 
+-- Run the given spec as `Producer` in the underlying `Aff` monad.
+-- This producer has two responsibilities:
+--      1) emit events for key moments in the runner's lifecycle
+--      2) collect the tst output into an array of results
+-- This allows downstream consumers to report about the tests even before the
+-- prodocer has completed and still benefit from the array of results the way
+-- the runner sees it.
 run'
   :: ∀ e
    . Spec e Unit
@@ -79,12 +86,14 @@ run' spec = do
     Describe only name <$> (for xs runGroup)
     <* yield Event.SuiteEnd
 
+-- Run a spec, returning the results, without any reporting
 runSpec
   :: ∀ e
    . Spec e Unit
   -> Aff e (Array (Group Result))
 runSpec spec = P.runEffect $ run' spec //> const (pure unit)
 
+-- Run the spec, report results and exit the program upon completion
 run
   :: ∀ s e
    . Array (BaseReporter s (Eff (RunEffects e)))
