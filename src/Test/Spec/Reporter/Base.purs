@@ -1,4 +1,4 @@
-module Test.Spec.PipeReporter.BaseReporter (
+module Test.Spec.Reporter.Base (
   update,
   summarize,
   reporter,
@@ -6,10 +6,7 @@ module Test.Spec.PipeReporter.BaseReporter (
   ) where
 
 import Prelude
-import Data.Newtype
-import Control.Monad.Eff  (Eff())
-import Control.Monad.Aff  (Aff())
-import Test.Spec              (Spec(), Group(..), Result(..), collect)
+import Test.Spec              (Group(), Result())
 import Test.Spec.Runner.Event (Event)
 
 type Update s m r = s -> Event -> m r

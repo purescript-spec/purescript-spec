@@ -31,4 +31,4 @@ runnerSpec =
           results `shouldEqual` [It true "works" Success]
         it "supports async" do
           res <- later' 10 $ pure 1
-          res `shouldEqual` 10
+          res `shouldEqual` 1

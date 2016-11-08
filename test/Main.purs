@@ -6,7 +6,7 @@ import Control.Monad.Eff         (Eff())
 import Control.Monad.Eff.Console (CONSOLE())
 import Node.Process              (PROCESS())
 
-import Test.Spec.PipeRunner     (run)
+import Test.Spec.Runner         (run)
 import Test.Spec.Reporter       (consoleReporter)
 
 import Test.Spec.ReporterSpec   (reporterSpec)
