@@ -2,16 +2,15 @@ module Test.Spec.PipeReporter.SpecReporter (specReporter) where
 
 import Prelude
 
-import Data.Tuple (Tuple)
 import Data.String as String
 import Data.Array as Array
 import Data.Array ((:), reverse)
 import Data.Foldable (intercalate)
-import Data.Traversable (sequence_, for_)
+import Data.Traversable (for_)
 
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.State (StateT, execStateT, evalStateT)
+import Control.Monad.State (StateT, evalStateT)
 import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Eff.Exception as Error
@@ -87,7 +86,7 @@ specReporter = reporter { indent: 0, numFailures: 0 } update summarize where
             in do
                 State.modify (_ + 1)
                 i <- State.get
-                lift $ log $ show i <> ") " <> n
+                lift $ log $ show i <> ") " <> label
                 lift $ red $ log $ indent 2 <> Error.message err
         _ -> pure unit
 
