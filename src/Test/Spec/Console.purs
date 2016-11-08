@@ -2,6 +2,7 @@ module Test.Spec.Console
   ( setAttr
   , reset
   , withAttrs
+  , write
   ) where
 
 import Prelude
@@ -12,6 +13,7 @@ import Data.Foldable             (foldr)
 
 -- This needs a foreign function to support the escape sequence.
 foreign import _setAttr :: forall e. String -> Eff (console :: CONSOLE | e) Unit
+foreign import write :: forall e. String -> Eff (console :: CONSOLE | e) Unit
 
 setAttr :: forall e. Int -> Eff (console :: CONSOLE | e) Unit
 setAttr code = _setAttr (show code)

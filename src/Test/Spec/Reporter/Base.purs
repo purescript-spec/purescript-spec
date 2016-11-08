@@ -25,15 +25,12 @@ import Control.Monad.Eff.Exception as Error
 
 import Test.Spec as           S
 import Test.Spec              (Group(), Result(..))
+import Test.Spec.Color as     Color
+import Test.Spec.Color        (colored)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Summary      as Summary
 import Test.Spec.Summary      (Summary(..))
 import Test.Spec.Console      (withAttrs)
-
--- TODO: move these somewhere central (Test.Spec.Console?)
-red   = withAttrs [31]
-green = withAttrs [32]
-blue  = withAttrs [36]
 
 type Update s m r = s -> Event -> m r
 type Summarize s m = s -> Array (Group Result) -> m Unit
@@ -101,9 +98,9 @@ defaultReporter s = reporter s defaultUpdate defaultSummary
   defaultSummary  _ xs = do
     case Summary.summarize xs of
       (Count passed failed pending) -> do
-        when (passed  > 0) $ green $ log $ show passed  <> " passing"
-        when (pending > 0) $ blue  $ log $ show pending <> " pending"
-        when (failed  > 0) $ red   $ log $ show failed  <> " failed"
+        when (passed  > 0) $ log $ colored Color.Green   $ show passed  <> " passing"
+        when (pending > 0) $ log $ colored Color.Pending $ show pending <> " pending"
+        when (failed  > 0) $ log $ colored Color.Fail    $ show failed  <> " failed"
     log ""
     printFailures xs
 
@@ -125,7 +122,7 @@ defaultReporter s = reporter s defaultUpdate defaultSummary
                 State.modify (_ + 1)
                 i <- State.get
                 lift $ log $ show i <> ") " <> label
-                lift $ red $ log $ indent 2 <> Error.message err
+                lift $ log $ colored Color.ErrorMessage $ indent 2 <> Error.message err
         _ -> pure unit
 
   -- TODO: move this somewhere central

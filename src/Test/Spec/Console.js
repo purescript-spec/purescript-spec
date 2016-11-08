@@ -9,7 +9,7 @@ function hasProcessWrite() {
       typeof process.stdout.write === 'function'
 }
 
-function write(s) {
+exports.write = function(s) {
   return function () {
     if (hasProcessWrite()) {
       process.stdout.write(s);
@@ -19,5 +19,5 @@ function write(s) {
 
 // This needs a foreign function to support the escape sequence.
 exports._setAttr = function (codeStr) {
-  return write("\x1b[" + codeStr + "m");
+  return exports.write("\x1b[" + codeStr + "m");
 };
