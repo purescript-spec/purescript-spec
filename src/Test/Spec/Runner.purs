@@ -35,6 +35,8 @@ import Test.Spec.Reporter     as Reporter
 import Test.Spec.Console      (withAttrs)
 import Test.Spec.Summary      (successful)
 
+foreign import dateNow :: ∀ e. Eff e Int
+
 type RunEffects e = (process :: PROCESS, console :: CONSOLE | e)
 
 trim :: ∀ r. Array (Group r) -> Array (Group r)
@@ -70,7 +72,9 @@ run' spec = do
   where
   runGroup (It only name test) = do
     yield Event.Test
-    e <- lift $ attempt test
+    start    <- lift $ liftEff dateNow
+    e        <- lift $ attempt test
+    duration <- (start - _) <$> lift (liftEff dateNow)
     yield $ either
       (Event.Fail name <<< Error.message)
       (const $ Event.Pass name)
