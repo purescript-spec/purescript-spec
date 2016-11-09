@@ -30,7 +30,6 @@ import Test.Spec.Color        (colored)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Summary      as Summary
 import Test.Spec.Summary      (Summary(..))
-import Test.Spec.Console      (withAttrs)
 
 type Update c s m r = c -> s -> Event -> m r
 type Summarize c s m = c -> s -> Array (Group Result) -> m Unit

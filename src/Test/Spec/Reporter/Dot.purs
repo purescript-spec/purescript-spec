@@ -2,19 +2,10 @@ module Test.Spec.Reporter.Dot (dotReporter) where
 
 import Prelude
 
-import Data.Foldable     (intercalate)
-import Data.String as    String
-import Data.Array as     Array
-import Data.Tuple        (Tuple)
-import Data.Tuple.Nested ((/\))
-
-import Control.Monad.Eff              (Eff)
-import Control.Monad.Eff.Console      (CONSOLE, log)
-import Control.Monad.Eff.Exception as Error
+import Control.Monad.Eff         (Eff)
+import Control.Monad.Eff.Console (CONSOLE)
 
 import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate)
-import Test.Spec                 (Group, Result(..))
-import Test.Spec.Console         (withAttrs)
 import Test.Spec.Console         (write) as Console
 import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color

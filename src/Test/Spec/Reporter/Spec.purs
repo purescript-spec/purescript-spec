@@ -23,9 +23,11 @@ type SpecReporterStateObj = {
   indent :: Int
 , numFailures :: Int
 }
+
 type SpecReporterConfigObj = {
   slow :: Int
 }
+
 type SpecReporter r = BaseReporter SpecReporterConfigObj SpecReporterStateObj r
 
 specReporter
@@ -37,8 +39,7 @@ specReporter config
       # onUpdate update
  where
   update { slow } s = case _ of
-    Event.Start -> s <$ do
-      log ""
+    Event.Start _ -> s <$ log ""
     Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
     Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
     Event.Pending name -> s <$ do

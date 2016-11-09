@@ -8,14 +8,17 @@ module Test.Spec (
   pending,
   it,
   itOnly,
-  collect
+  collect,
+  countTests
   ) where
 
 import Prelude
 
 import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (Error())
-import Control.Monad.State         (State(), modify, runState)
+import Control.Monad.State         (State(), modify, execState, runState)
+import Control.Monad.State         as State
+import Data.Traversable            (for)
 import Data.Tuple                  (snd)
 
 type Name = String
@@ -56,6 +59,13 @@ type Spec r t = State (Array (Group (Aff r Unit))) t
 collect :: forall r. Spec r Unit
         -> Array (Group (Aff r Unit))
 collect r = snd $ runState r []
+
+-- | Count the total number of tests in a spec
+countTests :: forall r. Spec r Unit -> Int
+countTests spec = execState (for (collect spec) go) 0
+  where
+  go (Describe _ _ xs) = void $ for xs go
+  go _ = State.modify (_ + 1)
 
 ---------------------
 --       DSL       --

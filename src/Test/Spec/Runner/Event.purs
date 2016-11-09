@@ -6,9 +6,10 @@ import Data.Generic (class Generic, gShow)
 type Message = String
 type Name = String
 type Duration = Int
+type NumberOfTests = Int
 
 data Event
-  = Start
+  = Start NumberOfTests
   | Suite String
   | Test
   | TestEnd

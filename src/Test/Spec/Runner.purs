@@ -30,6 +30,7 @@ import Node.Process as Process
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Runner.Event as Event
 import Test.Spec              (Spec(), Group(..), Result(..), collect)
+import Test.Spec              as Spec
 import Test.Spec.Reporter     (BaseReporter())
 import Test.Spec.Reporter     as Reporter
 import Test.Spec.Console      (withAttrs)
@@ -65,7 +66,7 @@ run'
    . Spec e Unit
   -> Producer Event (Aff e) (Array (Group Result))
 run' spec = do
-  yield Event.Start
+  yield (Event.Start (Spec.countTests spec))
   for (trim $ collect spec) runGroup
   <* yield Event.End
 
@@ -79,6 +80,7 @@ run' spec = do
       (Event.Fail name <<< Error.message)
       (const $ Event.Pass name duration)
       e
+    yield Event.TestEnd
     pure $ It only name $ either Failure (const Success) e
 
   runGroup (Pending name) = do
