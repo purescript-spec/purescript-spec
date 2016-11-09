@@ -1,7 +1,11 @@
 module Test.Spec.Runner.Event where
 
 import Prelude
-import Data.Generic
+import Data.Generic (class Generic, gShow)
+
+type Message = String
+type Name = String
+type Duration = Int
 
 data Event
   = Start
@@ -9,8 +13,8 @@ data Event
   | Test
   | TestEnd
   | SuiteEnd
-  | Fail String String
-  | Pass String
+  | Fail Name Message
+  | Pass Name Duration
   | Pending String
   | End
 

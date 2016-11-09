@@ -74,10 +74,10 @@ run' spec = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt test
-    duration <- (start - _) <$> lift (liftEff dateNow)
+    duration <- lift $ (start - _) <$> liftEff dateNow
     yield $ either
       (Event.Fail name <<< Error.message)
-      (const $ Event.Pass name)
+      (const $ Event.Pass name duration)
       e
     pure $ It only name $ either Failure (const Success) e
 
@@ -99,8 +99,8 @@ runSpec spec = P.runEffect $ run' spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
 run
-  :: ∀ s e
-   . Array (BaseReporter s (Eff (RunEffects e)))
+  :: ∀ c s e
+   . Array (BaseReporter c s (Eff (RunEffects e)))
   -> Spec (RunEffects e) Unit
   -> Eff  (RunEffects e) Unit
 run reporters spec = void do

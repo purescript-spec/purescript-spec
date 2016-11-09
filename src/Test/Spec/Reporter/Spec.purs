@@ -21,22 +21,24 @@ type SpecReporterStateObj = {
   indent :: Int
 , numFailures :: Int
 }
+type SpecReporterConfigObj = {}
+type SpecReporter r = BaseReporter SpecReporterConfigObj SpecReporterStateObj r
 
 initialState :: SpecReporterStateObj
 initialState = { indent: 0, numFailures: 0 }
 
-specReporter :: ∀ e. BaseReporter SpecReporterStateObj (Eff (console :: CONSOLE | e))
-specReporter = defaultReporter initialState # onUpdate update
-
+specReporter :: ∀ e. SpecReporter (Eff (console :: CONSOLE | e))
+specReporter = defaultReporter {} initialState
+                  # onUpdate update
  where
-  update s = case _ of
+  update _ s = case _ of
     Event.Start -> s <$ do
       log ""
     Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
     Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
     Event.Pending name -> s <$ do
       _log $ colored Color.Pending $ "- " <> name
-    Event.Pass name    -> s <$ do
+    Event.Pass name _  -> s <$ do
       _log $ colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name
     Event.Fail name _ ->
       let s' = s { numFailures = s.numFailures + 1 }

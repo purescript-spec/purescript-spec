@@ -20,26 +20,29 @@ import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color
 import Test.Spec.Runner.Event as Event
 
-type DotReporterState = Tuple Int Int
+type DotReporterState = Int
+type DotReporterConfig = Int
+type DotReporter r = BaseReporter DotReporterConfig DotReporterState r
 
 dotReporter
-  :: Int -- the width of the block of dots (i.e. how many tests per line?)
-  -> ∀ e. BaseReporter DotReporterState (Eff (console :: CONSOLE | e))
-dotReporter w = defaultReporter (w /\ -1)
-  # onUpdate update
+  :: Int -- the threshold of when to consider a test "slow"
+  -- -> Int -- the width of the block of dots (i.e. how many tests per line?)
+  -> ∀ e. DotReporter (Eff (console :: CONSOLE | e))
+dotReporter w = defaultReporter w (-1)
+                  # onUpdate update
 
  where
-  update s@(w /\ n) = case _ of
-    Event.Pass _    -> wrap $ Console.write (colored Color.Pending ".")
+  update w n = case _ of
+    Event.Pass  _ _ -> wrap $ Console.write (colored Color.Pending ".")
     Event.Pending _ -> wrap $ Console.write (colored Color.Pass    ",")
     Event.Fail  _ _ -> wrap $ Console.write (colored Color.Fail    "!")
-    Event.End       -> s   <$ Console.write "\n"
-    _               -> pure s
+    Event.End       -> n <$ Console.write "\n"
+    _               -> pure n
 
     where
     wrap action =
       let n' = n + 1
-       in (w /\ n') <$ do
+       in n' <$ do
             when (n' `mod` w == 0) (Console.write "\n")
             action
 
