@@ -1,22 +1,22 @@
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-import Data.Array (init)
-import Data.Maybe (fromMaybe)
-import Data.Foldable (intercalate)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Test.Spec.Summary as Summary
-import Test.Spec.Summary (Summary(..))
-import Test.Spec (Group, Result(..))
-import Test.Spec.Console (withAttrs)
-import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Base (BaseReporter, defaultReporter, onSummarize, onUpdate)
 
--- TODO: move these somewhere central (Test.Spec.Console?)
-red   = withAttrs [31]
-green = withAttrs [32]
-blue  = withAttrs [36]
+import Data.Array    (init)
+import Data.Maybe    (fromMaybe)
+import Data.Foldable (intercalate)
+
+import Control.Monad.Eff         (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+
+import Test.Spec.Summary as      Summary
+import Test.Spec.Summary         (Summary(..))
+import Test.Spec                 (Group, Result(..))
+import Test.Spec.Color           (colored)
+import Test.Spec.Color as        Color
+import Test.Spec.Console         (withAttrs)
+import Test.Spec.Runner.Event as Event
+import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onSummarize, onUpdate)
 
 type ConsoleReporterStateObj = {
   crumbs :: Array String
@@ -53,13 +53,13 @@ consoleReporter = defaultReporter initialState
     Event.Suite name -> pure (pushCrumb name s)
     Event.SuiteEnd -> pure (popCrumb s)
     Event.Pass name -> flushCrumbs do
-      green $ log $  "✓︎ " <> name
+      log $ "  " <> (colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name)
     Event.Pending name -> flushCrumbs do
-      blue $ log $  "~ " <> name
+      log $ "  " <> (colored Color.Pending $ "~ " <> name)
     Event.Fail name msg -> flushCrumbs do
-      red $ log $ "✗ " <> name <> ":"
+      log $ "  " <> (colored Color.Fail $ "✗ " <> name <> ":")
       log ""
-      red $ log $ "  " <> msg
+      log $ colored Color.Fail $ "  " <> msg
     _ -> pure s
       where
       flushCrumbs action =
