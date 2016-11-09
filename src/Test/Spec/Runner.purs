@@ -74,7 +74,7 @@ run' spec = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt test
-    duration <- lift $ (start - _) <$> liftEff dateNow
+    duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (Event.Fail name <<< Error.message)
       (const $ Event.Pass name duration)
