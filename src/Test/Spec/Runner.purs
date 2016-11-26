@@ -9,9 +9,12 @@ import Control.Monad.Aff           (Aff(), runAff, attempt)
 import Control.Monad.Eff           (Eff())
 import Control.Monad.Eff.Console   (CONSOLE(), logShow)
 import Control.Monad.Eff.Exception (Error)
+import Control.Alt                 ((<|>))
 
+import Data.Array                (singleton)
+import Data.Maybe                (Maybe(..), fromMaybe)
 import Data.Either               (either)
-import Data.Foldable             (sequence_)
+import Data.Foldable             (foldl, sequence_)
 import Data.Traversable          (sequence)
 
 import Test.Spec                (Spec(), Group(..), Result(..), collect)
@@ -26,20 +29,34 @@ runCatch :: forall r. Group (Aff r Unit)
          -> Aff r (Group Result)
 runCatch group =
   case group of
-    It name test -> do
-      let onError e = pure $ It name $ Failure e
-          onSuccess _ = pure $ It name Success
+    It only name test -> do
+      let onError e = pure $ It only name $ Failure e
+          onSuccess _ = pure $ It only name Success
       e <- attempt test
       either onError onSuccess e
-    Describe name groups -> do
+    Describe only name groups -> do
       results <- sequence (map runCatch groups)
-      pure (Describe name results)
+      pure (Describe only name results)
     Pending name -> pure (Pending name)
 
+trim :: ∀ r. Array (Group r) -> Array (Group r)
+trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
+  where
+  findOnly :: Group r -> Maybe (Group r)
+  findOnly g@(It true _ _) = pure g
+  findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g
+                                                               else Nothing
+  findOnly _ = Nothing
+
+  findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
+  findJust f = foldl go Nothing
+    where
+    go Nothing x = f x
+    go acc _     = acc
 
 runSpec :: forall r. Spec r Unit
          -> Aff r (Array (Group Result))
-runSpec = sequence <<< map runCatch <<< collect
+runSpec = sequence <<< map runCatch <<< trim <<< collect
 
 -- Runs the tests and invoke all reporters.
 -- If run in a NodeJS environment any failed test will cause the

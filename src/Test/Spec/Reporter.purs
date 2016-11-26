@@ -38,9 +38,9 @@ type Entries = Map EntryPath (Array Entry)
 collapseAt :: EntryPath -> Group Result -> Entries
 collapseAt path group =
   case group of
-    S.It name result -> singleton path [It name result]
+    S.It _ name result -> singleton path [It name result]
     S.Pending name -> singleton path [Pending name]
-    S.Describe name groups -> collapseAllAt (path <> [name]) groups
+    S.Describe _ name groups -> collapseAllAt (path <> [name]) groups
 
 collapseAllAt :: EntryPath -> Array (Group Result) -> Entries
 collapseAllAt path = foldl (unionWith (<>)) empty <<< map (collapseAt path)
