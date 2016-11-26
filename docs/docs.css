@@ -63,7 +63,6 @@ pre {
 }
 
 p code {
-  display: inline-block;
   background: #eee;
   padding: 0 2px;
   line-height: 1.3;
