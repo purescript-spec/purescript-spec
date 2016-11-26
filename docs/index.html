@@ -29,6 +29,7 @@
 <li><a href="#writing-specs">Writing Specs</a><ul>
 <li><a href="#full-example">Full Example</a></li>
 <li><a href="#combining-specs">Combining Specs</a></li>
+<li><a href="#running-a-subset-of-the-specs">Running A Subset of the Specs</a></li>
 <li><a href="#quickcheck">QuickCheck</a></li>
 </ul></li>
 <li><a href="#running">Running</a><ul>
@@ -111,6 +112,17 @@ main = run [consoleReporter] do
   arraySpec
   ...</code></pre>
 <p>This is often used to combine all specs into a single spec that can be passed to the test runner.</p>
+<h3 id="running-a-subset-of-the-specs">Running A Subset of the Specs</h3>
+<p>Sometimes you do not wish to run all specs. It might be that you are working on a certain feature, and only want to see the results for the relevant tests. It can also be that some spec takes a lot of time, and you wish to exclude it temporarily. By using <code>itOnly</code> instead of the regular <code>it</code>, the test runner includes only that spec.</p>
+<pre class="purescript"><code>describe &quot;My API&quot; do
+  itOnly &quot;does feature X&quot; ... -- only this spec will run
+  it &quot;does things that takes a lot of time&quot;</code></pre>
+<p>Similar to <code>itOnly</code>, <code>describeOnly</code> makes the runner include only that group.</p>
+<pre class="purescript"><code>describe &quot;Module&quot; do
+  describeOnly &quot;Sub Module A&quot; -- only this group will run
+    it &quot;does feature X&quot; ...
+  describe &quot;Sub Module B&quot;
+    it &quot;does feature Y&quot; ...</code></pre>
 <h3 id="quickcheck">QuickCheck</h3>
 <p>You can use <a href="https://github.com/purescript/purescript-quickcheck">QuickCheck</a> together with the <a href="https://github.com/owickstrom/purescript-spec-quickcheck">purescript-spec-quickcheck</a> adapter to get nice output formatting for QuickCheck tests.</p>
 <h2 id="running">Running</h2>

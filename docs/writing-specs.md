@@ -119,6 +119,30 @@ baseSpecs = do
 This is often used to combine all specs into a single spec that can be passed
 to the test runner.
 
+## Running A Subset of the Specs
+
+Sometimes you do not wish to run all specs. It might be that you are working
+on a certain feature, and only want to see the results for the relevant tests.
+It can also be that some spec takes a lot of time, and you wish to exclude it
+temporarily. By using `itOnly` instead of the regular `it`, the test runner
+includes only that spec.
+
+```purescript
+describe "My API" do
+  itOnly "does feature X" ... -- only this spec will run
+  it "does things that takes a lot of time"
+```
+
+Similar to `itOnly`, `describeOnly` makes the runner include only that group.
+
+```purescript
+describe "Module" do
+  describeOnly "Sub Module A" -- only this group will run
+    it "does feature X" ...
+  describe "Sub Module B"
+    it "does feature Y" ...
+```
+
 ## QuickCheck
 
 You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
