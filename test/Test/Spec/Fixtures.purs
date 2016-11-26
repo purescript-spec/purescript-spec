@@ -44,6 +44,16 @@ describeOnlyTest =
       it "also works" do
         1 `shouldEqual` 1
 
+describeOnlyNestedTest :: forall r. Spec r Unit
+describeOnlyNestedTest =
+  describe "a" do
+    describeOnly "b" do
+      it "works" do
+        1 `shouldEqual` 1
+    describe "c" do
+      it "also works" do
+        1 `shouldEqual` 1
+
 itOnlyTest :: forall r. Spec r Unit
 itOnlyTest =
   describe "a" do

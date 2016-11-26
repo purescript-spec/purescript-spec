@@ -32,6 +32,9 @@ runnerSpec =
           results <- runSpec describeOnlyTest
           results `shouldEqual` [Describe true "a" [Describe false "b" [It false "works" Success],
                                                     Describe false "c" [It false "also works" Success]]]
+        it "filters using \"only\" modifier on nested \"describe\" block" do
+          results <- runSpec describeOnlyNestedTest
+          results `shouldEqual` [Describe true "b" [It false "works" Success]]
         it "filters using \"only\" modifier on \"it\" block" do
           results <- runSpec itOnlyTest
           results `shouldEqual` [It true "works" Success]
