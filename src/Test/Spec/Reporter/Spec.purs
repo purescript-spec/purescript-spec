@@ -43,11 +43,11 @@ specReporter groups = do
                   -> StateT ReporterState (Eff (console :: CONSOLE | r)) Unit
   printGroups i crumbs groups = do
     void $ for groups case _ of
-      S.Describe n xs -> do
+      S.Describe _ n xs -> do
         logPlain n
         printGroups (i + 1) (n : crumbs) xs
       S.Pending n -> logBlue $ "- " <> n
-      S.It n result ->
+      S.It _ n result ->
         case result of
           Success -> logGreen $ "✓︎ " <> n
           Failure err ->

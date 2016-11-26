@@ -1,20 +1,11 @@
 module Test.Spec.RunnerSpec where
 
 import Prelude
-
-import Control.Monad.Aff         (later')
-
-import Test.Spec            ( Group(..)
-                            , Result(..)
-                            , Spec
-                            , describe
-                            , it
-                            , itOnly
-                            )
+import Control.Monad.Aff (later')
+import Test.Spec (Group(..), Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.Runner     (runSpec)
-
-import Test.Spec.Fixtures
+import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
+import Test.Spec.Runner (runSpec)
 
 runnerSpec :: forall r. Spec r Unit
 runnerSpec =
