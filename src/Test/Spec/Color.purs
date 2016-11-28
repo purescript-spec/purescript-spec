@@ -1,5 +1,7 @@
 module Test.Spec.Color where
 
+import Prelude ((<<<))
+
 data Color
  = Pass
  | Fail
@@ -37,6 +39,6 @@ code Green        = 32
 code Light        = 90
 
 colored :: Color -> String -> String
-colored c = _colored (code c)
+colored = _colored <<< code
 
 foreign import _colored :: Int -> String -> String

@@ -18,7 +18,7 @@ import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (Error())
 import Control.Monad.State         (State(), modify, execState, runState)
 import Control.Monad.State         as State
-import Data.Traversable            (for)
+import Data.Traversable            (for, for_)
 import Data.Tuple                  (snd)
 
 type Name = String
@@ -64,7 +64,7 @@ collect r = snd $ runState r []
 countTests :: forall r. Spec r Unit -> Int
 countTests spec = execState (for (collect spec) go) 0
   where
-  go (Describe _ _ xs) = void $ for xs go
+  go (Describe _ _ xs) = for_ xs go
   go _ = State.modify (_ + 1)
 
 ---------------------
