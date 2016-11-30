@@ -10,7 +10,7 @@ import Test.Spec.ReporterSpec (reporterSpec)
 import Test.Spec.Runner (run)
 import Test.Spec.RunnerSpec (runnerSpec)
 
-main :: forall eff. Eff (console :: CONSOLE, process :: PROCESS | eff) Unit
+main :: forall eff. Eff _ Unit
 main = run [specReporter] do
   runnerSpec
   reporterSpec

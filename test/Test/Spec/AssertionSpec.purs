@@ -9,7 +9,7 @@ import Test.Spec                    (Spec, describe, it)
 import Test.Spec.Assertions.Aff     (expectError)
 import Test.Spec.Assertions.String  (shouldContain, shouldNotContain)
 
-assertionSpec :: forall r. Spec r Unit
+assertionSpec :: Spec _ Unit
 assertionSpec =
   describe "Test" $
     describe "Spec" $

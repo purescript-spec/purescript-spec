@@ -4,6 +4,7 @@ module Test.Spec.Runner (
   , runSpec
   , runSpec'
   , defaultConfig
+  , timeout
   , Config
   , RunEffects
   ) where
@@ -23,12 +24,15 @@ import Data.Tuple       (snd)
 import Data.Either      (either)
 import Data.Maybe       (Maybe(..), fromMaybe)
 
-import Control.Monad.Aff           (Aff(), runAff, attempt)
+import Control.Monad.Aff           (Aff(), makeAff, runAff, forkAff, cancelWith, attempt)
+import Control.Monad.Aff.AVar      (modifyVar, makeVar', makeVar, killVar,
+                                    putVar, takeVar, AVAR)
 import Control.Monad.Eff           (Eff())
 import Control.Monad.Eff.Class     (liftEff)
 import Control.Monad.Eff.Console   (CONSOLE(), logShow)
-import Control.Monad.Eff.Exception (Error)
+import Control.Monad.Eff.Exception (Error, error)
 import Control.Monad.Eff.Exception as Error
+import Control.Monad.Eff.Timer     (TIMER, setTimeout)
 import Control.Monad.Trans.Class   (lift)
 import Control.Alternative ((<|>))
 
@@ -48,13 +52,21 @@ import Test.Spec.Speed as     Speed
 
 foreign import dateNow :: ∀ e. Eff e Int
 
-type RunEffects e = (process :: PROCESS, console :: CONSOLE | e)
+type RunEffects e = ( process :: PROCESS
+                    , console :: CONSOLE
+                    , timer   :: TIMER
+                    , avar    :: AVAR
+                    | e)
 
-type Config = { slow :: Int }
+type Config = {
+  slow :: Int
+, timeout :: Maybe Int
+}
 
 defaultConfig :: Config
 defaultConfig = {
   slow: 75
+, timeout: Just 2000
 }
 
 trim :: ∀ r. Array (Group r) -> Array (Group r)
@@ -71,6 +83,31 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
     go Nothing x = f x
     go acc _ = acc
 
+pickFirst
+  :: ∀ e
+   . Aff (avar :: AVAR | e) Unit
+  -> Aff (avar :: AVAR | e) Unit
+  -> Aff (avar :: AVAR | e) Unit
+pickFirst t1 t2 = do
+  va <- makeVar
+  c1 <- forkAff $ attempt t1 >>= either (killVar va) (putVar va)
+  c2 <- forkAff $ attempt t2 >>= either (killVar va) (putVar va)
+  (takeVar va) `cancelWith` (c1 <> c2)
+
+makeTimeout
+  :: ∀ e
+   . Int
+  -> Aff (timer :: TIMER | e) Unit
+makeTimeout time = makeAff \fail _ -> void do
+  setTimeout time $ fail $ error $ "test timed out after " <> show time <> "ms"
+
+timeout
+  :: ∀ e
+   . Int
+  -> Aff (timer :: TIMER, avar :: AVAR | e) Unit
+  -> Aff (timer :: TIMER, avar :: AVAR | e) Unit
+timeout time t = t `pickFirst` (makeTimeout time)
+
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
 --      1) emit events for key moments in the runner's lifecycle
@@ -81,9 +118,9 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
 _run
   :: ∀ e
    . Config
-  -> Spec e Unit
-  -> Producer Event (Aff e) (Array (Group Result))
-_run { slow } spec = do
+  -> Spec (timer :: TIMER, avar :: AVAR | e) Unit
+  -> Producer Event (Aff (timer :: TIMER, avar :: AVAR | e)) (Array (Group Result))
+_run config spec = do
   yield (Event.Start (Spec.countTests spec))
   for (trim $ collect spec) runGroup
   <* yield Event.End
@@ -92,11 +129,13 @@ _run { slow } spec = do
   runGroup (It only name test) = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
-    e        <- lift $ attempt test
+    e        <- lift $ attempt case config.timeout of
+                                      Just t -> timeout t test
+                                      _      -> test
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (Event.Fail name <<< Error.message)
-      (const $ Event.Pass name (speedOf slow duration) duration)
+      (const $ Event.Pass name (speedOf config.slow duration) duration)
       e
     yield Event.TestEnd
     pure $ It only name $ either Failure (const Success) e
@@ -114,14 +153,14 @@ _run { slow } spec = do
 runSpec'
   :: ∀ e
    . Config
-  -> Spec e Unit
-  -> Aff e (Array (Group Result))
+  -> Spec (timer :: TIMER, avar :: AVAR | e) Unit
+  -> Aff (timer :: TIMER, avar :: AVAR | e) (Array (Group Result))
 runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
 
 runSpec
   :: ∀ e
-   . Spec e Unit
-  -> Aff e (Array (Group Result))
+   . Spec (timer :: TIMER, avar :: AVAR | e) Unit
+  -> Aff (timer :: TIMER, avar :: AVAR | e) (Array (Group Result))
 runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
