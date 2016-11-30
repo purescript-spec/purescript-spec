@@ -1,4 +1,12 @@
-module Test.Spec.Runner where
+module Test.Spec.Runner (
+    run
+  , run'
+  , runSpec
+  , runSpec'
+  , defaultConfig
+  , Config
+  , RunEffects
+  ) where
 
 import Prelude
 
