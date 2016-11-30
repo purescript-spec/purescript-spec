@@ -2,9 +2,11 @@ module Test.Spec.Reporter.Tap (tapReporter) where
 
 import Prelude
 
+import Data.Maybe                 (Maybe(..))
 import Data.String.Regex as       Regex
 import Data.String.Regex.Flags as Regex
 import Data.String.Regex          (regex, Regex())
+import Data.String                (Pattern(Pattern), joinWith, split)
 import Data.Either                (fromRight)
 
 import Control.Monad.Eff         (Eff)
@@ -39,9 +41,12 @@ tapReporter
       "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
     Event.Pass name _ _ -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name)
-    Event.Fail name msg -> n <$ do
+    Event.Fail name msg mStack -> n <$ do
       log $ "not ok " <> show n <> " " <> (escTitle name)
       log $ escMsg msg
+      case mStack of
+        Nothing -> pure unit
+        Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
     _ -> pure n
 
   summarize _ _ xs =

@@ -134,7 +134,10 @@ _run config spec = do
                                       _      -> test
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
-      (Event.Fail name <<< Error.message)
+      (\err ->
+        let msg = Error.message err
+            stack = Error.stack err
+         in Event.Fail name msg stack)
       (const $ Event.Pass name (speedOf config.slow duration) duration)
       e
     yield Event.TestEnd

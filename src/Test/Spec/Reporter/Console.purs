@@ -61,7 +61,7 @@ consoleReporter = defaultReporter {} initialState
       log $ "  " <> (colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name)
     Event.Pending name -> flushCrumbs do
       log $ "  " <> (colored Color.Pending $ "~ " <> name)
-    Event.Fail name msg -> flushCrumbs do
+    Event.Fail name msg _ -> flushCrumbs do
       log $ "  " <> (colored Color.Fail $ "✗ " <> name <> ":")
       log ""
       log $ colored Color.Fail $ "  " <> msg

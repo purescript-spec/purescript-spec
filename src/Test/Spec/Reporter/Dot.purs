@@ -28,10 +28,10 @@ dotReporter config
     Event.Pass _ speed ms ->
       let col = Speed.toColor speed
        in wrap $ Console.write (colored col ".")
-    Event.Fail  _ _ -> wrap $ Console.write (colored Color.Fail    "!")
-    Event.Pending _ -> wrap $ Console.write (colored Color.Pass    ",")
-    Event.End       -> n <$ Console.write "\n"
-    _               -> pure n
+    Event.Fail _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
+    Event.Pending _  -> wrap $ Console.write (colored Color.Pass ",")
+    Event.End        -> n <$ Console.write "\n"
+    _                -> pure n
 
     where
     wrap action =

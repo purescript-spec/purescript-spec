@@ -49,7 +49,7 @@ specReporter
                           label = " (" <> show ms <> "ms)"
                       in colored col label
 
-    Event.Fail name _ ->
+    Event.Fail name _ _ ->
       let s' = s { numFailures = s.numFailures + 1 }
        in s' <$ (_log $ colored Color.Fail $ show s'.numFailures <> ") " <> name)
     _ -> pure s
