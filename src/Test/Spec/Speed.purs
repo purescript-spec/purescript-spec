@@ -1,10 +1,16 @@
-module Test.Spec.Reporter.Speed where
+module Test.Spec.Speed where
 
 import Prelude
+import Data.Generic (class Generic, gShow)
 import Test.Spec.Color as Color
 import Test.Spec.Color (Color)
 
 data Speed = Fast | Medium | Slow
+
+derive instance genericSpeed :: Generic Speed
+
+instance showSpeed :: Show Speed
+  where show = gShow
 
 speedOf :: Int -> Int -> Speed
 speedOf thresh ms | ms > thresh     = Slow

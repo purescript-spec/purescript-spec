@@ -2,6 +2,7 @@ module Test.Spec.Runner.Event where
 
 import Prelude
 import Data.Generic (class Generic, gShow)
+import Test.Spec.Speed (Speed)
 
 type Message = String
 type Name = String
@@ -15,7 +16,7 @@ data Event
   | TestEnd
   | SuiteEnd
   | Fail Name Message
-  | Pass Name Duration
+  | Pass Name Speed Duration
   | Pending String
   | End
 

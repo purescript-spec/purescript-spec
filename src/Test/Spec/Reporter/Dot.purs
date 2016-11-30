@@ -10,7 +10,7 @@ import Test.Spec.Console         (write) as Console
 import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Speed as Speed
+import Test.Spec.Speed as        Speed
 
 type DotReporterState = Int
 type DotReporterConfig = { slow :: Int, width :: Int }
@@ -25,8 +25,8 @@ dotReporter config
 
  where
   update { slow, width } n = case _ of
-    Event.Pass  _ ms ->
-      let col = Speed.toColor' slow ms
+    Event.Pass _ speed ms ->
+      let col = Speed.toColor speed
        in wrap $ Console.write (colored col ".")
     Event.Fail  _ _ -> wrap $ Console.write (colored Color.Fail    "!")
     Event.Pending _ -> wrap $ Console.write (colored Color.Pass    ",")

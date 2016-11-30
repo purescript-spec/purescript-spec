@@ -18,7 +18,6 @@ import Test.Spec                 (Group(), Result(..))
 import Test.Spec.Summary as      Summary
 import Test.Spec.Summary         (Summary(..))
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Speed as Speed
 
 import Partial.Unsafe (unsafePartial)
 
@@ -38,7 +37,7 @@ tapReporter
     Event.TestEnd -> pure (n + 1)
     Event.Pending name -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
-    Event.Pass name _ -> n <$ log do
+    Event.Pass name _ _ -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name)
     Event.Fail name msg -> n <$ do
       log $ "not ok " <> show n <> " " <> (escTitle name)

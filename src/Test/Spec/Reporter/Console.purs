@@ -57,7 +57,7 @@ consoleReporter = defaultReporter {} initialState
   update _ s = case _ of
     Event.Suite name -> pure (pushCrumb name s)
     Event.SuiteEnd -> pure (popCrumb s)
-    Event.Pass name _ -> flushCrumbs do
+    Event.Pass name _ _ -> flushCrumbs do
       log $ "  " <> (colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name)
     Event.Pending name -> flushCrumbs do
       log $ "  " <> (colored Color.Pending $ "~ " <> name)

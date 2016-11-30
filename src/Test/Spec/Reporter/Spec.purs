@@ -16,42 +16,36 @@ import Test.Spec.Console         (withAttrs)
 import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Speed (speedOf)
-import Test.Spec.Reporter.Speed as Speed
+import Test.Spec.Speed as        Speed
 
 type SpecReporterStateObj = {
   indent :: Int
 , numFailures :: Int
 }
 
-type SpecReporterConfigObj = {
-  slow :: Int
-}
-
-type SpecReporter r = BaseReporter SpecReporterConfigObj SpecReporterStateObj r
+type SpecReporter r = BaseReporter {} SpecReporterStateObj r
 
 specReporter
   :: ∀ e
-   . SpecReporterConfigObj
-  -> SpecReporter (Eff (console :: CONSOLE | e))
-specReporter config
-  = defaultReporter config { indent: 0, numFailures: 0 }
+   . SpecReporter (Eff (console :: CONSOLE | e))
+specReporter
+  = defaultReporter {} { indent: 0, numFailures: 0 }
       # onUpdate update
  where
-  update { slow } s = case _ of
+  update _ s = case _ of
     Event.Start _ -> s <$ log ""
     Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
     Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
     Event.Pending name -> s <$ do
       _log $ colored Color.Pending $ "- " <> name
-    Event.Pass name ms -> s <$ do
+    Event.Pass name speed ms -> s <$ do
       _log $ colored Color.Checkmark "✓︎"
               <> " "
               <> colored Color.Pass name
-              <> case speedOf slow ms of
+              <> case speed of
                     Speed.Fast -> ""
                     _ ->
-                      let col = Speed.toColor' slow ms
+                      let col = Speed.toColor speed
                           label = " (" <> show ms <> "ms)"
                       in colored col label
 

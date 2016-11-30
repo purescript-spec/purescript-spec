@@ -11,7 +11,7 @@ import Test.Spec.Runner (run)
 import Test.Spec.RunnerSpec (runnerSpec)
 
 main :: forall eff. Eff (console :: CONSOLE, process :: PROCESS | eff) Unit
-main = run [specReporter { slow: 400 }] do
+main = run [specReporter] do
   runnerSpec
   reporterSpec
   assertionSpec

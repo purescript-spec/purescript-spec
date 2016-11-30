@@ -35,10 +35,19 @@ import Test.Spec.Reporter     (BaseReporter())
 import Test.Spec.Reporter     as Reporter
 import Test.Spec.Console      (withAttrs)
 import Test.Spec.Summary      (successful)
+import Test.Spec.Speed        (speedOf)
+import Test.Spec.Speed as     Speed
 
 foreign import dateNow :: ∀ e. Eff e Int
 
 type RunEffects e = (process :: PROCESS, console :: CONSOLE | e)
+
+type Config = { slow :: Int }
+
+defaultConfig :: Config
+defaultConfig = {
+  slow: 75
+}
 
 trim :: ∀ r. Array (Group r) -> Array (Group r)
 trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
@@ -61,11 +70,12 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
 -- This allows downstream consumers to report about the tests even before the
 -- prodocer has completed and still benefit from the array of results the way
 -- the runner sees it.
-run'
+_run
   :: ∀ e
-   . Spec e Unit
+   . Config
+  -> Spec e Unit
   -> Producer Event (Aff e) (Array (Group Result))
-run' spec = do
+_run { slow } spec = do
   yield (Event.Start (Spec.countTests spec))
   for (trim $ collect spec) runGroup
   <* yield Event.End
@@ -78,7 +88,7 @@ run' spec = do
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (Event.Fail name <<< Error.message)
-      (const $ Event.Pass name duration)
+      (const $ Event.Pass name (speedOf slow duration) duration)
       e
     yield Event.TestEnd
     pure $ It only name $ either Failure (const Success) e
@@ -93,23 +103,31 @@ run' spec = do
     <* yield Event.SuiteEnd
 
 -- Run a spec, returning the results, without any reporting
+runSpec'
+  :: ∀ e
+   . Config
+  -> Spec e Unit
+  -> Aff e (Array (Group Result))
+runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
+
 runSpec
   :: ∀ e
    . Spec e Unit
   -> Aff e (Array (Group Result))
-runSpec spec = P.runEffect $ run' spec //> const (pure unit)
+runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
-run
+run'
   :: ∀ c s e
-   . Array (BaseReporter c s (Eff (RunEffects e)))
+   . Config
+  -> Array (BaseReporter c s (Eff (RunEffects e)))
   -> Spec (RunEffects e) Unit
   -> Eff  (RunEffects e) Unit
-run reporters spec = void do
+run' config reporters spec = void do
   runAff onError onSuccess do
     snd <$> do
       P.foldM' step begin done do
-        run' spec
+        _run config spec
 
   where
     begin       = pure reporters
@@ -125,3 +143,10 @@ run reporters spec = void do
                            if (successful results)
                              then Process.exit 0
                              else Process.exit 1
+
+run
+  :: ∀ c s e
+   . Array (BaseReporter c s (Eff (RunEffects e)))
+  -> Spec (RunEffects e) Unit
+  -> Eff  (RunEffects e) Unit
+run = run' defaultConfig
