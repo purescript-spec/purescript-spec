@@ -10,7 +10,7 @@ import Test.Spec.Fixtures (failureTest, pendingTest, sharedDescribeTest, duplica
 import Test.Spec.Reporter (collapseAll, Entry(..))
 import Test.Spec.Runner (runSpec)
 
-reporterSpec :: Spec _ Unit
+reporterSpec :: ∀ e. Spec e Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $

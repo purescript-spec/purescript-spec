@@ -3,6 +3,7 @@ module Test.Spec (
   Result(..),
   Group(..),
   Spec(..),
+  SpecEffects,
   describe,
   describeOnly,
   pending,
@@ -20,6 +21,11 @@ import Control.Monad.State         (State(), modify, execState, runState)
 import Control.Monad.State         as State
 import Data.Traversable            (for, for_)
 import Data.Tuple                  (snd)
+
+import Node.Process               (PROCESS)
+import Control.Monad.Aff.AVar     (AVAR)
+import Control.Monad.Eff.Console  (CONSOLE)
+import Control.Monad.Eff.Timer    (TIMER)
 
 type Name = String
 type Only = Boolean
@@ -54,10 +60,15 @@ instance eqGroup :: Eq t => Eq (Group t) where
   eq _                   _                   = false
 
 -- Specifications with unevaluated tests.
-type Spec r t = State (Array (Group (Aff r Unit))) t
+type SpecEffects e =  ( process :: PROCESS
+                      , console :: CONSOLE
+                      , timer   :: TIMER
+                      , avar    :: AVAR
+                      | e)
+type Spec eff t = State (Array (Group (Aff (SpecEffects eff) Unit))) t
 
 collect :: forall r. Spec r Unit
-        -> Array (Group (Aff r Unit))
+        -> Array (Group (Aff (SpecEffects r) Unit))
 collect r = snd $ runState r []
 
 -- | Count the total number of tests in a spec
@@ -109,21 +120,21 @@ pending' name _ = pending name
 
 -- | Create a spec with a description that either has the "only" modifier
 -- | applied or not
-_it :: forall r.  Boolean
+_it :: forall eff. Boolean
    -> String
-   -> Aff r Unit
-   -> Spec r Unit
+   -> Aff (SpecEffects eff) Unit
+   -> Spec eff Unit
 _it only description tests = modify (_ <> [It only description tests]) $> unit
 
 -- | Create a spec with a description.
-it :: forall r. String
-   -> Aff r Unit
-   -> Spec r Unit
+it :: forall eff. String
+   -> Aff (SpecEffects eff) Unit
+   -> Spec eff Unit
 it = _it false
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
-itOnly :: forall r. String
-   -> Aff r Unit
-   -> Spec r Unit
+itOnly :: forall eff. String
+   -> Aff (SpecEffects eff) Unit
+   -> Spec eff Unit
 itOnly = _it true

@@ -6,7 +6,6 @@ module Test.Spec.Runner (
   , defaultConfig
   , timeout
   , Config
-  , RunEffects
   ) where
 
 import Prelude
@@ -41,7 +40,7 @@ import Node.Process as Process
 
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Runner.Event as Event
-import Test.Spec              (Spec(), Group(..), Result(..), collect)
+import Test.Spec              (Spec(), Group(..), Result(..), SpecEffects, collect)
 import Test.Spec              as Spec
 import Test.Spec.Reporter     (BaseReporter())
 import Test.Spec.Reporter     as Reporter
@@ -51,12 +50,6 @@ import Test.Spec.Speed        (speedOf)
 import Test.Spec.Speed as     Speed
 
 foreign import dateNow :: ∀ e. Eff e Int
-
-type RunEffects e = ( process :: PROCESS
-                    , console :: CONSOLE
-                    , timer   :: TIMER
-                    , avar    :: AVAR
-                    | e)
 
 type Config = {
   slow :: Int
@@ -104,8 +97,8 @@ makeTimeout time = makeAff \fail _ -> void do
 timeout
   :: ∀ e
    . Int
-  -> Aff (timer :: TIMER, avar :: AVAR | e) Unit
-  -> Aff (timer :: TIMER, avar :: AVAR | e) Unit
+  -> Aff (SpecEffects e) Unit
+  -> Aff (SpecEffects e) Unit
 timeout time t = t `pickFirst` (makeTimeout time)
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
@@ -118,8 +111,8 @@ timeout time t = t `pickFirst` (makeTimeout time)
 _run
   :: ∀ e
    . Config
-  -> Spec (timer :: TIMER, avar :: AVAR | e) Unit
-  -> Producer Event (Aff (timer :: TIMER, avar :: AVAR | e)) (Array (Group Result))
+  -> Spec e Unit
+  -> Producer Event (Aff (SpecEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
   for (trim $ collect spec) runGroup
@@ -156,23 +149,23 @@ _run config spec = do
 runSpec'
   :: ∀ e
    . Config
-  -> Spec (timer :: TIMER, avar :: AVAR | e) Unit
-  -> Aff (timer :: TIMER, avar :: AVAR | e) (Array (Group Result))
+  -> Spec e Unit
+  -> Aff (SpecEffects e) (Array (Group Result))
 runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
 
 runSpec
   :: ∀ e
-   . Spec (timer :: TIMER, avar :: AVAR | e) Unit
-  -> Aff (timer :: TIMER, avar :: AVAR | e) (Array (Group Result))
+   . Spec e Unit
+  -> Aff (SpecEffects e) (Array (Group Result))
 runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
 run'
   :: ∀ c s e
    . Config
-  -> Array (BaseReporter c s (Eff (RunEffects e)))
-  -> Spec (RunEffects e) Unit
-  -> Eff  (RunEffects e) Unit
+  -> Array (BaseReporter c s (Eff (SpecEffects e)))
+  -> Spec e Unit
+  -> Eff  (SpecEffects e) Unit
 run' config reporters spec = void do
   runAff onError onSuccess do
     snd <$> do
@@ -184,19 +177,19 @@ run' config reporters spec = void do
     step rs evt = for rs (liftEff <<< Reporter.update evt)
     done _      = pure unit
 
-    onError :: Error -> Eff (RunEffects e) Unit
+    onError :: Error -> Eff _ Unit
     onError err = do withAttrs [31] $ logShow err
                      Process.exit 1
 
-    onSuccess :: Array (Group Result) -> Eff (RunEffects e) Unit
+    onSuccess :: Array (Group Result) -> Eff _ Unit
     onSuccess results = do sequence_ (map (Reporter.summarize results) reporters)
-                           if (successful results)
+                           if successful results
                              then Process.exit 0
                              else Process.exit 1
 
 run
   :: ∀ c s e
-   . Array (BaseReporter c s (Eff (RunEffects e)))
-  -> Spec (RunEffects e) Unit
-  -> Eff  (RunEffects e) Unit
+   . Array (BaseReporter c s (Eff (SpecEffects e)))
+  -> Spec e Unit
+  -> Eff  (SpecEffects e) Unit
 run = run' defaultConfig

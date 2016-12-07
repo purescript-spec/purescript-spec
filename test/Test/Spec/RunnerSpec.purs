@@ -7,7 +7,7 @@ import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (runSpec)
 
-runnerSpec :: Spec _ Unit
+runnerSpec :: ∀ e. Spec e Unit
 runnerSpec =
   describe "Test" $
     describe "Spec" $
