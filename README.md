@@ -65,3 +65,7 @@ requests are encouraged.
 ## License
 
 [MIT License](LICENSE.md).
+
+## Status
+
+[![](https://codescene.io/projects/124/status.svg) Get more details at **codescene.io**.](https://codescene.io/projects/124/jobs/latest-successful/results)
