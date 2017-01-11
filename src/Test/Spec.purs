@@ -65,10 +65,10 @@ type SpecEffects e =  ( process :: PROCESS
                       , timer   :: TIMER
                       , avar    :: AVAR
                       | e)
-type Spec eff t = State (Array (Group (Aff (SpecEffects eff) Unit))) t
+type Spec  eff t = State (Array (Group (Aff eff Unit))) t
 
 collect :: forall r. Spec r Unit
-        -> Array (Group (Aff (SpecEffects r) Unit))
+        -> Array (Group (Aff r Unit))
 collect r = snd $ runState r []
 
 -- | Count the total number of tests in a spec
@@ -122,19 +122,19 @@ pending' name _ = pending name
 -- | applied or not
 _it :: forall eff. Boolean
    -> String
-   -> Aff (SpecEffects eff) Unit
+   -> Aff eff Unit
    -> Spec eff Unit
 _it only description tests = modify (_ <> [It only description tests]) $> unit
 
 -- | Create a spec with a description.
 it :: forall eff. String
-   -> Aff (SpecEffects eff) Unit
-   -> Spec eff Unit
+   -> Aff  eff Unit
+   -> Spec  eff Unit
 it = _it false
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
 itOnly :: forall eff. String
-   -> Aff (SpecEffects eff) Unit
+   -> Aff eff Unit
    -> Spec eff Unit
 itOnly = _it true

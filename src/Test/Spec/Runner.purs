@@ -107,7 +107,7 @@ timeout time t = t `pickFirst` (makeTimeout time)
 _run
   :: ∀ e
    . Config
-  -> Spec e Unit
+  -> Spec (SpecEffects e) Unit
   -> Producer Event (Aff (SpecEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
@@ -145,13 +145,13 @@ _run config spec = do
 runSpec'
   :: ∀ e
    . Config
-  -> Spec e Unit
+  -> Spec (SpecEffects e) Unit
   -> Aff (SpecEffects e) (Array (Group Result))
 runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
 
 runSpec
   :: ∀ e
-   . Spec e Unit
+   . Spec (SpecEffects e) Unit
   -> Aff (SpecEffects e) (Array (Group Result))
 runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
@@ -160,7 +160,7 @@ run'
   :: ∀ c s e
    . Config
   -> Array (BaseReporter c s (Eff (SpecEffects e)))
-  -> Spec e Unit
+  -> Spec (SpecEffects e) Unit
   -> Eff  (SpecEffects e) Unit
 run' config reporters spec = void do
   runAff onError onSuccess do
@@ -186,6 +186,6 @@ run' config reporters spec = void do
 run
   :: ∀ c s e
    . Array (BaseReporter c s (Eff (SpecEffects e)))
-  -> Spec e Unit
+  -> Spec (SpecEffects e) Unit
   -> Eff  (SpecEffects e) Unit
 run = run' defaultConfig

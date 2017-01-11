@@ -1,15 +1,13 @@
 module Test.Spec.AssertionSpec where
 
 import Prelude
-
 import Control.Monad.Eff.Exception (error)
-import Control.Monad.Error.Class   (throwError)
+import Control.Monad.Error.Class (throwError)
+import Test.Spec (SpecEffects, Spec, describe, it)
+import Test.Spec.Assertions.Aff (expectError)
+import Test.Spec.Assertions.String (shouldContain, shouldNotContain)
 
-import Test.Spec                    (Spec, describe, it)
-import Test.Spec.Assertions.Aff     (expectError)
-import Test.Spec.Assertions.String  (shouldContain, shouldNotContain)
-
-assertionSpec :: ∀ e. Spec e Unit
+assertionSpec :: ∀ e. Spec (SpecEffects e) Unit
 assertionSpec =
   describe "Test" $
     describe "Spec" $
