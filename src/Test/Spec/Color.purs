@@ -5,9 +5,6 @@ import Prelude ((<<<))
 data Color
  = Pass
  | Fail
- | BrightPass
- | BrightFail
- | BrightYellow
  | Pending
  | Suite
  | ErrorTitle
@@ -23,9 +20,6 @@ data Color
 code :: Color -> Int
 code Pass         = 90
 code Fail         = 31
-code BrightPass   = 92
-code BrightFail   = 91
-code BrightYellow = 93
 code Pending      = 36
 code Suite        = 0
 code ErrorTitle   = 0
