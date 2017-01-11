@@ -10,11 +10,10 @@ module Test.Spec.Runner (
 
 import Prelude
 
-import Pipes as P
 import Pipes (yield)
 import Pipes.Core (Producer(), (//>))
-import Pipes.Core as P
-import Pipes.Prelude as P
+import Pipes.Core (runEffect) as P
+import Pipes.Prelude (foldM') as P
 
 import Data.Array       (singleton)
 import Data.Traversable (for, sequence_)
@@ -24,18 +23,16 @@ import Data.Either      (either)
 import Data.Maybe       (Maybe(..), fromMaybe)
 
 import Control.Monad.Aff           (Aff(), makeAff, runAff, forkAff, cancelWith, attempt)
-import Control.Monad.Aff.AVar      (modifyVar, makeVar', makeVar, killVar,
-                                    putVar, takeVar, AVAR)
+import Control.Monad.Aff.AVar      (makeVar, killVar, putVar, takeVar, AVAR)
 import Control.Monad.Eff           (Eff())
 import Control.Monad.Eff.Class     (liftEff)
-import Control.Monad.Eff.Console   (CONSOLE(), logShow)
+import Control.Monad.Eff.Console   (logShow)
 import Control.Monad.Eff.Exception (Error, error)
 import Control.Monad.Eff.Exception as Error
 import Control.Monad.Eff.Timer     (TIMER, setTimeout)
 import Control.Monad.Trans.Class   (lift)
 import Control.Alternative ((<|>))
 
-import Node.Process (PROCESS())
 import Node.Process as Process
 
 import Test.Spec.Runner.Event (Event)
@@ -47,7 +44,6 @@ import Test.Spec.Reporter     as Reporter
 import Test.Spec.Console      (withAttrs)
 import Test.Spec.Summary      (successful)
 import Test.Spec.Speed        (speedOf)
-import Test.Spec.Speed as     Speed
 
 foreign import dateNow :: ∀ e. Eff e Int
 
@@ -65,7 +61,7 @@ defaultConfig = {
 trim :: ∀ r. Array (Group r) -> Array (Group r)
 trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
   where
-  findOnly :: forall r. Group r -> Maybe (Group r)
+  findOnly :: Group r -> Maybe (Group r)
   findOnly g@(It true _ _) = pure g
   findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g else Nothing
   findOnly _ = Nothing
@@ -177,11 +173,11 @@ run' config reporters spec = void do
     step rs evt = for rs (liftEff <<< Reporter.update evt)
     done _      = pure unit
 
-    onError :: Error -> Eff _ Unit
+    onError :: Error -> Eff (SpecEffects e) Unit
     onError err = do withAttrs [31] $ logShow err
                      Process.exit 1
 
-    onSuccess :: Array (Group Result) -> Eff _ Unit
+    onSuccess :: Array (Group Result) -> Eff (SpecEffects e) Unit
     onSuccess results = do sequence_ (map (Reporter.summarize results) reporters)
                            if successful results
                              then Process.exit 0

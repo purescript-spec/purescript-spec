@@ -2,17 +2,13 @@ module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
 
-import Data.Foldable  (intercalate)
 import Data.String as String
 import Data.Array as  Array
 
 import Control.Monad.Eff              (Eff)
 import Control.Monad.Eff.Console      (CONSOLE, log)
-import Control.Monad.Eff.Exception as Error
 
 import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate)
-import Test.Spec                 (Group, Result(..))
-import Test.Spec.Console         (withAttrs)
 import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color
 import Test.Spec.Runner.Event as Event

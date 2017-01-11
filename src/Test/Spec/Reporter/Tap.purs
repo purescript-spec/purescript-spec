@@ -2,21 +2,16 @@ module Test.Spec.Reporter.Tap (tapReporter) where
 
 import Prelude
 
-import Data.Maybe                 (Maybe(..))
-import Data.String.Regex as       Regex
-import Data.String.Regex.Flags as Regex
-import Data.String.Regex          (regex, Regex())
-import Data.String                (Pattern(Pattern), joinWith, split)
-import Data.Either                (fromRight)
+import Data.String.Regex as Regex
+import Data.Maybe           (Maybe(..))
+import Data.String.Regex    (regex)
+import Data.String          (Pattern(Pattern), joinWith, split)
+import Data.Either          (fromRight)
 
 import Control.Monad.Eff         (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 
 import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate, onSummarize)
-import Test.Spec.Console         (write) as Console
-import Test.Spec.Color           (colored)
-import Test.Spec.Color as        Color
-import Test.Spec                 (Group(), Result(..))
 import Test.Spec.Summary as      Summary
 import Test.Spec.Summary         (Summary(..))
 import Test.Spec.Runner.Event as Event

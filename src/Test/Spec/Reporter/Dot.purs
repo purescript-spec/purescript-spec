@@ -39,4 +39,3 @@ dotReporter config
        in n' <$ do
             when (n' `mod` width == 0) (Console.write "\n")
             action
-

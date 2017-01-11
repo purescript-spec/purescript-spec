@@ -65,7 +65,7 @@ onUpdate
   => Update c s m s
   -> BaseReporter c s m
   -> BaseReporter c s m
-onUpdate update (BaseReporter s) = reporter s.config s.state update s.summarize
+onUpdate update' (BaseReporter s) = reporter s.config s.state update' s.summarize
 
 -- set the summary handler for a reporter
 onSummarize
@@ -73,7 +73,7 @@ onSummarize
    . Summarize c s m
   -> BaseReporter c s m
   -> BaseReporter c s m
-onSummarize summarize (BaseReporter s) = BaseReporter $ s { summarize = summarize }
+onSummarize summarize' (BaseReporter s) = BaseReporter $ s { summarize = summarize' }
 
 -- implement a fresh reporter
 reporter
@@ -84,15 +84,16 @@ reporter
   -> Update c s m s   -- the update function
   -> Summarize c s m  -- the summary reporting function
   -> BaseReporter c s m
-reporter config state update summarize = BaseReporter { config
-                                                      , state
-                                                      , update: go
-                                                      , summarize
-                                                      }
+reporter config state update' summarize' =
+  BaseReporter { config
+               , state
+               , update: go
+               , summarize: summarize'
+               }
   where
   go c s e = do
-    s' <- update c s e
-    pure $ BaseReporter { config, state: s', update: go, summarize }
+    s' <- update' c s e
+    pure $ BaseReporter { config, state: s', update: go, summarize: summarize' }
 
 -- | A default reporter implementation that can be used as a base to build
 -- | other reporters on top of.
@@ -132,4 +133,3 @@ defaultReporter c s = reporter c s defaultUpdate defaultSummary
 
   -- TODO: move this somewhere central
   indent i = String.fromCharArray $ Array.replicate i ' '
-

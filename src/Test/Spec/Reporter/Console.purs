@@ -11,7 +11,7 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 
 import Test.Spec.Summary as      Summary
 import Test.Spec.Summary         (Summary(..))
-import Test.Spec                 (Group, Result(..))
+import Test.Spec                 (Group, Result)
 import Test.Spec.Color           (colored)
 import Test.Spec.Color as        Color
 import Test.Spec.Console         (withAttrs)
