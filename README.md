@@ -19,6 +19,12 @@ PureScript Spec is a simple testing framework for Purescript, inspired by
 * **0.11.0**
   * Publish *The Guide* on GitHub pages
   * Collapse result entries in Maps to deduplicate describes, fixes #9
+  * Reimplement Node reporters and runner using purescript-pipes. An upgrade
+    might require a change in your `main` type signature. The type
+    `Test.Spec.Runner.RunnerEffects` makes it more convenient to specify all
+    effect rows:
+    * When using regular specs, use `main :: Eff (RunnerEffects ()) Unit`
+    * When using purescript-spec-discovery, use `main :: Eff (RunnerEffects (fs :: FS)) Unit`
 * **0.10.0**
   * Defer test execution with Aff to have greater control. Test runners can
     either collect and run all tests, and then report their results, using
