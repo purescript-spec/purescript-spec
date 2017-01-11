@@ -3,12 +3,12 @@ module Main where
 import Prelude
 import Control.Monad.Aff (later')
 import Control.Monad.Eff (Eff)
-import Test.Spec (SpecEffects, pending, describe, it)
+import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (run)
+import Test.Spec.Runner (RunnerEffects, run)
 
-main :: Eff (SpecEffects ()) Unit
+main :: Eff (RunnerEffects ()) Unit
 main = run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do

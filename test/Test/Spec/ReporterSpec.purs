@@ -4,13 +4,13 @@ import Prelude
 import Control.Monad.Eff.Exception (error)
 import Data.Map (fromFoldable)
 import Data.Tuple (Tuple(Tuple))
-import Test.Spec (SpecEffects, Result(..), Spec, describe, it)
+import Test.Spec (Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (failureTest, pendingTest, sharedDescribeTest, duplicatedDescribeTest, successTest)
 import Test.Spec.Reporter (collapseAll, Entry(..))
-import Test.Spec.Runner (runSpec)
+import Test.Spec.Runner (RunnerEffects, runSpec)
 
-reporterSpec :: ∀ e. Spec (SpecEffects e) Unit
+reporterSpec :: ∀ e. Spec (RunnerEffects e) Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $
