@@ -23,7 +23,6 @@ import Control.Monad.State         as State
 import Data.Traversable            (for, for_)
 import Data.Tuple                  (snd)
 
-import Node.Process               (PROCESS)
 import Control.Monad.Aff.AVar     (AVAR)
 import Control.Monad.Eff.Console  (CONSOLE)
 import Control.Monad.Eff.Timer    (TIMER)
@@ -61,8 +60,7 @@ instance eqGroup :: Eq t => Eq (Group t) where
   eq _                   _                   = false
 
 -- Specifications with unevaluated tests.
-type SpecEffects e =  ( process :: PROCESS
-                      , console :: CONSOLE
+type SpecEffects e =  ( console :: CONSOLE
                       , timer   :: TIMER
                       , avar    :: AVAR
                       | e)

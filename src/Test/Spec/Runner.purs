@@ -1,49 +1,48 @@
-module Test.Spec.Runner (
-    run
-  , run'
-  , runSpec
-  , runSpec'
-  , defaultConfig
-  , timeout
-  , Config
-  ) where
+module Test.Spec.Runner
+       ( RunnerEffects
+       , run
+       , run'
+       , runSpec
+       , runSpec'
+       , defaultConfig
+       , timeout
+       , Config
+       ) where
 
 import Prelude
-
+import Control.Monad.Eff.Exception as Error
+import Node.Process as Process
+import Test.Spec as Spec
+import Test.Spec.Reporter as Reporter
+import Test.Spec.Runner.Event as Event
+import Control.Alternative ((<|>))
+import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
+import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Console (logShow)
+import Control.Monad.Eff.Exception (Error, error)
+import Control.Monad.Eff.Timer (TIMER, setTimeout)
+import Control.Monad.Trans.Class (lift)
+import Data.Array (singleton)
+import Data.Either (either)
+import Data.Foldable (foldl)
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Traversable (for, sequence_)
+import Data.Tuple (snd)
+import Node.Process (PROCESS)
 import Pipes (yield)
-import Pipes.Core (Producer(), (//>))
+import Pipes.Core (Producer, (//>))
 import Pipes.Core (runEffect) as P
 import Pipes.Prelude (foldM') as P
-
-import Data.Array       (singleton)
-import Data.Traversable (for, sequence_)
-import Data.Foldable    (foldl)
-import Data.Tuple       (snd)
-import Data.Either      (either)
-import Data.Maybe       (Maybe(..), fromMaybe)
-
-import Control.Monad.Aff           (Aff(), makeAff, runAff, forkAff, cancelWith, attempt)
-import Control.Monad.Aff.AVar      (makeVar, killVar, putVar, takeVar, AVAR)
-import Control.Monad.Eff           (Eff())
-import Control.Monad.Eff.Class     (liftEff)
-import Control.Monad.Eff.Console   (logShow)
-import Control.Monad.Eff.Exception (Error, error)
-import Control.Monad.Eff.Exception as Error
-import Control.Monad.Eff.Timer     (TIMER, setTimeout)
-import Control.Monad.Trans.Class   (lift)
-import Control.Alternative ((<|>))
-
-import Node.Process as Process
-
+import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
+import Test.Spec.Console (withAttrs)
+import Test.Spec.Reporter (BaseReporter)
 import Test.Spec.Runner.Event (Event)
-import Test.Spec.Runner.Event as Event
-import Test.Spec              (Spec(), Group(..), Result(..), SpecEffects, collect)
-import Test.Spec              as Spec
-import Test.Spec.Reporter     (BaseReporter())
-import Test.Spec.Reporter     as Reporter
-import Test.Spec.Console      (withAttrs)
-import Test.Spec.Summary      (successful)
-import Test.Spec.Speed        (speedOf)
+import Test.Spec.Speed (speedOf)
+import Test.Spec.Summary (successful)
+
+type RunnerEffects e = SpecEffects (process :: PROCESS | e)
 
 foreign import dateNow :: ∀ e. Eff e Int
 
@@ -93,8 +92,8 @@ makeTimeout time = makeAff \fail _ -> void do
 timeout
   :: ∀ e
    . Int
-  -> Aff (SpecEffects e) Unit
-  -> Aff (SpecEffects e) Unit
+  -> Aff (RunnerEffects e) Unit
+  -> Aff (RunnerEffects e) Unit
 timeout time t = t `pickFirst` (makeTimeout time)
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
@@ -107,8 +106,8 @@ timeout time t = t `pickFirst` (makeTimeout time)
 _run
   :: ∀ e
    . Config
-  -> Spec (SpecEffects e) Unit
-  -> Producer Event (Aff (SpecEffects e)) (Array (Group Result))
+  -> Spec (RunnerEffects e) Unit
+  -> Producer Event (Aff (RunnerEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
   for (trim $ collect spec) runGroup
@@ -145,23 +144,23 @@ _run config spec = do
 runSpec'
   :: ∀ e
    . Config
-  -> Spec (SpecEffects e) Unit
-  -> Aff (SpecEffects e) (Array (Group Result))
+  -> Spec (RunnerEffects e) Unit
+  -> Aff (RunnerEffects e) (Array (Group Result))
 runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
 
 runSpec
   :: ∀ e
-   . Spec (SpecEffects e) Unit
-  -> Aff (SpecEffects e) (Array (Group Result))
+   . Spec (RunnerEffects e) Unit
+  -> Aff (RunnerEffects e) (Array (Group Result))
 runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
 run'
   :: ∀ c s e
    . Config
-  -> Array (BaseReporter c s (Eff (SpecEffects e)))
-  -> Spec (SpecEffects e) Unit
-  -> Eff  (SpecEffects e) Unit
+  -> Array (BaseReporter c s (Eff (RunnerEffects e)))
+  -> Spec (RunnerEffects e) Unit
+  -> Eff  (RunnerEffects e) Unit
 run' config reporters spec = void do
   runAff onError onSuccess do
     snd <$> do
@@ -173,11 +172,11 @@ run' config reporters spec = void do
     step rs evt = for rs (liftEff <<< Reporter.update evt)
     done _      = pure unit
 
-    onError :: Error -> Eff (SpecEffects e) Unit
+    onError :: Error -> Eff (RunnerEffects e) Unit
     onError err = do withAttrs [31] $ logShow err
                      Process.exit 1
 
-    onSuccess :: Array (Group Result) -> Eff (SpecEffects e) Unit
+    onSuccess :: Array (Group Result) -> Eff (RunnerEffects e) Unit
     onSuccess results = do sequence_ (map (Reporter.summarize results) reporters)
                            if successful results
                              then Process.exit 0
@@ -185,7 +184,7 @@ run' config reporters spec = void do
 
 run
   :: ∀ c s e
-   . Array (BaseReporter c s (Eff (SpecEffects e)))
-  -> Spec (SpecEffects e) Unit
-  -> Eff  (SpecEffects e) Unit
+   . Array (BaseReporter c s (Eff (RunnerEffects e)))
+  -> Spec (RunnerEffects e) Unit
+  -> Eff  (RunnerEffects e) Unit
 run = run' defaultConfig
