@@ -24,6 +24,7 @@
     "purescript-node-process": "^3.0.0",
     "purescript-monoid": "^2.0.0",
     "purescript-foldable-traversable": "^2.0.0",
-    "purescript-js-timers": "^2.0.0"
+    "purescript-js-timers": "^2.0.0",
+    "purescript-pipes": "^2.0.0"
   }
 }
