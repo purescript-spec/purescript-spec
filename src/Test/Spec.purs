@@ -1,5 +1,6 @@
 module Test.Spec (
   Name(..),
+  Only(..),
   Result(..),
   Group(..),
   Spec(..),
@@ -31,8 +32,8 @@ type Name = String
 type Only = Boolean
 
 data Group t
-  = Describe Boolean Name (Array (Group t))
-  | It Boolean Name t
+  = Describe Only Name (Array (Group t))
+  | It Only Name t
   | Pending Name
 
 data Result
