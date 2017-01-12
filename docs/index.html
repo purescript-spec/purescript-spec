@@ -83,13 +83,14 @@
 <pre class="purescript"><code>module Main where
 
 import Prelude
-
-import Control.Monad.Aff          (later&#39;)
-import Test.Spec                  (describe, it)
-import Test.Spec.Runner           (run)
-import Test.Spec.Assertions       (shouldEqual)
+import Control.Monad.Aff (later&#39;)
+import Control.Monad.Eff (Eff)
+import Test.Spec (pending, describe, it)
+import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (RunnerEffects, run)
 
+main :: Eff (RunnerEffects ()) Unit
 main = run [consoleReporter] do
   describe &quot;purescript-spec&quot; do
     describe &quot;Attributes&quot; do
@@ -100,10 +101,13 @@ main = run [consoleReporter] do
     describe &quot;Features&quot; do
       it &quot;runs in NodeJS&quot; $ pure unit
       it &quot;runs in the browser&quot; $ pure unit
+      it &quot;supports streaming reporters&quot; $ pure unit
       it &quot;supports async specs&quot; do
         res &lt;- later&#39; 100 $ pure &quot;Alligator&quot;
         res `shouldEqual` &quot;Alligator&quot;
-      it &quot;is PureScript 0.10.1 compatible&quot; $ pure unit</code></pre>
+      it &quot;is PureScript 0.10.x compatible&quot; $ pure unit</code></pre>
+<p><code>RunnerEffects</code> is a convenience type alias that includes the effect rows used by the Node runner, meaning you do not have to type them all out if you want to have a type annotation for your <code>main</code> function. You can pass any extra effect rows used in your own tests:</p>
+<pre class="purescript"><code>main :: Eff (RunnerEffects (random :: RANDOM, buffer :: BUFFER)) Unit</code></pre>
 <h3 id="combining-specs">Combining Specs</h3>
 <p>You can split specs into multiple files and combine them using regular monadic bind, e.g. with <code>do</code> expressions.</p>
 <pre class="purescript"><code>baseSpecs = do
@@ -111,7 +115,7 @@ main = run [consoleReporter] do
   stringsSpec
   arraySpec
   ...</code></pre>
-<p>This is often used to combine all specs into a single spec that can be passed to the test runner.</p>
+<p>This is often used to combine all specs into a single spec that can be passed to the test runner, if not using <a href="https://github.com/owickstrom/purescript-spec-discovery">purescript-spec-discovery</a>.</p>
 <h3 id="running-a-subset-of-the-specs">Running A Subset of the Specs</h3>
 <p>Sometimes you do not wish to run all specs. It might be that you are working on a certain feature, and only want to see the results for the relevant tests. It can also be that some spec takes a lot of time, and you wish to exclude it temporarily. By using <code>itOnly</code> instead of the regular <code>it</code>, the test runner includes only that spec.</p>
 <pre class="purescript"><code>describe &quot;My API&quot; do

@@ -80,13 +80,14 @@ image](#header-image) looks like this:
 module Main where
 
 import Prelude
-
-import Control.Monad.Aff          (later')
-import Test.Spec                  (describe, it)
-import Test.Spec.Runner           (run)
-import Test.Spec.Assertions       (shouldEqual)
+import Control.Monad.Aff (later')
+import Control.Monad.Eff (Eff)
+import Test.Spec (pending, describe, it)
+import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner (RunnerEffects, run)
 
+main :: Eff (RunnerEffects ()) Unit
 main = run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do
@@ -97,10 +98,20 @@ main = run [consoleReporter] do
     describe "Features" do
       it "runs in NodeJS" $ pure unit
       it "runs in the browser" $ pure unit
+      it "supports streaming reporters" $ pure unit
       it "supports async specs" do
         res <- later' 100 $ pure "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.10.1 compatible" $ pure unit
+      it "is PureScript 0.10.x compatible" $ pure unit
+```
+
+`RunnerEffects` is a convenience type alias that includes the effect rows used
+by the Node runner, meaning you do not have to type them all out if you want
+to have a type annotation for your `main` function. You can pass any extra
+effect rows used in your own tests:
+
+```purescript
+main :: Eff (RunnerEffects (random :: RANDOM, buffer :: BUFFER)) Unit
 ```
 
 ## Combining Specs
@@ -117,7 +128,7 @@ baseSpecs = do
 ```
 
 This is often used to combine all specs into a single spec that can be passed
-to the test runner.
+to the test runner, if not using [purescript-spec-discovery](https://github.com/owickstrom/purescript-spec-discovery).
 
 ## Running A Subset of the Specs
 
