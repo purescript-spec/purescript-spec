@@ -1,84 +1,60 @@
 module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Exception (Error(), message)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.State (StateT, execStateT, evalStateT)
-import Control.Monad.State as State
-import Data.Foldable (intercalate, traverse_)
-import Data.Traversable (for)
-import Data.Map (toList)
-import Data.Array ((:), reverse)
-import Data.Array as Array
+
 import Data.String as String
-import Data.Tuple (Tuple(Tuple))
-import Data.Tuple.Nested ((/\))
-import Test.Spec (Group, Result(..))
-import Test.Spec as S
-import Test.Spec.Console (withAttrs)
-import Test.Spec.Reporter (collapseAll, EntryPath, Entry(..), Reporter)
-import Test.Spec.Summary (Summary(..), summarize)
+import Data.Array as  Array
 
-type NamedFailure = Tuple String Error
-type ReporterState = { failures :: Array NamedFailure }
+import Control.Monad.Eff              (Eff)
+import Control.Monad.Eff.Console      (CONSOLE, log)
 
-red   = withAttrs [31]
-green = withAttrs [32]
-blue  = withAttrs [33]
+import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate)
+import Test.Spec.Color           (colored)
+import Test.Spec.Color as        Color
+import Test.Spec.Runner.Event as Event
+import Test.Spec.Speed as        Speed
 
-specReporter :: forall e. Reporter (console :: CONSOLE | e)
-specReporter groups = do
-  { failures } <- flip execStateT { failures: [] } $ printGroups 0 [] groups
-  log ""
-  printSummary groups
-  log ""
-  printFailures $ reverse failures
+type SpecReporterStateObj = {
+  indent :: Int
+, numFailures :: Int
+}
 
-  where
-  printGroups :: forall r. Int
-                  -> Array String
-                  -> Array (Group Result)
-                  -> StateT ReporterState (Eff (console :: CONSOLE | r)) Unit
-  printGroups i crumbs groups = do
-    void $ for groups case _ of
-      S.Describe _ n xs -> do
-        logPlain n
-        printGroups (i + 1) (n : crumbs) xs
-      S.Pending n -> logBlue $ "- " <> n
-      S.It _ n result ->
-        case result of
-          Success -> logGreen $ "✓︎ " <> n
-          Failure err ->
-            let label = intercalate " " (reverse $ n : crumbs)
-             in do
-              State.modify \s -> s { failures = (label /\ err) : s.failures }
-              nFailures <- Array.length <<< _.failures <$> State.get
-              logRed $ show nFailures <> ") " <> n
+type SpecReporter r = BaseReporter {} SpecReporterStateObj r
+
+specReporter
+  :: ∀ e
+   . SpecReporter (Eff (console :: CONSOLE | e))
+specReporter
+  = defaultReporter {} { indent: 0, numFailures: 0 }
+      # onUpdate update
+ where
+  update _ s = case _ of
+    Event.Start _ -> s <$ log ""
+    Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
+    Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
+    Event.Pending name -> s <$ do
+      _log $ colored Color.Pending $ "- " <> name
+    Event.Pass name speed ms -> s <$ do
+      _log $ colored Color.Checkmark "✓︎"
+              <> " "
+              <> colored Color.Pass name
+              <> case speed of
+                    Speed.Fast -> ""
+                    _ ->
+                      let col = Speed.toColor speed
+                          label = " (" <> show ms <> "ms)"
+                      in colored col label
+
+    Event.Fail name _ _ ->
+      let s' = s { numFailures = s.numFailures + 1 }
+       in s' <$ (_log $ colored Color.Fail $ show s'.numFailures <> ") " <> name)
+    _ -> pure s
 
     where
-    _log msg = log $ indent i <> msg
-    logRed   = lift <<< red   <<< _log
-    logGreen = lift <<< green <<< _log
-    logBlue  = lift <<< red   <<< _log
-    logPlain = lift           <<< _log
+    _log msg = log $ indent s.indent <> msg
+    modIndent f fm =
+      let s' = s { indent = f s.indent }
+       in s' <$ (fm s'.indent)
 
-  printFailures :: forall r. Array NamedFailure
-                  -> Eff (console :: CONSOLE | r) Unit
-  printFailures failures = void $ flip evalStateT 1 do
-    for failures \(n /\ err) -> do
-      i <- State.get
-      lift $ log $ show i <> ") " <> n
-      lift $ red $ log $ indent 2 <> message err
-      State.modify $ const $ i + 1
-
-  indent :: Int -> String
-  indent i = String.fromCharArray (Array.replicate i ' ')
-
-  printSummary :: forall r. Array (Group Result)
-                  -> Eff (console :: CONSOLE | r) Unit
-  printSummary = summarize >>> \(Count passed failed pending) -> do
-    when (passed  > 0) $ green $ log $ show passed  <> " passing"
-    when (pending > 0) $ blue  $ log $ show pending <> " pending"
-    when (failed  > 0) $ red   $ log $ show failed  <> " failed"
+    -- TODO: move this somewhere central
+    indent i = String.fromCharArray $ Array.replicate i ' '

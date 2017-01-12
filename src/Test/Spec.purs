@@ -1,29 +1,38 @@
 module Test.Spec (
   Name(..),
+  Only(..),
   Result(..),
   Group(..),
   Spec(..),
+  SpecEffects,
   describe,
   describeOnly,
   pending,
   it,
   itOnly,
-  collect
+  collect,
+  countTests
   ) where
 
 import Prelude
 
 import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (Error())
-import Control.Monad.State         (State(), modify, runState)
+import Control.Monad.State         (State(), modify, execState, runState)
+import Control.Monad.State         as State
+import Data.Traversable            (for, for_)
 import Data.Tuple                  (snd)
+
+import Control.Monad.Aff.AVar     (AVAR)
+import Control.Monad.Eff.Console  (CONSOLE)
+import Control.Monad.Eff.Timer    (TIMER)
 
 type Name = String
 type Only = Boolean
 
 data Group t
-  = Describe Boolean Name (Array (Group t))
-  | It Boolean Name t
+  = Describe Only Name (Array (Group t))
+  | It Only Name t
   | Pending Name
 
 data Result
@@ -51,11 +60,22 @@ instance eqGroup :: Eq t => Eq (Group t) where
   eq _                   _                   = false
 
 -- Specifications with unevaluated tests.
-type Spec r t = State (Array (Group (Aff r Unit))) t
+type SpecEffects e =  ( console :: CONSOLE
+                      , timer   :: TIMER
+                      , avar    :: AVAR
+                      | e)
+type Spec  eff t = State (Array (Group (Aff eff Unit))) t
 
 collect :: forall r. Spec r Unit
         -> Array (Group (Aff r Unit))
 collect r = snd $ runState r []
+
+-- | Count the total number of tests in a spec
+countTests :: forall r. Spec r Unit -> Int
+countTests spec = execState (for (collect spec) go) 0
+  where
+  go (Describe _ _ xs) = for_ xs go
+  go _ = State.modify (_ + 1)
 
 ---------------------
 --       DSL       --
@@ -99,21 +119,21 @@ pending' name _ = pending name
 
 -- | Create a spec with a description that either has the "only" modifier
 -- | applied or not
-_it :: forall r.  Boolean
+_it :: forall eff. Boolean
    -> String
-   -> Aff r Unit
-   -> Spec r Unit
+   -> Aff eff Unit
+   -> Spec eff Unit
 _it only description tests = modify (_ <> [It only description tests]) $> unit
 
 -- | Create a spec with a description.
-it :: forall r. String
-   -> Aff r Unit
-   -> Spec r Unit
+it :: forall eff. String
+   -> Aff  eff Unit
+   -> Spec  eff Unit
 it = _it false
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
-itOnly :: forall r. String
-   -> Aff r Unit
-   -> Spec r Unit
+itOnly :: forall eff. String
+   -> Aff eff Unit
+   -> Spec eff Unit
 itOnly = _it true

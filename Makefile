@@ -34,7 +34,7 @@ example.png: build-example $(EXAMPLE_CSS)
 
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
 	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 4
-	convert example.png -trim example.png
+	gm convert example.png -trim example.png
 
 MD_SOURCES=\
 				docs/index.md \

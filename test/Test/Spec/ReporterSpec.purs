@@ -8,9 +8,9 @@ import Test.Spec (Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (failureTest, pendingTest, sharedDescribeTest, duplicatedDescribeTest, successTest)
 import Test.Spec.Reporter (collapseAll, Entry(..))
-import Test.Spec.Runner (runSpec)
+import Test.Spec.Runner (RunnerEffects, runSpec)
 
-reporterSpec :: forall r. Spec r Unit
+reporterSpec :: ∀ e. Spec (RunnerEffects e) Unit
 reporterSpec =
   describe "Test" $
     describe "Spec" $

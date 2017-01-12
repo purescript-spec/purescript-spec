@@ -5,9 +5,9 @@ import Control.Monad.Aff (later')
 import Test.Spec (Group(..), Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
-import Test.Spec.Runner (runSpec)
+import Test.Spec.Runner (RunnerEffects, runSpec)
 
-runnerSpec :: forall r. Spec r Unit
+runnerSpec :: ∀ e. Spec (RunnerEffects e) Unit
 runnerSpec =
   describe "Test" $
     describe "Spec" $

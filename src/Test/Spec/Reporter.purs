@@ -4,16 +4,23 @@ module Test.Spec.Reporter (
   Entries,
   Reporter(),
   collapse,
-  collapseAll
+  collapseAll,
+  module Reexport
   ) where
 
 import Prelude
 import Test.Spec as S
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Exception (message)
 import Data.Array (foldl)
-import Data.Map (unionWith, empty, singleton, Map)
+import Data.Map   (unionWith, empty, singleton, Map)
+import Control.Monad.Eff           (Eff)
+import Control.Monad.Eff.Exception (message)
 import Test.Spec (Name, Group, Result(Failure, Success))
+
+import Test.Spec.Reporter.Base (BaseReporter(), update, summarize) as Reexport
+import Test.Spec.Reporter.Spec    (specReporter)    as Reexport
+import Test.Spec.Reporter.Console (consoleReporter) as Reexport
+import Test.Spec.Reporter.Dot     (dotReporter)     as Reexport
+import Test.Spec.Reporter.Tap     (tapReporter)     as Reexport
 
 data Entry = It Name Result
            | Pending Name
