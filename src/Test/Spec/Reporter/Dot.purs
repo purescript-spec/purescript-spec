@@ -14,14 +14,14 @@ import Test.Spec.Speed as        Speed
 
 type DotReporterState = Int
 type DotReporterConfig = { slow :: Int, width :: Int }
-type DotReporter r = BaseReporter DotReporterConfig DotReporterState r
+type DotReporter r = BaseReporter DotReporterState r
 
 dotReporter
   :: DotReporterConfig
   -> ∀ e. DotReporter (Eff (console :: CONSOLE | e))
 dotReporter config
-  = defaultReporter config (-1)
-      # onUpdate update
+  = defaultReporter (-1)
+      # onUpdate (update config)
 
  where
   update { slow, width } n = case _ of

@@ -18,15 +18,13 @@ import Test.Spec.Console         (withAttrs)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onSummarize, onUpdate)
 
-type ConsoleReporterConfigObj = {}
 type ConsoleReporterStateObj = {
   crumbs :: Array String
 , crumbsChanged :: Boolean
 , hasEmitted :: Boolean
 }
 
-type ConsoleReporter r = BaseReporter ConsoleReporterConfigObj
-                                      ConsoleReporterStateObj
+type ConsoleReporter r = BaseReporter ConsoleReporterStateObj
                                       r
 
 initialState :: ConsoleReporterStateObj
@@ -49,12 +47,12 @@ popCrumb s = s {
 }
 
 consoleReporter :: ∀ e. ConsoleReporter (Eff (console :: CONSOLE | e))
-consoleReporter = defaultReporter {} initialState
+consoleReporter = defaultReporter initialState
   # onUpdate    update
   # onSummarize summarize
 
   where
-  update _ s = case _ of
+  update s = case _ of
     Event.Suite name -> pure (pushCrumb name s)
     Event.SuiteEnd -> pure (popCrumb s)
     Event.Pass name _ _ -> flushCrumbs do
@@ -74,7 +72,7 @@ consoleReporter = defaultReporter {} initialState
             when s.hasEmitted $ log ""
             withAttrs [1, 35] $ log $ intercalate " » " s.crumbs
             action
-  summarize _ _ = printSummary
+  summarize _ = printSummary
 
 pluralize :: String -> Int -> String
 pluralize s 1 = s

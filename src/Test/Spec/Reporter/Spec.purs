@@ -19,16 +19,16 @@ type SpecReporterStateObj = {
 , numFailures :: Int
 }
 
-type SpecReporter r = BaseReporter {} SpecReporterStateObj r
+type SpecReporter r = BaseReporter SpecReporterStateObj r
 
 specReporter
   :: ∀ e
    . SpecReporter (Eff (console :: CONSOLE | e))
 specReporter
-  = defaultReporter {} { indent: 0, numFailures: 0 }
+  = defaultReporter { indent: 0, numFailures: 0 }
       # onUpdate update
  where
-  update _ s = case _ of
+  update s = case _ of
     Event.Start _ -> s <$ log ""
     Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
     Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")

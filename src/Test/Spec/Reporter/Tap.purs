@@ -19,17 +19,16 @@ import Test.Spec.Runner.Event as Event
 import Partial.Unsafe (unsafePartial)
 
 type TapReporterState = Int
-type TapReporterConfig = {}
-type TapReporter r = BaseReporter TapReporterConfig TapReporterState r
+type TapReporter r = BaseReporter TapReporterState r
 
 tapReporter :: ∀ e. TapReporter (Eff (console :: CONSOLE | e))
 tapReporter
-  = defaultReporter {} 1
-      # onUpdate  update
+  = defaultReporter 1
+      # onUpdate update
       # onSummarize summarize
 
  where
-  update _ n = case _ of
+  update n = case _ of
     Event.Start nTests -> n <$ (log $ "1.." <> show nTests)
     Event.TestEnd -> pure (n + 1)
     Event.Pending name -> n <$ log do
@@ -44,7 +43,7 @@ tapReporter
         Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
     _ -> pure n
 
-  summarize _ _ xs =
+  summarize _ xs =
     case Summary.summarize xs of
       (Count passed failed pending) -> do
         log $ "# tests " <> show (failed + passed + pending)

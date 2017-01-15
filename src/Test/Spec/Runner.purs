@@ -156,9 +156,9 @@ runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
 -- Run the spec, report results and exit the program upon completion
 run'
-  :: ∀ c s e
+  :: ∀ s e
    . Config
-  -> Array (BaseReporter c s (Eff (RunnerEffects e)))
+  -> Array (BaseReporter s (Eff (RunnerEffects e)))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
 run' config reporters spec = void do
@@ -183,8 +183,8 @@ run' config reporters spec = void do
                              else Process.exit 1
 
 run
-  :: ∀ c s e
-   . Array (BaseReporter c s (Eff (RunnerEffects e)))
+  :: ∀ s e
+   . Array (BaseReporter s (Eff (RunnerEffects e)))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
 run = run' defaultConfig

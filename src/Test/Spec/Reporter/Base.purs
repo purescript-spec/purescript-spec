@@ -31,77 +31,74 @@ import Test.Spec.Runner.Event (Event)
 import Test.Spec.Summary      as Summary
 import Test.Spec.Summary      (Summary(..))
 
-type Update c s m r = c -> s -> Event -> m r
-type Summarize c s m = c -> s -> Array (Group Result) -> m Unit
+type Update s m r = s -> Event -> m r
+type Summarize s m = s -> Array (Group Result) -> m Unit
 
 -- A reporter is responsible for reporting test results in some monad `m`.
 -- Reporters keep a state `s` that is updated with each application of the
 -- `update` function. Finally a reporter may be asked to report a summary of
 -- the test results, given a set of test results as well as the latest `s` it
 -- built.
-newtype BaseReporter c s m = BaseReporter {
+newtype BaseReporter s m = BaseReporter {
   state     :: s
-, config    :: c
-, update    :: Update c s m (BaseReporter c s m)
-, summarize :: Summarize c s m
+, update    :: Update s m (BaseReporter s m)
+, summarize :: Summarize s m
 }
 
 -- Update the reporter, given events emitted by the runner.
 -- It returns a new reporter, which then in turn can be updated to
 -- effectively fold over the incoming events.
-update :: ∀ c s m. Event -> BaseReporter c s m -> m (BaseReporter c s m)
-update e (BaseReporter { state, config, update: f }) = f config state e
+update :: ∀ s m. Event -> BaseReporter s m -> m (BaseReporter s m)
+update e (BaseReporter { state, update: f }) = f state e
 
 -- Handle summarizing the results
 -- The effect runs in `m` and returns Unit, so is only useful for the
 -- side-effects it causes.
-summarize :: ∀ c s m. Array (Group Result) -> BaseReporter c s m -> m Unit
-summarize xs (BaseReporter { config, state, summarize: f }) = f config state xs
+summarize :: ∀ s m. Array (Group Result) -> BaseReporter s m -> m Unit
+summarize xs (BaseReporter { state, summarize: f }) = f state xs
 
 -- set the update handler for a reporter
 onUpdate
-  :: ∀ s m c
+  :: ∀ s m
    . (Monad m)
-  => Update c s m s
-  -> BaseReporter c s m
-  -> BaseReporter c s m
-onUpdate update' (BaseReporter s) = reporter s.config s.state update' s.summarize
+  => Update s m s
+  -> BaseReporter s m
+  -> BaseReporter s m
+onUpdate update' (BaseReporter s) = reporter s.state update' s.summarize
 
 -- set the summary handler for a reporter
 onSummarize
-  :: ∀ c s m
-   . Summarize c s m
-  -> BaseReporter c s m
-  -> BaseReporter c s m
+  :: ∀ s m
+   . Summarize s m
+  -> BaseReporter s m
+  -> BaseReporter s m
 onSummarize summarize' (BaseReporter s) = BaseReporter $ s { summarize = summarize' }
 
 -- implement a fresh reporter
 reporter
-  :: ∀ c s m
+  :: ∀ s m
    . (Monad m)
-  => c                -- the read-only config of the reporter
-  -> s                -- the initial state of the reporter
-  -> Update c s m s   -- the update function
-  -> Summarize c s m  -- the summary reporting function
-  -> BaseReporter c s m
-reporter config state update' summarize' =
-  BaseReporter { config
-               , state
+  => s              -- the initial state of the reporter
+  -> Update s m s   -- the update function
+  -> Summarize s m  -- the summary reporting function
+  -> BaseReporter s m
+reporter state update' summarize' =
+  BaseReporter { state
                , update: go
                , summarize: summarize'
                }
   where
-  go c s e = do
-    s' <- update' c s e
-    pure $ BaseReporter { config, state: s', update: go, summarize: summarize' }
+  go s e = do
+    s' <- update' s e
+    pure $ BaseReporter { state: s', update: go, summarize: summarize' }
 
 -- | A default reporter implementation that can be used as a base to build
 -- | other reporters on top of.
-defaultReporter :: ∀ c s e. c -> s -> BaseReporter c s (Eff (console :: CONSOLE | e))
-defaultReporter c s = reporter c s defaultUpdate defaultSummary
+defaultReporter :: ∀ s e. s -> BaseReporter s (Eff (console :: CONSOLE | e))
+defaultReporter s = reporter s defaultUpdate defaultSummary
   where
-  defaultUpdate _ s _ = pure s
-  defaultSummary _ _ xs = do
+  defaultUpdate s _ = pure s
+  defaultSummary _ xs = do
     case Summary.summarize xs of
       (Count passed failed pending) -> do
         when (passed  > 0) $ log $ colored Color.Green   $ show passed  <> " passing"
