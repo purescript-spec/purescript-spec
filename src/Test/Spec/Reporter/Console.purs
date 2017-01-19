@@ -1,31 +1,26 @@
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-
-import Data.Array    (init)
-import Data.Maybe    (fromMaybe)
-import Data.Foldable (intercalate)
-
-import Control.Monad.Eff         (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-
-import Test.Spec.Summary as      Summary
-import Test.Spec.Summary         (Summary(..))
-import Test.Spec                 (Group, Result)
-import Test.Spec.Color           (colored)
-import Test.Spec.Color as        Color
-import Test.Spec.Console         (withAttrs)
+import Test.Spec.Color as Color
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onSummarize, onUpdate)
+import Test.Spec.Summary as Summary
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.Array (init)
+import Data.Foldable (intercalate)
+import Data.Maybe (fromMaybe)
+import Test.Spec (Group, Result)
+import Test.Spec.Color (colored)
+import Test.Spec.Console (withAttrs)
+import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Runner (Reporter)
+import Test.Spec.Summary (Summary(..))
 
 type ConsoleReporterStateObj = {
   crumbs :: Array String
 , crumbsChanged :: Boolean
 , hasEmitted :: Boolean
 }
-
-type ConsoleReporter r = BaseReporter ConsoleReporterStateObj
-                                      r
 
 initialState :: ConsoleReporterStateObj
 initialState = {
@@ -46,10 +41,8 @@ popCrumb s = s {
 , crumbsChanged = true
 }
 
-consoleReporter :: ∀ e. ConsoleReporter (Eff (console :: CONSOLE | e))
-consoleReporter = defaultReporter initialState
-  # onUpdate    update
-  # onSummarize summarize
+consoleReporter :: ∀ e. Reporter (console :: CONSOLE | e)
+consoleReporter = defaultReporter initialState update summarize
 
   where
   update s = case _ of

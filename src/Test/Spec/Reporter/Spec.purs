@@ -1,32 +1,20 @@
 module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
-
+import Data.Array as Array
 import Data.String as String
-import Data.Array as  Array
-
-import Control.Monad.Eff              (Eff)
-import Control.Monad.Eff.Console      (CONSOLE, log)
-
-import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate)
-import Test.Spec.Color           (colored)
-import Test.Spec.Color as        Color
+import Test.Spec.Color as Color
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Speed as        Speed
-
-type SpecReporterStateObj = {
-  indent :: Int
-, numFailures :: Int
-}
-
-type SpecReporter r = BaseReporter SpecReporterStateObj r
+import Test.Spec.Speed as Speed
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Test.Spec.Color (colored)
+import Test.Spec.Reporter.Base (defaultSummary, defaultReporter)
+import Test.Spec.Runner (Reporter)
 
 specReporter
-  :: ∀ e
-   . SpecReporter (Eff (console :: CONSOLE | e))
+  :: ∀ e. Reporter (console :: CONSOLE | e)
 specReporter
-  = defaultReporter { indent: 0, numFailures: 0 }
-      # onUpdate update
+  = defaultReporter { indent: 0, numFailures: 0 } update defaultSummary
  where
   update s = case _ of
     Event.Start _ -> s <$ log ""

@@ -1,19 +1,19 @@
 module Test.Spec.Runner
        ( RunnerEffects
        , run
-       , run'
        , runSpec
        , runSpec'
        , defaultConfig
        , timeout
        , Config
+       , TestEvents
+       , Reporter
        ) where
 
 import Prelude
 import Control.Monad.Eff.Exception as Error
 import Node.Process as Process
 import Test.Spec as Spec
-import Test.Spec.Reporter as Reporter
 import Test.Spec.Runner.Event as Event
 import Control.Alternative ((<|>))
 import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
@@ -28,16 +28,14 @@ import Data.Array (singleton)
 import Data.Either (either)
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Traversable (for, sequence_)
-import Data.Tuple (snd)
+import Data.Traversable (for)
 import Node.Process (PROCESS)
-import Pipes (yield)
-import Pipes.Core (Producer, (//>))
+import Pipes ((>->), yield)
+import Pipes (for) as P
+import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffect) as P
-import Pipes.Prelude (foldM') as P
 import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
 import Test.Spec.Console (withAttrs)
-import Test.Spec.Reporter (BaseReporter)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
@@ -154,37 +152,36 @@ runSpec
   -> Aff (RunnerEffects e) (Array (Group Result))
 runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
 
+type TestEvents e = Producer Event (Aff e) (Array (Group Result))
+
+type Reporter e = Pipe Event Event (Aff e) (Array (Group Result))
+
 -- Run the spec, report results and exit the program upon completion
-run'
-  :: ∀ s e
+run''
+  :: ∀ e
    . Config
-  -> Array (BaseReporter s (Eff (RunnerEffects e)))
+  -> Reporter (RunnerEffects e)
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
-run' config reporters spec = void do
-  runAff onError onSuccess do
-    snd <$> do
-      P.foldM' step begin done do
-        _run config spec
+run'' config reporter spec = void do
+  let events = _run config spec >-> reporter
+  runAff onError onSuccess (P.runEffect (P.for events onEvent))
 
   where
-    begin       = pure reporters
-    step rs evt = for rs (liftEff <<< Reporter.update evt)
-    done _      = pure unit
+    onEvent _ = pure unit
 
     onError :: Error -> Eff (RunnerEffects e) Unit
     onError err = do withAttrs [31] $ logShow err
                      Process.exit 1
 
     onSuccess :: Array (Group Result) -> Eff (RunnerEffects e) Unit
-    onSuccess results = do sequence_ (map (Reporter.summarize results) reporters)
-                           if successful results
-                             then Process.exit 0
-                             else Process.exit 1
+    onSuccess results = if successful results
+                        then Process.exit 0
+                        else Process.exit 1
 
 run
-  :: ∀ s e
-   . Array (BaseReporter s (Eff (RunnerEffects e)))
+  :: ∀ e
+   . Reporter (RunnerEffects e)
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
-run = run' defaultConfig
+run = run'' defaultConfig
