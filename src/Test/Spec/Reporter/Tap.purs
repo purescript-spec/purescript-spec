@@ -1,35 +1,26 @@
 module Test.Spec.Reporter.Tap (tapReporter) where
 
 import Prelude
-
 import Data.String.Regex as Regex
-import Data.Maybe           (Maybe(..))
-import Data.String.Regex    (regex)
-import Data.String          (Pattern(Pattern), joinWith, split)
-import Data.Either          (fromRight)
-
-import Control.Monad.Eff         (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-
-import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onUpdate, onSummarize)
-import Test.Spec.Summary as      Summary
-import Test.Spec.Summary         (Summary(..))
 import Test.Spec.Runner.Event as Event
-
+import Test.Spec.Summary as Summary
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.Either (fromRight)
+import Data.Maybe (Maybe(..))
+import Data.String (Pattern(Pattern), joinWith, split)
+import Data.String.Regex (regex)
 import Partial.Unsafe (unsafePartial)
+import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Runner (Reporter)
+import Test.Spec.Summary (Summary(..))
 
 type TapReporterState = Int
-type TapReporterConfig = {}
-type TapReporter r = BaseReporter TapReporterConfig TapReporterState r
 
-tapReporter :: ∀ e. TapReporter (Eff (console :: CONSOLE | e))
-tapReporter
-  = defaultReporter {} 1
-      # onUpdate  update
-      # onSummarize summarize
-
+tapReporter :: ∀ e. Reporter (console :: CONSOLE | e)
+tapReporter =
+ defaultReporter 1 update summarize
  where
-  update _ n = case _ of
+  update n = case _ of
     Event.Start nTests -> n <$ (log $ "1.." <> show nTests)
     Event.TestEnd -> pure (n + 1)
     Event.Pending name -> n <$ log do
@@ -44,7 +35,7 @@ tapReporter
         Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
     _ -> pure n
 
-  summarize _ _ xs =
+  summarize _ xs =
     case Summary.summarize xs of
       (Count passed failed pending) -> do
         log $ "# tests " <> show (failed + passed + pending)

@@ -1,33 +1,26 @@
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-
-import Data.Array    (init)
-import Data.Maybe    (fromMaybe)
-import Data.Foldable (intercalate)
-
-import Control.Monad.Eff         (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-
-import Test.Spec.Summary as      Summary
-import Test.Spec.Summary         (Summary(..))
-import Test.Spec                 (Group, Result)
-import Test.Spec.Color           (colored)
-import Test.Spec.Color as        Color
-import Test.Spec.Console         (withAttrs)
+import Test.Spec.Color as Color
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Reporter.Base   (BaseReporter, defaultReporter, onSummarize, onUpdate)
+import Test.Spec.Summary as Summary
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.Array (init)
+import Data.Foldable (intercalate)
+import Data.Maybe (fromMaybe)
+import Test.Spec (Group, Result)
+import Test.Spec.Color (colored)
+import Test.Spec.Console (withAttrs)
+import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Runner (Reporter)
+import Test.Spec.Summary (Summary(..))
 
-type ConsoleReporterConfigObj = {}
 type ConsoleReporterStateObj = {
   crumbs :: Array String
 , crumbsChanged :: Boolean
 , hasEmitted :: Boolean
 }
-
-type ConsoleReporter r = BaseReporter ConsoleReporterConfigObj
-                                      ConsoleReporterStateObj
-                                      r
 
 initialState :: ConsoleReporterStateObj
 initialState = {
@@ -48,13 +41,11 @@ popCrumb s = s {
 , crumbsChanged = true
 }
 
-consoleReporter :: ∀ e. ConsoleReporter (Eff (console :: CONSOLE | e))
-consoleReporter = defaultReporter {} initialState
-  # onUpdate    update
-  # onSummarize summarize
+consoleReporter :: ∀ e. Reporter (console :: CONSOLE | e)
+consoleReporter = defaultReporter initialState update summarize
 
   where
-  update _ s = case _ of
+  update s = case _ of
     Event.Suite name -> pure (pushCrumb name s)
     Event.SuiteEnd -> pure (popCrumb s)
     Event.Pass name _ _ -> flushCrumbs do
@@ -74,7 +65,7 @@ consoleReporter = defaultReporter {} initialState
             when s.hasEmitted $ log ""
             withAttrs [1, 35] $ log $ intercalate " » " s.crumbs
             action
-  summarize _ _ = printSummary
+  summarize _ = printSummary
 
 pluralize :: String -> Int -> String
 pluralize s 1 = s
