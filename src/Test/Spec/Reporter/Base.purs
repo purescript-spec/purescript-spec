@@ -58,7 +58,7 @@ printFailures xs = void $ evalStateT (go [] xs) 0
       -> StateT Int (Eff (console :: CONSOLE | e)) Unit
     go crumbs groups =
       for_ groups case _ of
-        S.Describe _ n xs -> go (n:crumbs) xs
+        S.Describe _ n xs' -> go (n:crumbs) xs'
         S.It _ n (Failure err) ->
           let label = intercalate " " (reverse $ n:crumbs)
             in do
