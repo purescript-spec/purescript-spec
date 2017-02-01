@@ -160,11 +160,11 @@ type Reporter e = Pipe Event Event (Aff e) (Array (Group Result))
 run''
   :: ∀ e
    . Config
-  -> Reporter (RunnerEffects e)
+  -> Array (Reporter (RunnerEffects e))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
-run'' config reporter spec = void do
-  let events = _run config spec >-> reporter
+run'' config reporters spec = void do
+  let events = foldl (>->) (_run config spec) reporters
   runAff onError onSuccess (P.runEffect (P.for events onEvent))
 
   where
@@ -181,7 +181,7 @@ run'' config reporter spec = void do
 
 run
   :: ∀ e
-   . Reporter (RunnerEffects e)
+   . Array (Reporter (RunnerEffects e))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
 run = run'' defaultConfig
