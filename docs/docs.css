@@ -62,6 +62,8 @@ pre {
   overflow: visible;
 }
 
+ul code,
+ol code,
 p code {
   background: #eee;
   padding: 0 2px;
