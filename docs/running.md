@@ -34,10 +34,10 @@ see [Browser Testing](#browser-testing) below.
 Reporters can be passed to the runner, e.g. `run [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
-* [Console](https://pursuit.purescript.org/packages/purescript-spec/0.11.0/docs/Test.Spec.Reporter.Console#v:consoleReporter)
-* [Dot](https://pursuit.purescript.org/packages/purescript-spec/0.11.0/docs/Test.Spec.Reporter.Dot#v:dotReporter)
-* [Spec](https://pursuit.purescript.org/packages/purescript-spec/0.11.0/docs/Test.Spec.Reporter.Spec#v:specReporter)
-* [Tap](https://pursuit.purescript.org/packages/purescript-spec/0.11.0/docs/Test.Spec.Reporter.Tap#v:tapReporter)
+* `consoleReporter` in `Test.Spec.Reporter.Console`
+* `dotReporter` in `Test.Spec.Reporter.Dot`
+* `specReporter` in `Test.Spec.Reporter.Spec`
+* `tapReporter` in `Test.Spec.Reporter.Tap`
 * [purescript-spec-reporter-xunit](https://github.com/owickstrom/purescript-spec-reporter-xunit)
 
 ## Automatically Discovering Specs
