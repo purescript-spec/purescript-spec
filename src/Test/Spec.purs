@@ -15,17 +15,15 @@ module Test.Spec (
   ) where
 
 import Prelude
-
-import Control.Monad.Aff           (Aff())
-import Control.Monad.Eff.Exception (Error())
-import Control.Monad.State         (State(), modify, execState, runState)
-import Control.Monad.State         as State
-import Data.Traversable            (for, for_)
-import Data.Tuple                  (snd)
-
-import Control.Monad.Aff.AVar     (AVAR)
-import Control.Monad.Eff.Console  (CONSOLE)
-import Control.Monad.Eff.Timer    (TIMER)
+import Control.Monad.State as State
+import Control.Monad.Aff (Aff)
+import Control.Monad.Aff.AVar (AVAR)
+import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Exception (Error)
+import Control.Monad.Eff.Timer (TIMER)
+import Control.Monad.State (State, modify, execState, runState)
+import Data.Traversable (for, for_)
+import Data.Tuple (snd)
 
 type Name = String
 type Only = Boolean

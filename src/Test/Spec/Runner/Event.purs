@@ -1,8 +1,8 @@
 module Test.Spec.Runner.Event where
 
 import Prelude
-import Data.Generic (class Generic, gShow)
 import Data.Maybe (Maybe)
+import Test.Spec (Group, Result)
 import Test.Spec.Speed (Speed)
 
 type Message = String
@@ -20,9 +20,19 @@ data Event
   | Fail Name Message (Maybe Stack)
   | Pass Name Speed Duration
   | Pending String
-  | End
+  | End (Array (Group Result))
 
-derive instance genericEvent :: Generic Event
-
-instance showEvent :: Show Event
-  where show = gShow
+instance showEvent :: Show Event where
+  show =
+    case _ of
+      Start n -> "Start " <> show n
+      Suite name ->  "Suite " <> name
+      Test -> "Test"
+      TestEnd -> "TestEnd"
+      SuiteEnd -> "SuiteEnd"
+      Fail name msg _ -> "Fail " <> name <> ": " <> msg
+      Pass name speed duration -> "Pass " <> name <> " "
+                                  <> show speed <> " "
+                                  <> show duration
+      Pending name -> "Pending " <> name
+      End results -> "End " <> show results

@@ -14,7 +14,7 @@ import Test.Spec.Runner (Reporter)
 specReporter
   :: ∀ e. Reporter (console :: CONSOLE | e)
 specReporter
-  = defaultReporter { indent: 0, numFailures: 0 } update defaultSummary
+  = defaultReporter { indent: 0, numFailures: 0 } update
  where
   update s = case _ of
     Event.Start _ -> s <$ log ""
@@ -36,6 +36,8 @@ specReporter
     Event.Fail name _ _ ->
       let s' = s { numFailures = s.numFailures + 1 }
        in s' <$ (_log $ colored Color.Fail $ show s'.numFailures <> ") " <> name)
+
+    Event.End results -> s <$ defaultSummary results
     _ -> pure s
 
     where

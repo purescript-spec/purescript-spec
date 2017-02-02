@@ -17,7 +17,7 @@ dotReporter
   :: DotReporterConfig
   -> ∀ e. Reporter (console :: CONSOLE | e)
 dotReporter { slow, width } =
-  defaultReporter (-1) update summary
+  defaultReporter (-1) update
 
   where
     update n = case _ of
@@ -26,7 +26,7 @@ dotReporter { slow, width } =
         in wrap $ Console.write (colored col ".")
       Event.Fail _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
       Event.Pending _  -> wrap $ Console.write (colored Color.Pass ",")
-      Event.End        -> n <$ Console.write "\n"
+      Event.End _      -> n <$ Console.write "\n"
       _                -> pure n
 
       where
@@ -35,5 +35,3 @@ dotReporter { slow, width } =
           in n' <$ do
             when (n' `mod` width == 0) (Console.write "\n")
             action
-
-    summary _ _ = pure unit

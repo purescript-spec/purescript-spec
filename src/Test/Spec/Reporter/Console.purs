@@ -9,7 +9,6 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Array (init)
 import Data.Foldable (intercalate)
 import Data.Maybe (fromMaybe)
-import Test.Spec (Group, Result)
 import Test.Spec.Color (colored)
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Reporter.Base (defaultReporter)
@@ -42,8 +41,7 @@ popCrumb s = s {
 }
 
 consoleReporter :: ∀ e. Reporter (console :: CONSOLE | e)
-consoleReporter = defaultReporter initialState update summarize
-
+consoleReporter = defaultReporter initialState update
   where
   update s = case _ of
     Event.Suite name -> pure (pushCrumb name s)
@@ -56,6 +54,7 @@ consoleReporter = defaultReporter initialState update summarize
       log $ "  " <> (colored Color.Fail $ "✗ " <> name <> ":")
       log ""
       log $ colored Color.Fail $ "  " <> msg
+    Event.End results -> s <$ printSummary results
     _ -> pure s
       where
       flushCrumbs action =
@@ -65,7 +64,14 @@ consoleReporter = defaultReporter initialState update summarize
             when s.hasEmitted $ log ""
             withAttrs [1, 35] $ log $ intercalate " » " s.crumbs
             action
-  summarize _ = printSummary
+
+      printSummary = Summary.summarize >>> \(Count passed failed pending) -> do
+        log ""
+        withAttrs [1] $ log "Summary"
+        printPassedFailed passed failed
+        printPending pending
+        log ""
+
 
 pluralize :: String -> Int -> String
 pluralize s 1 = s
@@ -83,11 +89,3 @@ printPending :: forall r. Int -> Eff (console :: CONSOLE | r) Unit
 printPending p
   | p > 0     = withAttrs [33] $ log (show p <> " " <> pluralize "test" p <> " pending")
   | otherwise = pure unit
-
-printSummary :: forall r. Array (Group Result) -> Eff (console :: CONSOLE | r) Unit
-printSummary = Summary.summarize >>> \(Count passed failed pending) -> do
-  log ""
-  withAttrs [1] $ log "Summary"
-  printPassedFailed passed failed
-  printPending pending
-  log ""

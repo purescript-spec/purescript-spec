@@ -18,7 +18,7 @@ type TapReporterState = Int
 
 tapReporter :: ∀ e. Reporter (console :: CONSOLE | e)
 tapReporter =
- defaultReporter 1 update summarize
+ defaultReporter 1 update
  where
   update n = case _ of
     Event.Start nTests -> n <$ (log $ "1.." <> show nTests)
@@ -33,14 +33,15 @@ tapReporter =
       case mStack of
         Nothing -> pure unit
         Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
-    _ -> pure n
+    Event.End results -> do
+      case Summary.summarize results of
+        (Count passed failed pending) -> do
+          log $ "# tests " <> show (failed + passed + pending)
+          log $ "# pass "  <> show (passed + pending)
+          log $ "# fail "  <> show failed
+      pure n
 
-  summarize _ xs =
-    case Summary.summarize xs of
-      (Count passed failed pending) -> do
-        log $ "# tests " <> show (failed + passed + pending)
-        log $ "# pass "  <> show (passed + pending)
-        log $ "# fail "  <> show failed
+    _ -> pure n
 
 -- create a TAP-safe title
 escMsg :: String -> String

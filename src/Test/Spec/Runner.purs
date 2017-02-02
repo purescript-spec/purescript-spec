@@ -108,8 +108,9 @@ _run
   -> Producer Event (Aff (RunnerEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
-  for (trim $ collect spec) runGroup
-  <* yield Event.End
+  r <- for (trim $ collect spec) runGroup
+  yield (Event.End r)
+  pure r
 
   where
   runGroup (It only name test) = do

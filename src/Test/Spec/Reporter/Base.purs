@@ -35,8 +35,8 @@ indent i = String.fromCharArray $ Array.replicate i ' '
 defaultUpdate :: forall s e. s -> Event -> Eff e s
 defaultUpdate s _ = pure s
 
-defaultSummary :: forall s e. s -> Array (Group Result) -> Eff (console :: CONSOLE | e) Unit
-defaultSummary _ xs = do
+defaultSummary :: forall e. Array (Group Result) -> Eff (console :: CONSOLE | e) Unit
+defaultSummary xs = do
   case Summary.summarize xs of
     (Count passed failed pending) -> do
       when (passed  > 0) $ log $ colored Color.Green   $ show passed  <> " passing"
@@ -90,9 +90,8 @@ defaultReporter
   :: ∀ s e.
      s
   -> (s -> Event -> Eff e s)
-  -> (s -> Array (Group Result) -> Eff e Unit)
   -> Reporter e
-defaultReporter initialState onEvent onSummary =
+defaultReporter initialState onEvent = do
   scanWithStateM dispatch (pure initialState)
   where
     dispatch s e = liftEff (onEvent s e)
