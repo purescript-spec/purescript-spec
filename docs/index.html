@@ -34,6 +34,7 @@
 </ul></li>
 <li><a href="#running">Running</a><ul>
 <li><a href="#reporters">Reporters</a></li>
+<li><a href="#passing-runner-configuration">Passing Runner Configuration</a></li>
 <li><a href="#automatically-discovering-specs">Automatically Discovering Specs</a></li>
 <li><a href="#browser-testing">Browser Testing</a></li>
 </ul></li>
@@ -146,6 +147,15 @@ main = run [consoleReporter] do
 <li><code>tapReporter</code> in <code>Test.Spec.Reporter.Tap</code></li>
 <li><a href="https://github.com/owickstrom/purescript-spec-reporter-xunit">purescript-spec-reporter-xunit</a></li>
 </ul>
+<h3 id="passing-runner-configuration">Passing Runner Configuration</h3>
+<p>In addition to the regular <code>run</code> function, there is also <code>run'</code>, which takes a <code>Config</code> record.</p>
+<pre class="purescript"><code>main = run&#39; testConfig [consoleReporter] mySpec
+  where
+    testConfig = { slow: 5000, timeout: Just 10000 }</code></pre>
+<p>The <code>Test.Spec.Runner</code> module provides a <code>defaultConfig</code> value which you can use to override only specific values.</p>
+<pre class="purescript"><code>main = run&#39; testConfig [consoleReporter] mySpec
+  where
+    testConfig = defaultConfig { slow = 100 }</code></pre>
 <h3 id="automatically-discovering-specs">Automatically Discovering Specs</h3>
 <p>If you are running your specs in an NodeJS environment, e.g. with <code>pulp test</code>, you can automatically scan for spec modules using <a href="https://github.com/owickstrom/purescript-spec-discovery">purescript-spec-discovery</a>. Then your <code>main</code> function can be as simple as:</p>
 <pre class="purescript"><code>main = discover &quot;My\\.Package\\..*Spec&quot; &gt;&gt;= run [consoleReporter]</code></pre>

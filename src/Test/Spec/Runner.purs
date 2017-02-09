@@ -158,13 +158,13 @@ type TestEvents e = Producer Event (Aff e) (Array (Group Result))
 type Reporter e = Pipe Event Event (Aff e) (Array (Group Result))
 
 -- Run the spec, report results and exit the program upon completion
-run''
+run'
   :: ∀ e
    . Config
   -> Array (Reporter (RunnerEffects e))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
-run'' config reporters spec = void do
+run' config reporters spec = void do
   let events = foldl (>->) (_run config spec) reporters
   runAff onError onSuccess (P.runEffect (P.for events onEvent))
 
@@ -185,4 +185,4 @@ run
    . Array (Reporter (RunnerEffects e))
   -> Spec (RunnerEffects e) Unit
   -> Eff  (RunnerEffects e) Unit
-run = run'' defaultConfig
+run = run' defaultConfig

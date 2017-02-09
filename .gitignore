@@ -6,3 +6,4 @@ output/
 tmp/
 /*.log
 tags
+/.psc-ide-port
