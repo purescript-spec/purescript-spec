@@ -16,6 +16,13 @@ PureScript Spec is a simple testing framework for Purescript, inspired by
 
 ## Changelog
 
+* **0.12.2**
+  * Reexport common reporters in `Test.Spec.Reporter` module, fixes #37
+  * Export and document `run'` function (for configuration), fixes #38
+* **0.12.1**
+  * Move array of results to runner event, fixes #36
+* **0.12.0**
+  * Again support multiple reporters, fixes #33
 * **0.11.0**
   * Publish *The Guide* on GitHub pages
   * Collapse result entries in Maps to deduplicate describes, fixes #9
