@@ -1,6 +1,7 @@
 module Test.Spec.Runner
        ( RunnerEffects
        , run
+       , run'
        , runSpec
        , runSpec'
        , defaultConfig
