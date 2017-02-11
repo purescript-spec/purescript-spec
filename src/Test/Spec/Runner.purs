@@ -34,7 +34,7 @@ import Node.Process (PROCESS)
 import Pipes ((>->), yield)
 import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
-import Pipes.Core (runEffect) as P
+import Pipes.Core (runEffectRec) as P
 import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
@@ -146,13 +146,13 @@ runSpec'
    . Config
   -> Spec (RunnerEffects e) Unit
   -> Aff (RunnerEffects e) (Array (Group Result))
-runSpec' config spec = P.runEffect $ _run config spec //> const (pure unit)
+runSpec' config spec = P.runEffectRec $ _run config spec //> const (pure unit)
 
 runSpec
   :: ∀ e
    . Spec (RunnerEffects e) Unit
   -> Aff (RunnerEffects e) (Array (Group Result))
-runSpec spec = P.runEffect $ _run defaultConfig spec //> const (pure unit)
+runSpec spec = P.runEffectRec $ _run defaultConfig spec //> const (pure unit)
 
 type TestEvents e = Producer Event (Aff e) (Array (Group Result))
 
@@ -167,7 +167,7 @@ run'
   -> Eff  (RunnerEffects e) Unit
 run' config reporters spec = void do
   let events = foldl (>->) (_run config spec) reporters
-  runAff onError onSuccess (P.runEffect (P.for events onEvent))
+  runAff onError onSuccess (P.runEffectRec (P.for events onEvent))
 
   where
     onEvent _ = pure unit
