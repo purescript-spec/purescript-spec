@@ -16,6 +16,8 @@ PureScript Spec is a simple testing framework for Purescript, inspired by
 
 ## Changelog
 
+* **0.12.4**
+  * Upgrade to purescript-pipes 2.1.0
 * **0.12.3**
   * Export and document `run'` function (for configuration), fixes #38
 * **0.12.2**
