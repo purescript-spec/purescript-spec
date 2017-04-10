@@ -1,7 +1,8 @@
 module Test.Spec.RunnerSpec where
 
 import Prelude
-import Control.Monad.Aff (later')
+import Control.Monad.Aff (delay)
+import Data.Time.Duration (Milliseconds(..))
 import Test.Spec (Group(..), Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
@@ -30,5 +31,5 @@ runnerSpec =
           results <- runSpec itOnlyTest
           results `shouldEqual` [It true "works" Success]
         it "supports async" do
-          res <- later' 10 $ pure 1
+          res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1

@@ -25,6 +25,6 @@
     "purescript-monoid": "^3.0.0",
     "purescript-foldable-traversable": "^3.0.0",
     "purescript-js-timers": "^3.0.0",
-    "purescript-pipes": "^2.2.0"
+    "purescript-pipes": "^4.0.0"
   }
 }
