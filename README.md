@@ -16,6 +16,8 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **0.13.0**
+  * Upgrade to PureScript 0.11.x, which is non-backwards compatible to 0.10.x.
 * **0.12.4**
   * Upgrade to purescript-pipes 2.1.0
 * **0.12.3**
