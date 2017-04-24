@@ -8,6 +8,7 @@ module Test.Spec (
   describe,
   describeOnly,
   pending,
+  pending',
   it,
   itOnly,
   collect,
