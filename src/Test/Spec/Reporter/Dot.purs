@@ -11,12 +11,12 @@ import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Runner (Reporter)
 
 type DotReporterState = Int
-type DotReporterConfig = { slow :: Int, width :: Int }
+type DotReporterConfig = { width :: Int }
 
 dotReporter
   :: DotReporterConfig
   -> ∀ e. Reporter (console :: CONSOLE | e)
-dotReporter { slow, width } =
+dotReporter { width } =
   defaultReporter (-1) update
 
   where
