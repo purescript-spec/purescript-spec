@@ -3,15 +3,16 @@ module Test.Spec.RunnerSpec where
 import Prelude
 import Control.Monad.Aff (delay)
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it)
+import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach, it1)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
+import Control.Monad.Aff.Console as Console
 
 runnerSpec :: ∀ e. Spec (RunnerEffects e) Unit
 runnerSpec =
   describe "Test" $
-    describe "Spec" $
+    describe "Spec" do
       describe "Runner" do
         it "collects \"it\" and \"pending\" in Describe groups" do
           results <- runSpec successTest
@@ -33,3 +34,11 @@ runnerSpec =
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
+
+      describe "beforeEach" do
+        beforeEach (pure "bar") do
+          it1 "should pass result to \"it\" (1)" \s ->
+            s `shouldEqual` "bar"
+
+          it1 "should pass result to \"it\" (2)" \s ->
+            s `shouldEqual` "bar"
