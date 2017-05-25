@@ -3,7 +3,7 @@ module Test.Spec.RunnerSpec where
 import Prelude
 import Control.Monad.Aff (delay)
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach, it1)
+import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
@@ -37,8 +37,8 @@ runnerSpec =
 
       describe "beforeEach" do
         beforeEach (pure "bar") do
-          it1 "should pass result to \"it\" (1)" \s ->
+          it "should pass result to \"it\" (1)" \s ->
             s `shouldEqual` "bar"
 
-          it1 "should pass result to \"it\" (2)" \s ->
+          it "should pass result to \"it\" (2)" \s ->
             s `shouldEqual` "bar"

@@ -3,7 +3,8 @@ module Test.Spec (
   Only(..),
   Result(..),
   Group(..),
-  Spec(..),
+  Spec,
+  SpecWith,
   SpecEffects,
   describe,
   describeOnly,
@@ -11,8 +12,6 @@ module Test.Spec (
   pending',
   it,
   itOnly,
-  it1,
-  itOnly1,
   beforeEach,
   collect,
   countTests
@@ -71,8 +70,8 @@ type SpecEffects e =  ( console :: CONSOLE
                       , timer   :: TIMER
                       , avar    :: AVAR
                       | e)
-type Spec eff r = State (Array (Group (Aff eff Unit))) r
-type SpecF1 eff a r = State (Array (Group (a -> Aff eff Unit))) r
+type Spec eff r = SpecWith eff Unit r
+type SpecWith eff a r = State (Array (Group (a -> Aff eff Unit))) r
 
 collect
   :: ∀ t r
@@ -133,7 +132,7 @@ _it :: forall eff. Boolean
    -> String
    -> Aff eff Unit
    -> Spec eff Unit
-_it only description tests = modify (_ <> [It only description tests])
+_it only description tests = modify (_ <> [It only description (\_ -> tests)])
 
 -- | Create a spec with a description.
 it :: forall eff. String
@@ -148,26 +147,12 @@ itOnly :: forall eff. String
    -> Spec eff Unit
 itOnly = _it true
 
--- | Create a spec with a description that either has the "only" modifier
--- | applied or not
-_it1 :: forall eff a. Boolean -> String -> (a -> Aff eff Unit) -> SpecF1 eff a Unit
-_it1 only description tests = modify (_ <> [It only description tests])
-
--- | Create a spec with a description.
-it1 :: forall eff a. String -> (a -> Aff eff Unit) -> SpecF1 eff a Unit
-it1 = _it1 false
-
--- | Create a spec with a description and mark it as the only one to
--- | be run. (useful for quickly narrowing down on a single test)
-itOnly1 :: forall eff a. String -> (a -> Aff eff Unit) -> SpecF1 eff a Unit
-itOnly1 = _it1 true
-
 -- | Run an effectful computation before each test, passing the result to
 -- | the test
 beforeEach
   :: ∀ eff a
    . Aff eff a
-  -> SpecF1 eff a Unit
+  -> SpecWith eff a Unit
   -> Spec eff Unit
 beforeEach beforeAction spec = modify $ const do
-  ((beforeAction >>= _) <$> _) <$> collect spec
+  ((\atn -> \_ -> beforeAction >>= atn) <$> _) <$> collect spec
