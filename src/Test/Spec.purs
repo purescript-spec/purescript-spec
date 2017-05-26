@@ -176,17 +176,17 @@ around
   :: ∀ eff1 eff2 eff3 eff4 fun1 fun2 arg1
    . Example eff3 arg1 fun1
   => Aff eff1 arg1
-  -> Aff eff2 Unit
+  -> (arg1 -> Aff eff2 Unit)
   -> SpecWith fun1 Unit
   -> Spec eff4 {- eff1 + eff2 + eff3 -} Unit
 around before after spec = modify $ const $
   let groups = collect spec
    in groups <#> \group ->
-        group <#> \example -> do
+        group <#> \example -> void do
           -- TODO: how to unify rows?
           v <- unsafeCoerceAff before
           unsafeCoerceAff $ eval example v
-          <* unsafeCoerceAff after
+          unsafeCoerceAff $ after v
 
 -- | Run an effectful computation beofre each test, passing the result to
 -- | the test
@@ -196,7 +196,7 @@ beforeEach
   => Aff eff1 arg1
   -> SpecWith fun1 Unit
   -> Spec eff2 {- eff1 + eff2 -} Unit
-beforeEach = flip around (pure unit)
+beforeEach = flip around (const $ pure unit)
 
 -- | Run an effectful computation beofre each test, passing the result to
 -- | the test
@@ -206,4 +206,4 @@ afterEach
   => Aff eff1 Unit
   -> SpecWith fun1 Unit
   -> Spec eff2 {- eff1 + eff2 -} Unit
-afterEach = around (pure unit)
+afterEach after = around (pure unit) (const after)
