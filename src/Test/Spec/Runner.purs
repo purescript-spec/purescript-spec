@@ -35,7 +35,7 @@ import Pipes ((>->), yield)
 import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
+import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect, eval)
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Speed (speedOf)
@@ -118,8 +118,8 @@ _run config spec = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt case config.timeout of
-                                      Just t -> timeout t $ test unit
-                                      _      -> test unit
+                                      Just t -> timeout t $ eval test
+                                      _      -> eval test
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (\err ->

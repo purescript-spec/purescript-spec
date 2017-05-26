@@ -12,9 +12,10 @@ module Test.Spec (
   pending',
   it,
   itOnly,
-  beforeEach,
   collect,
-  countTests
+  countTests,
+  class Example,
+  eval
   ) where
 
 import Prelude
@@ -65,13 +66,22 @@ instance functorGroup :: Functor Group where
   map f (Describe o n ss) = Describe o n ((f <$> _) <$> ss)
   map _ (Pending n) = Pending n
 
+class Example eff a | a -> eff where
+  eval :: a -> Aff eff Unit
+
+instance exampleFunc :: Example eff (Unit -> Aff eff Unit) where
+  eval f = f unit
+
+instance exampleUnit :: Example eff (Aff eff Unit) where
+  eval u = u
+
 -- Specifications with unevaluated tests.
 type SpecEffects e =  ( console :: CONSOLE
                       , timer   :: TIMER
                       , avar    :: AVAR
                       | e)
-type Spec eff r = SpecWith eff Unit r
-type SpecWith eff a r = State (Array (Group (a -> Aff eff Unit))) r
+type Spec eff r = SpecWith (Aff eff Unit) r
+type SpecWith a r = State (Array (Group a)) r
 
 collect
   :: ∀ t r
@@ -80,7 +90,7 @@ collect
 collect r = snd $ runState r []
 
 -- | Count the total number of tests in a spec
-countTests :: forall r. Spec r Unit -> Int
+countTests :: forall r. SpecWith r Unit -> Int
 countTests spec = execState (for (collect spec) go) 0
   where
   go (Describe _ _ xs) = for_ xs go
@@ -94,65 +104,62 @@ countTests spec = execState (for (collect spec) go) 0
 -- |"only" modifier applied or not.
 _describe :: forall r. Boolean
          -> String
-         -> Spec r Unit
-         -> Spec r Unit
+         -> SpecWith r Unit
+         -> SpecWith r Unit
 _describe only name its =
   modify (_ <> [Describe only name (collect its)]) $> unit
 
 -- | Combine a group of specs into a described hierarchy.
 describe :: forall r. String
-         -> Spec r Unit
-         -> Spec r Unit
+         -> SpecWith r Unit
+         -> SpecWith r Unit
 describe = _describe false
 
 -- | Combine a group of specs into a described hierarchy and mark it as the
 -- | only group to actually be evaluated. (useful for quickly narrowing down
 -- | on a set)
-describeOnly :: forall r. String
-         -> Spec r Unit
-         -> Spec r Unit
+describeOnly
+  :: ∀ eff a
+   . Example eff a
+  => String
+  -> SpecWith a Unit
+  -> SpecWith a Unit
 describeOnly = _describe true
 
 -- | Create a pending spec.
-pending :: forall r. String
-        -> Spec r Unit
+pending
+  :: ∀ eff a
+   . Example eff a
+  => String
+  -> SpecWith a Unit
 pending name = modify $ \p -> p <> [Pending name]
 
 -- | Create a pending spec with a body that is ignored by
 -- | the runner. It can be useful for documenting what the
 -- | spec should test when non-pending.
-pending' :: forall r. String
-        -> Aff r Unit
-        -> Spec r Unit
+pending'
+  :: ∀ eff a
+   . Example eff a
+  => String
+  -> a
+  -> SpecWith a Unit
 pending' name _ = pending name
 
--- | Create a spec with a description that either has the "only" modifier
--- | applied or not
-_it :: forall eff. Boolean
-   -> String
-   -> Aff eff Unit
-   -> Spec eff Unit
-_it only description tests = modify (_ <> [It only description (\_ -> tests)])
-
 -- | Create a spec with a description.
-it :: forall eff. String
-   -> Aff  eff Unit
-   -> Spec  eff Unit
-it = _it false
+it
+  :: ∀ eff a
+   . Example eff a
+  => String
+  -> a
+  -> SpecWith a Unit
+it description example = modify (_ <> [It false description example])
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
-itOnly :: forall eff. String
-   -> Aff eff Unit
-   -> Spec eff Unit
-itOnly = _it true
-
--- | Run an effectful computation before each test, passing the result to
--- | the test
-beforeEach
+itOnly
   :: ∀ eff a
-   . Aff eff a
-  -> SpecWith eff a Unit
-  -> Spec eff Unit
-beforeEach beforeAction spec = modify $ const do
-  ((\atn -> \_ -> beforeAction >>= atn) <$> _) <$> collect spec
+   . Example eff a
+  => String
+  -> a
+  -> SpecWith a Unit
+itOnly description example = modify (_ <> [It true description example])

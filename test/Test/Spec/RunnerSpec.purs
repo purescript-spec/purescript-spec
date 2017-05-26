@@ -3,7 +3,7 @@ module Test.Spec.RunnerSpec where
 import Prelude
 import Control.Monad.Aff (delay)
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach)
+import Test.Spec (Group(..), Result(..), Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
@@ -34,11 +34,3 @@ runnerSpec =
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
-
-      describe "beforeEach" do
-        beforeEach (pure "bar") do
-          it "should pass result to \"it\" (1)" \s ->
-            s `shouldEqual` "bar"
-
-          it "should pass result to \"it\" (2)" \s ->
-            s `shouldEqual` "bar"
