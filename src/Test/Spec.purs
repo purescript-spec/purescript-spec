@@ -197,7 +197,9 @@ _around cache before after spec = modify $ const $
    in groups <#> \group ->
         group <#> \example ->
           \ctx -> do
-            -- TODO: this is not composable but a necessary evil
+            -- XXX: This is kludgy, but necessary in order to share state
+            -- between each example. We expect the runner to pass a fresh ctx
+            -- AVar for each group of tests.
             v /\ ctx' <- unsafeCoerceAff do
               tryPeekVar ctx >>= case _ of
                 Just v -> pure (unsafeCoerce v)
@@ -207,6 +209,9 @@ _around cache before after spec = modify $ const $
                   putVar ctx (unsafeCoerce $ v /\ ctx')
                   pure $ v /\ ctx'
             unsafeCoerceAff $ eval (example ctx') v
+
+            -- TODO: have the runner indicate if this is the last test in this
+            -- group and run the clean up action.
             unsafeCoerceAff $ after v
 
 -- | Run an effectful computation around each test, passing the result to
