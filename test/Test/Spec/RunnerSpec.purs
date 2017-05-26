@@ -1,15 +1,16 @@
 module Test.Spec.RunnerSpec where
 
 import Prelude
+import Control.Monad.Aff (Aff)
 import Control.Monad.Aff (delay)
+import Control.Monad.Aff.Console as Console
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it)
+import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
-import Control.Monad.Aff.Console as Console
 
-runnerSpec :: ∀ e. Spec (RunnerEffects e) Unit
+runnerSpec :: ∀ e eff. Spec (RunnerEffects e) Unit
 runnerSpec =
   describe "Test" $
     describe "Spec" do
@@ -34,3 +35,8 @@ runnerSpec =
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
+
+      describe "beforeEach" do
+        beforeEach (pure 10) do
+          it "should pass result to \"it\" (1)" \s -> do
+            s `shouldEqual` 10

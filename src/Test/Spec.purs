@@ -12,6 +12,7 @@ module Test.Spec (
   pending',
   it,
   itOnly,
+  beforeEach,
   collect,
   countTests,
   class Example,
@@ -21,6 +22,7 @@ module Test.Spec (
 import Prelude
 import Control.Monad.State as State
 import Control.Monad.Aff (Aff)
+import Control.Monad.Aff.Unsafe (unsafeCoerceAff)
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Exception (Error)
@@ -166,3 +168,19 @@ itOnly
   -> fun
   -> SpecWith fun Unit
 itOnly description example = modify (_ <> [It true description example])
+
+-- | Run an effectful computation before each test, passing the result to
+-- | the test
+beforeEach
+  :: ∀ eff eff eff2 arg1 fun1 fun2 eff3
+   . Example eff arg1 fun1
+  => Aff eff arg1
+  -> SpecWith fun1 Unit
+  -> Spec eff {- eff1 + eff2 -} Unit
+beforeEach beforeAction spec = modify $ const $
+  let groups = collect spec
+   in groups <#> \group ->
+        group <#> \example -> do
+          -- TODO: how to unify rows?
+          v <- unsafeCoerceAff beforeAction
+          unsafeCoerceAff $ eval example v
