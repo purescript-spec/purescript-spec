@@ -66,14 +66,14 @@ instance functorGroup :: Functor Group where
   map f (Describe o n ss) = Describe o n ((f <$> _) <$> ss)
   map _ (Pending n) = Pending n
 
-class Example eff a | a -> eff where
-  eval :: a -> Aff eff Unit
+class Example eff arg fun | arg -> eff, fun -> arg where
+  eval :: fun -> arg -> Aff eff Unit
 
-instance exampleFunc :: Example eff (Unit -> Aff eff Unit) where
-  eval f = f unit
+instance exampleFunc :: Example eff arg (arg -> Aff eff Unit) where
+  eval f arg = f arg
 
-instance exampleUnit :: Example eff (Aff eff Unit) where
-  eval u = u
+instance exampleUnit :: Example eff Unit (Aff eff Unit) where
+  eval u _ = u
 
 -- Specifications with unevaluated tests.
 type SpecEffects e =  ( console :: CONSOLE
@@ -102,64 +102,67 @@ countTests spec = execState (for (collect spec) go) 0
 
 -- | Combine a group of specs into a described hierarchy that either has the
 -- |"only" modifier applied or not.
-_describe :: forall r. Boolean
-         -> String
-         -> SpecWith r Unit
-         -> SpecWith r Unit
-_describe only name its =
-  modify (_ <> [Describe only name (collect its)]) $> unit
+_describe
+  :: forall r
+   . Boolean
+  -> String
+  -> SpecWith r Unit
+  -> SpecWith r Unit
+_describe only name its = modify (_ <> [Describe only name (collect its)])
 
 -- | Combine a group of specs into a described hierarchy.
-describe :: forall r. String
-         -> SpecWith r Unit
-         -> SpecWith r Unit
+describe
+  :: ∀ r
+   . String
+  -> SpecWith r Unit
+  -> SpecWith r Unit
 describe = _describe false
 
 -- | Combine a group of specs into a described hierarchy and mark it as the
 -- | only group to actually be evaluated. (useful for quickly narrowing down
 -- | on a set)
 describeOnly
-  :: ∀ eff a
-   . Example eff a
+  :: ∀ eff arg fun
+   . Example eff arg fun
   => String
-  -> SpecWith a Unit
-  -> SpecWith a Unit
+  -> SpecWith fun Unit
+  -> SpecWith fun Unit
 describeOnly = _describe true
 
 -- | Create a pending spec.
 pending
-  :: ∀ eff a
-   . Example eff a
+  :: ∀ eff arg fun
+   . Example eff arg fun
   => String
-  -> SpecWith a Unit
+  -> SpecWith fun Unit
 pending name = modify $ \p -> p <> [Pending name]
 
 -- | Create a pending spec with a body that is ignored by
 -- | the runner. It can be useful for documenting what the
 -- | spec should test when non-pending.
 pending'
-  :: ∀ eff a
-   . Example eff a
+  :: ∀ eff arg fun
+   . Example eff arg fun
   => String
-  -> a
-  -> SpecWith a Unit
+  -> fun
+  -> SpecWith fun Unit
 pending' name _ = pending name
 
 -- | Create a spec with a description.
 it
-  :: ∀ eff a
-   . Example eff a
+  :: ∀ eff arg fun
+   . Example eff arg fun
   => String
-  -> a
-  -> SpecWith a Unit
+  -> fun
+  -> SpecWith fun Unit
 it description example = modify (_ <> [It false description example])
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
 itOnly
-  :: ∀ eff a
-   . Example eff a
+  :: ∀ eff arg fun
+   . Example eff arg fun
   => String
-  -> a
-  -> SpecWith a Unit
+  -> fun
+  -> SpecWith fun Unit
 itOnly description example = modify (_ <> [It true description example])

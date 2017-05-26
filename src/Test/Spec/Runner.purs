@@ -118,8 +118,8 @@ _run config spec = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt case config.timeout of
-                                      Just t -> timeout t $ eval test
-                                      _      -> eval test
+                                      Just t -> timeout t $ eval test unit
+                                      _      -> eval test unit
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (\err ->
