@@ -5,7 +5,7 @@ import Control.Monad.Aff (Aff)
 import Control.Monad.Aff (delay)
 import Control.Monad.Aff.Console as Console
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach, afterEach, aroundEach)
+import Test.Spec (Group(..), Result(..), Spec, describe, it, aroundEach)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
@@ -38,8 +38,7 @@ runnerSpec =
 
       describe "aroundEach" do
         aroundEach
-          (pure 10)
-          (_ `shouldEqual` 10) do
-            it "should pass result to \"it\" (1)" \s -> do
-              s `shouldEqual` 10
-
+          ((pure 10) :: Aff _ Int)
+          ((Console.log <<< show) :: Int -> Aff _ Unit) do
+            it "should pass result to \"it\" (1)" do
+              10 `shouldEqual` 10

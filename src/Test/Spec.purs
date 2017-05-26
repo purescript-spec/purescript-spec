@@ -12,8 +12,8 @@ module Test.Spec (
   pending',
   it,
   itOnly,
-  beforeEach,
-  afterEach,
+  -- beforeEach,
+  -- afterEach,
   aroundEach,
   collect,
   countTests,
@@ -25,13 +25,15 @@ import Prelude
 import Control.Monad.State as State
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Unsafe (unsafeCoerceAff)
-import Control.Monad.Aff.AVar (AVAR)
+import Control.Monad.Aff.AVar (AVAR, AVar, peekVar)
 import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Aff.Console as Console
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.State (State, modify, execState, runState)
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
+import Unsafe.Coerce (unsafeCoerce)
 
 type Name = String
 type Only = Boolean
@@ -70,13 +72,19 @@ instance functorGroup :: Functor Group where
   map f (Describe o n ss) = Describe o n ((f <$> _) <$> ss)
   map _ (Pending n) = Pending n
 
-class Example eff arg fun | arg -> eff, fun -> arg where
-  eval :: fun -> arg -> Aff eff Unit
+class Example eff arg fun
+  | arg -> eff
+  , fun -> arg
+  , fun -> eff
+  where
+  eval :: fun -> AVar arg -> Aff eff Unit
 
 instance exampleFunc :: Example eff arg (arg -> Aff eff Unit) where
-  eval f arg = f arg
+  eval f var = do
+    arg <- unsafeCoerceAff $ peekVar var -- TODO: make this safe
+    f arg
 
-instance exampleUnit :: Example eff Unit (Aff eff Unit) where
+instance exampleAff :: Example eff a (Aff eff Unit) where
   eval u _ = u
 
 -- Specifications with unevaluated tests.
@@ -107,19 +115,21 @@ countTests spec = execState (for (collect spec) go) 0
 -- | Combine a group of specs into a described hierarchy that either has the
 -- |"only" modifier applied or not.
 _describe
-  :: forall r
-   . Boolean
+  :: ∀ eff arg fun
+   . Example eff arg fun
+  => Boolean
   -> String
-  -> SpecWith r Unit
-  -> SpecWith r Unit
+  -> SpecWith fun Unit
+  -> SpecWith fun Unit
 _describe only name its = modify (_ <> [Describe only name (collect its)])
 
 -- | Combine a group of specs into a described hierarchy.
 describe
-  :: ∀ r
-   . String
-  -> SpecWith r Unit
-  -> SpecWith r Unit
+  :: ∀ eff arg fun
+   . Example eff arg fun
+  => String
+  -> SpecWith fun Unit
+  -> SpecWith fun Unit
 describe = _describe false
 
 -- | Combine a group of specs into a described hierarchy and mark it as the
@@ -176,35 +186,13 @@ itOnly description example = modify (_ <> [It true description example])
 aroundEach
   :: ∀ eff1 eff2 eff3 eff4 fun1 fun2 arg1
    . Example eff3 arg1 fun1
+  => Example eff4 Unit fun2
   => Aff eff1 arg1
   -> (arg1 -> Aff eff2 Unit)
   -> SpecWith fun1 Unit
-  -> Spec eff4 {- eff1 + eff2 + eff3 -} Unit
+  -> SpecWith fun2 Unit
 aroundEach before after spec = modify $ const $
   let groups = collect spec
    in groups <#> \group ->
-        group <#> \example -> void do
-          -- TODO: how to unify rows?
-          v <- unsafeCoerceAff before
-          unsafeCoerceAff $ eval example v
-          unsafeCoerceAff $ after v
-
--- | Run an effectful computation beofre each test, passing the result to
--- | the test
-beforeEach
-  :: ∀ eff1 eff2 fun1 arg1
-   . Example eff2 arg1 fun1
-  => Aff eff1 arg1
-  -> SpecWith fun1 Unit
-  -> Spec eff2 {- eff1 + eff2 -} Unit
-beforeEach = flip aroundEach (const $ pure unit)
-
--- | Run an effectful computation beofre each test, passing the result to
--- | the test
-afterEach
-  :: ∀ eff1 eff2 fun1
-   . Example eff2 Unit fun1
-  => Aff eff1 Unit
-  -> SpecWith fun1 Unit
-  -> Spec eff2 {- eff1 + eff2 -} Unit
-afterEach after = aroundEach (pure unit) (const after)
+        group <#> \example -> do
+          unsafeCoerceAff $ Console.log "..." --

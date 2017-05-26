@@ -18,7 +18,7 @@ import Test.Spec as Spec
 import Test.Spec.Runner.Event as Event
 import Control.Alternative ((<|>))
 import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
-import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
+import Control.Monad.Aff.AVar (makeVar, makeVar', killVar, putVar, takeVar, AVAR)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (logShow)
@@ -109,17 +109,18 @@ _run
   -> Producer Event (Aff (RunnerEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
-  r <- for (trim $ collect spec) runGroup
+  ctx <- lift $ makeVar' unit
+  r <- for (trim $ collect spec) (runGroup ctx)
   yield (Event.End r)
   pure r
 
   where
-  runGroup (It only name test) = do
+  runGroup ctx (It only name test) = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt case config.timeout of
-                                      Just t -> timeout t $ eval test unit
-                                      _      -> eval test unit
+                                      Just t -> timeout t $ eval test ctx
+                                      _      -> eval test ctx
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (\err ->
@@ -131,13 +132,14 @@ _run config spec = do
     yield Event.TestEnd
     pure $ It only name $ either Failure (const Success) e
 
-  runGroup (Pending name) = do
+  runGroup _ (Pending name) = do
     yield $ Event.Pending name
     pure $ Pending name
 
-  runGroup (Describe only name xs) = do
+  runGroup _ (Describe only name xs) = do
     yield $ Event.Suite name
-    Describe only name <$> (for xs runGroup)
+    ctx <- lift $ makeVar' unit
+    Describe only name <$> for xs (runGroup ctx)
     <* yield Event.SuiteEnd
 
 -- Run a spec, returning the results, without any reporting
