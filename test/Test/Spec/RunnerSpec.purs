@@ -5,7 +5,7 @@ import Control.Monad.Aff (Aff)
 import Control.Monad.Aff (delay)
 import Control.Monad.Aff.Console as Console
 import Data.Time.Duration (Milliseconds(..))
-import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach)
+import Test.Spec (Group(..), Result(..), Spec, describe, it, beforeEach, afterEach)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Runner (RunnerEffects, runSpec)
@@ -37,6 +37,8 @@ runnerSpec =
           res `shouldEqual` 1
 
       describe "beforeEach" do
-        beforeEach (pure 10) do
-          it "should pass result to \"it\" (1)" \s -> do
-            s `shouldEqual` 10
+        afterEach (Console.log "done") do
+          beforeEach (pure 10) do
+            it "should pass result to \"it\" (1)" \s -> do
+              s `shouldEqual` 10
+

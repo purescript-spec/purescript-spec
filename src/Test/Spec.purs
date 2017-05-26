@@ -13,6 +13,7 @@ module Test.Spec (
   it,
   itOnly,
   beforeEach,
+  afterEach,
   collect,
   countTests,
   class Example,
@@ -169,18 +170,40 @@ itOnly
   -> SpecWith fun Unit
 itOnly description example = modify (_ <> [It true description example])
 
--- | Run an effectful computation before each test, passing the result to
--- | the test
-beforeEach
-  :: ∀ eff eff eff2 arg1 fun1 fun2 eff3
-   . Example eff arg1 fun1
-  => Aff eff arg1
+-- | Run an effectful computation around each test, passing the result to
+-- | the test and cleaning up afterwards
+around
+  :: ∀ eff1 eff2 eff3 eff4 fun1 fun2 arg1
+   . Example eff3 arg1 fun1
+  => Aff eff1 arg1
+  -> Aff eff2 Unit
   -> SpecWith fun1 Unit
-  -> Spec eff {- eff1 + eff2 -} Unit
-beforeEach beforeAction spec = modify $ const $
+  -> Spec eff4 {- eff1 + eff2 + eff3 -} Unit
+around before after spec = modify $ const $
   let groups = collect spec
    in groups <#> \group ->
         group <#> \example -> do
           -- TODO: how to unify rows?
-          v <- unsafeCoerceAff beforeAction
+          v <- unsafeCoerceAff before
           unsafeCoerceAff $ eval example v
+          <* unsafeCoerceAff after
+
+-- | Run an effectful computation beofre each test, passing the result to
+-- | the test
+beforeEach
+  :: ∀ eff1 eff2 fun1 arg1
+   . Example eff2 arg1 fun1
+  => Aff eff1 arg1
+  -> SpecWith fun1 Unit
+  -> Spec eff2 {- eff1 + eff2 -} Unit
+beforeEach = flip around (pure unit)
+
+-- | Run an effectful computation beofre each test, passing the result to
+-- | the test
+afterEach
+  :: ∀ eff1 eff2 fun1
+   . Example eff2 Unit fun1
+  => Aff eff1 Unit
+  -> SpecWith fun1 Unit
+  -> Spec eff2 {- eff1 + eff2 -} Unit
+afterEach = around (pure unit)
