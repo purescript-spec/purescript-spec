@@ -12,9 +12,10 @@ module Test.Spec (
   pending',
   it,
   itOnly,
-  -- beforeEach,
-  -- afterEach,
+  beforeEach,
+  afterEach,
   aroundEach,
+  beforeAll,
   collect,
   countTests,
   class Example,
@@ -25,14 +26,16 @@ import Prelude
 import Control.Monad.State as State
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Unsafe (unsafeCoerceAff)
-import Control.Monad.Aff.AVar (AVAR, AVar, peekVar)
+import Control.Monad.Aff.AVar (AVAR, AVar, tryPeekVar, makeVar, putVar)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Aff.Console as Console
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.State (State, modify, execState, runState)
+import Data.Maybe (Maybe(..))
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
+import Data.Tuple.Nested ((/\))
 import Unsafe.Coerce (unsafeCoerce)
 
 type Name = String
@@ -77,12 +80,10 @@ class Example eff arg fun
   , fun -> arg
   , fun -> eff
   where
-  eval :: fun -> AVar arg -> Aff eff Unit
+  eval :: fun -> arg -> Aff eff Unit
 
 instance exampleFunc :: Example eff arg (arg -> Aff eff Unit) where
-  eval f var = do
-    arg <- unsafeCoerceAff $ peekVar var -- TODO: make this safe
-    f arg
+  eval f arg = f arg
 
 instance exampleAff :: Example eff a (Aff eff Unit) where
   eval u _ = u
@@ -93,7 +94,7 @@ type SpecEffects e =  ( console :: CONSOLE
                       , avar    :: AVAR
                       | e)
 type Spec eff r = SpecWith (Aff eff Unit) r
-type SpecWith a r = State (Array (Group a)) r
+type SpecWith a r = State (Array (Group (AVar Unit -> a))) r
 
 collect
   :: ∀ t r
@@ -149,7 +150,7 @@ pending
    . Example eff arg fun
   => String
   -> SpecWith fun Unit
-pending name = modify $ \p -> p <> [Pending name]
+pending name = modify (_ <> [Pending name])
 
 -- | Create a pending spec with a body that is ignored by
 -- | the runner. It can be useful for documenting what the
@@ -169,7 +170,7 @@ it
   => String
   -> fun
   -> SpecWith fun Unit
-it description example = modify (_ <> [It false description example])
+it description example = modify (_ <> [It false description \_ -> example])
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
@@ -179,20 +180,70 @@ itOnly
   => String
   -> fun
   -> SpecWith fun Unit
-itOnly description example = modify (_ <> [It true description example])
+itOnly description example = modify (_ <> [It true description \_ -> example])
+
+-- | Run an effectful computation around each test, passing the result to
+-- | the test and cleaning up afterwards
+_around
+  :: ∀ eff1 eff2 eff3 eff4 fun1 arg1
+   . Example eff3 arg1 fun1
+  => Boolean -- cached?
+  -> Aff eff1 arg1
+  -> (arg1 -> Aff eff2 Unit)
+  -> SpecWith fun1 Unit
+  -> Spec eff4 Unit
+_around cache before after spec = modify $ const $
+  let groups = collect spec
+   in groups <#> \group ->
+        group <#> \example ->
+          \ctx -> do
+            -- TODO: this is not composable but a necessary evil
+            v /\ ctx' <- unsafeCoerceAff do
+              tryPeekVar ctx >>= case _ of
+                Just v -> pure (unsafeCoerce v)
+                Nothing -> do
+                  ctx' <- makeVar
+                  v <- unsafeCoerceAff $ before
+                  putVar ctx (unsafeCoerce $ v /\ ctx')
+                  pure $ v /\ ctx'
+            unsafeCoerceAff $ eval (example ctx') v
+            unsafeCoerceAff $ after v
 
 -- | Run an effectful computation around each test, passing the result to
 -- | the test and cleaning up afterwards
 aroundEach
-  :: ∀ eff1 eff2 eff3 eff4 fun1 fun2 arg1
+  :: ∀ eff1 eff2 eff3 eff4 fun1 arg1
    . Example eff3 arg1 fun1
-  => Example eff4 Unit fun2
   => Aff eff1 arg1
   -> (arg1 -> Aff eff2 Unit)
   -> SpecWith fun1 Unit
-  -> SpecWith fun2 Unit
-aroundEach before after spec = modify $ const $
-  let groups = collect spec
-   in groups <#> \group ->
-        group <#> \example -> do
-          unsafeCoerceAff $ Console.log "..." --
+  -> Spec eff4 Unit
+aroundEach = _around false
+
+-- | Run an effectful computation around before each test
+beforeEach
+  :: ∀ eff1 eff2 eff3 eff4 fun1 arg1
+   . Example eff3 arg1 fun1
+  => Aff eff1 arg1
+  -> SpecWith fun1 Unit
+  -> Spec eff4 Unit
+beforeEach = flip (_around false) (const $ pure unit)
+
+-- | Run an effectful computation around before each test
+afterEach
+  :: ∀ eff1 eff2 eff3 eff4 fun1
+   . Example eff3 Unit fun1
+  => (Unit -> Aff eff2 Unit)
+  -> SpecWith fun1 Unit
+  -> Spec eff4 Unit
+afterEach = _around false (pure unit)
+
+-- | Run an effectful computation around all tests, passing the result to
+-- | the test without evaluating it twice
+beforeAll
+  :: ∀ eff1 eff2 eff3 eff4 fun1 arg1
+   . Example eff3 arg1 fun1
+  => Aff eff1 arg1
+  -> SpecWith fun1 Unit
+  -> Spec eff4 Unit
+beforeAll before spec = _around true before (const $ pure unit) spec

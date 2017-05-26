@@ -40,6 +40,7 @@ import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
+import Unsafe.Coerce (unsafeCoerce)
 
 type RunnerEffects e = SpecEffects (process :: PROCESS | e)
 
@@ -109,7 +110,7 @@ _run
   -> Producer Event (Aff (RunnerEffects e)) (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
-  ctx <- lift $ makeVar' unit
+  ctx <- lift $ makeVar
   r <- for (trim $ collect spec) (runGroup ctx)
   yield (Event.End r)
   pure r
@@ -119,8 +120,8 @@ _run config spec = do
     yield Event.Test
     start    <- lift $ liftEff dateNow
     e        <- lift $ attempt case config.timeout of
-                                      Just t -> timeout t $ eval test ctx
-                                      _      -> eval test ctx
+                          Just t -> timeout t $ eval (test (unsafeCoerce ctx)) unit
+                          _      -> eval (test (unsafeCoerce ctx)) unit
     duration <- lift $ (_ - start) <$> liftEff dateNow
     yield $ either
       (\err ->
@@ -138,7 +139,7 @@ _run config spec = do
 
   runGroup _ (Describe only name xs) = do
     yield $ Event.Suite name
-    ctx <- lift $ makeVar' unit
+    ctx <- lift $ makeVar
     Describe only name <$> for xs (runGroup ctx)
     <* yield Event.SuiteEnd
 
