@@ -16,13 +16,13 @@ following command compiles all PureScript modules in `test` and `src`.
 
 
 ```bash
-psc -o output/tests 'test/**/*.purs' 'src/**/*.purs'
+psc -o output 'test/**/*.purs' 'src/**/*.purs'
 ```
 
 After that has finished, you can run the test program using NodeJS.
 
 ```
-NODE_PATH=output/tests node -e "require('Test.Main').main();"
+NODE_PATH=output node -e "require('Test.Main').main();"
 ```
 
 **NOTE:** A test program using `Test.Spec.Runner.run` cannot be browserified
