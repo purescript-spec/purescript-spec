@@ -1,6 +1,6 @@
 # PureScript Spec [![Build Status](https://travis-ci.org/owickstrom/purescript-spec.svg?branch=master)](https://travis-ci.org/owickstrom/purescript-spec)
 
-PureScript Spec is a simple testing framework for Purescript, inspired by
+PureScript Spec is a testing framework for Purescript, inspired by
 [hspec](http://hspec.github.io/).
 
 <img src="https://raw.githubusercontent.com/owickstrom/purescript-spec/master/example.png" width="400" />
