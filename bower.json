@@ -21,7 +21,6 @@
     "purescript-strings": "^3.0.0",
     "purescript-prelude": "^3.0.0",
     "purescript-transformers": "^3.0.0",
-    "purescript-node-process": "^4.0.0",
     "purescript-monoid": "^3.0.0",
     "purescript-foldable-traversable": "^3.0.0",
     "purescript-js-timers": "^3.0.0",
