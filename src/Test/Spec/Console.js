@@ -4,15 +4,23 @@
 // module Test.Spec.Console
 
 function hasProcessWrite() {
-  return process &&
-      process.stdout &&
-      typeof process.stdout.write === 'function'
+  try {
+    return process &&
+        process.stdout &&
+        typeof process.stdout.write === 'function'
+  }
+  catch(e) {
+    return false
+  }
 }
 
 exports.write = function(s) {
   return function () {
     if (hasProcessWrite()) {
-      process.stdout.write(s);
+      try {
+        process.stdout.write(s);
+      }
+      catch (e) {}
     }
   };
 };

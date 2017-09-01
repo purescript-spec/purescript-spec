@@ -9,8 +9,10 @@ exports.dateNow = function () {
 
 exports.exit = function(code) {
   return function() {
-    if (process && typeof process.exit === 'function') {
-      process.exit(code);
-    }
+    try {
+      if (process && typeof process.exit === 'function') {
+        process.exit(code);
+      }
+    } catch(e) {}
   };
 }
