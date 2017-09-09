@@ -9,17 +9,17 @@ module Test.Spec.Runner
        , Config
        , TestEvents
        , Reporter
+       , PROCESS
        ) where
 
 import Prelude
 import Control.Monad.Eff.Exception as Error
-import Node.Process as Process
 import Test.Spec as Spec
 import Test.Spec.Runner.Event as Event
 import Control.Alternative ((<|>))
 import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
 import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (logShow)
 import Control.Monad.Eff.Exception (Error, error)
@@ -30,7 +30,6 @@ import Data.Either (either)
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Traversable (for)
-import Node.Process (PROCESS)
 import Pipes ((>->), yield)
 import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
@@ -40,6 +39,10 @@ import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
+
+foreign import data PROCESS :: Effect
+
+foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
 
 type RunnerEffects e = SpecEffects (process :: PROCESS | e)
 
@@ -174,12 +177,12 @@ run' config reporters spec = void do
 
     onError :: Error -> Eff (RunnerEffects e) Unit
     onError err = do withAttrs [31] $ logShow err
-                     Process.exit 1
+                     exit 1
 
     onSuccess :: Array (Group Result) -> Eff (RunnerEffects e) Unit
     onSuccess results = if successful results
-                        then Process.exit 0
-                        else Process.exit 1
+                        then exit 0
+                        else exit 1
 
 run
   :: ∀ e
