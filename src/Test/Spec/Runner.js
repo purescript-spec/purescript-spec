@@ -14,5 +14,11 @@ exports.exit = function(code) {
         process.exit(code);
       }
     } catch(e) {}
+
+    try {
+      if (phantom && typeof phantom.exit === 'function') {
+        phantom.exit(code);
+      }
+    } catch(e) {}
   };
 }
