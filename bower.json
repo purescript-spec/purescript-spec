@@ -16,14 +16,16 @@
   },
   "dependencies": {
     "purescript-console": "^3.0.0",
-    "purescript-aff": "^3.0.0",
+    "purescript-aff": "^4.0.0",
     "purescript-exceptions": "^3.0.0",
     "purescript-strings": "^3.0.0",
     "purescript-prelude": "^3.0.0",
     "purescript-transformers": "^3.0.0",
     "purescript-monoid": "^3.0.0",
     "purescript-foldable-traversable": "^3.0.0",
-    "purescript-js-timers": "^3.0.0",
     "purescript-pipes": "^4.0.0"
+  },
+  "resolutions": {
+    "purescript-aff": "^4.0.0"
   }
 }

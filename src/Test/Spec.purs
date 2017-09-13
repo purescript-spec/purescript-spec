@@ -21,7 +21,6 @@ import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Exception (Error)
-import Control.Monad.Eff.Timer (TIMER)
 import Control.Monad.State (State, modify, execState, runState)
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
@@ -60,7 +59,6 @@ instance eqGroup :: Eq t => Eq (Group t) where
 
 -- Specifications with unevaluated tests.
 type SpecEffects e =  ( console :: CONSOLE
-                      , timer   :: TIMER
                       , avar    :: AVAR
                       | e)
 type Spec  eff t = State (Array (Group (Aff eff Unit))) t
