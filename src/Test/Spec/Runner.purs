@@ -15,19 +15,20 @@ module Test.Spec.Runner
 import Prelude
 
 import Control.Alternative ((<|>))
-import Control.Monad.Aff (Aff, attempt, cancelWith, delay, forkAff, makeAff, runAff)
-import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
+import Control.Monad.Aff (Aff, attempt, delay, makeAff, runAff, throwError, try)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (logShow)
 import Control.Monad.Eff.Exception (Error, error)
 import Control.Monad.Eff.Exception as Error
 import Control.Monad.Trans.Class (lift)
+import Control.Parallel (sequential, parallel)
 import Data.Array (singleton)
-import Data.Either (either)
+import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Monoid (mempty)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (for)
 import Pipes ((>->), yield)
@@ -75,32 +76,23 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
     go Nothing x = f x
     go acc _ = acc
 
-pickFirst
-  :: ∀ e
-   . Aff (avar :: AVAR | e) Unit
-  -> Aff (avar :: AVAR | e) Unit
-  -> Aff (avar :: AVAR | e) Unit
-pickFirst t1 t2 = do
-  va <- makeVar
-  c1 <- forkAff $ attempt t1 >>= either (killVar va) (putVar va)
-  c2 <- forkAff $ attempt t2 >>= either (killVar va) (putVar va)
-  (takeVar va) `cancelWith` (c1 <> c2)
-
 makeTimeout
   :: ∀ e
    . Int
   -> Aff e Unit
 makeTimeout time = do
   delay (Milliseconds $ toNumber time)
-  makeAff \fail _ -> void do
-    fail $ error $ "test timed out after " <> show time <> "ms"
+  makeAff \cb -> mempty <$ do
+    cb <<< Left $ error $ "test timed out after " <> show time <> "ms"
 
 timeout
   :: ∀ e
    . Int
   -> Aff (RunnerEffects e) Unit
   -> Aff (RunnerEffects e) Unit
-timeout time t = t `pickFirst` (makeTimeout time)
+timeout time t = do
+  sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
+    >>= either throwError pure
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
@@ -174,7 +166,7 @@ run'
   -> Eff  (RunnerEffects e) Unit
 run' config reporters spec = void do
   let events = foldl (>->) (_run config spec) reporters
-  runAff onError onSuccess (P.runEffectRec (P.for events onEvent))
+  runAff (either onError onSuccess) (P.runEffectRec (P.for events onEvent))
 
   where
     onEvent _ = pure unit

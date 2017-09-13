@@ -16,14 +16,14 @@
   },
   "dependencies": {
     "purescript-console": "^3.0.0",
-    "purescript-aff": "^3.0.0",
-    "purescript-exceptions": "^3.0.0",
-    "purescript-strings": "^3.0.0",
-    "purescript-prelude": "^3.0.0",
-    "purescript-transformers": "^3.0.0",
-    "purescript-monoid": "^3.0.0",
-    "purescript-foldable-traversable": "^3.0.0",
-    "purescript-pipes": "^4.0.0",
+    "purescript-aff": "^4.0.0",
+    "purescript-exceptions": "^3.1.0",
+    "purescript-strings": "^3.3.1",
+    "purescript-prelude": "^3.1.0",
+    "purescript-transformers": "^3.4.0",
+    "purescript-monoid": "^3.2.0",
+    "purescript-foldable-traversable": "^3.6.1",
+    "purescript-pipes": "^5.0.0",
     "purescript-ansi": "^4.0.0"
   }
 }
