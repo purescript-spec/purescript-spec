@@ -13,20 +13,19 @@ module Test.Spec.Runner
        ) where
 
 import Prelude
-import Control.Monad.Eff.Exception as Error
-import Test.Spec as Spec
-import Test.Spec.Runner.Event as Event
+
 import Control.Alternative ((<|>))
-import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
-import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
+import Control.Monad.Aff (Aff, attempt, effCanceler, makeAff, runAff)
+import Control.Monad.Aff.AVar (AVAR)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (logShow)
 import Control.Monad.Eff.Exception (Error, error)
+import Control.Monad.Eff.Exception as Error
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Trans.Class (lift)
 import Data.Array (singleton)
-import Data.Either (either)
+import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Traversable (for)
@@ -35,8 +34,10 @@ import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
+import Test.Spec as Spec
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
+import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
 
@@ -78,18 +79,14 @@ pickFirst
    . Aff (avar :: AVAR | e) Unit
   -> Aff (avar :: AVAR | e) Unit
   -> Aff (avar :: AVAR | e) Unit
-pickFirst t1 t2 = do
-  va <- makeVar
-  c1 <- forkAff $ attempt t1 >>= either (killVar va) (putVar va)
-  c2 <- forkAff $ attempt t2 >>= either (killVar va) (putVar va)
-  (takeVar va) `cancelWith` (c1 <> c2)
+pickFirst t1 t2 = t1 <|> t2
 
 makeTimeout
   :: ∀ e
    . Int
   -> Aff (timer :: TIMER | e) Unit
-makeTimeout time = makeAff \fail _ -> void do
-  setTimeout time $ fail $ error $ "test timed out after " <> show time <> "ms"
+makeTimeout time = makeAff $ \cb -> pure <<< effCanceler <<< void $
+  setTimeout time (cb <<< Left <<< error $ "test timed out after " <> show time <> "ms")
 
 timeout
   :: ∀ e
@@ -170,19 +167,18 @@ run'
   -> Eff  (RunnerEffects e) Unit
 run' config reporters spec = void do
   let events = foldl (>->) (_run config spec) reporters
-  runAff onError onSuccess (P.runEffectRec (P.for events onEvent))
+  runAff doneCb (P.runEffectRec (P.for events onEvent))
 
   where
     onEvent _ = pure unit
 
-    onError :: Error -> Eff (RunnerEffects e) Unit
-    onError err = do withAttrs [31] $ logShow err
-                     exit 1
+    doneCb :: Either Error (Array (Group Result)) -> Eff (RunnerEffects e) Unit
+    doneCb (Left err) = do withAttrs [31] $ logShow err
+                           exit 1
 
-    onSuccess :: Array (Group Result) -> Eff (RunnerEffects e) Unit
-    onSuccess results = if successful results
-                        then exit 0
-                        else exit 1
+    doneCb (Right results) = if successful results
+                               then exit 0
+                               else exit 1
 
 run
   :: ∀ e
