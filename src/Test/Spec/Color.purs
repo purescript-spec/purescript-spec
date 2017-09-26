@@ -1,5 +1,8 @@
 module Test.Spec.Color where
 
+import Ansi.Codes (GraphicsParam(..), colorSuffix, graphicsParamToString, prefix)
+import Data.Semigroup ((<>))
+import Data.Show (show)
 import Prelude ((<<<))
 
 data Color
@@ -35,4 +38,7 @@ code Light        = 2
 colored :: Color -> String -> String
 colored = _colored <<< code
 
-foreign import _colored :: Int -> String -> String
+_colored :: Int -> String -> String
+_colored c str = wrap (show c) <> str <> wrap (graphicsParamToString Reset)
+  where
+  wrap s = prefix <> s <> colorSuffix
