@@ -13,30 +13,32 @@ module Test.Spec.Runner
        ) where
 
 import Prelude
-import Control.Monad.Eff.Exception as Error
-import Test.Spec as Spec
-import Test.Spec.Runner.Event as Event
+
 import Control.Alternative ((<|>))
-import Control.Monad.Aff (Aff, makeAff, runAff, forkAff, cancelWith, attempt)
+import Control.Monad.Aff (Aff, attempt, cancelWith, delay, forkAff, makeAff, runAff)
 import Control.Monad.Aff.AVar (makeVar, killVar, putVar, takeVar, AVAR)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Console (logShow)
 import Control.Monad.Eff.Exception (Error, error)
-import Control.Monad.Eff.Timer (TIMER, setTimeout)
+import Control.Monad.Eff.Exception as Error
 import Control.Monad.Trans.Class (lift)
 import Data.Array (singleton)
 import Data.Either (either)
 import Data.Foldable (foldl)
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (for)
 import Pipes ((>->), yield)
 import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
+import Test.Spec as Spec
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
+import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
 
@@ -87,9 +89,11 @@ pickFirst t1 t2 = do
 makeTimeout
   :: ∀ e
    . Int
-  -> Aff (timer :: TIMER | e) Unit
-makeTimeout time = makeAff \fail _ -> void do
-  setTimeout time $ fail $ error $ "test timed out after " <> show time <> "ms"
+  -> Aff e Unit
+makeTimeout time = do
+  delay (Milliseconds $ toNumber time)
+  makeAff \fail _ -> void do
+    fail $ error $ "test timed out after " <> show time <> "ms"
 
 timeout
   :: ∀ e
