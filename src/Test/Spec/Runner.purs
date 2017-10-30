@@ -9,7 +9,7 @@ module Test.Spec.Runner
        , Config
        , TestEvents
        , Reporter
-       , PROCESS
+       , SPEC_PROCESS
        ) where
 
 import Prelude
@@ -43,11 +43,11 @@ import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
 
-foreign import data PROCESS :: Effect
+foreign import data SPEC_PROCESS :: Effect
 
-foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
+foreign import exit :: forall eff. Int -> Eff (specProcess :: SPEC_PROCESS | eff) Unit
 
-type RunnerEffects e = SpecEffects (process :: PROCESS | e)
+type RunnerEffects e = SpecEffects (specProcess :: SPEC_PROCESS | e)
 
 foreign import dateNow :: ∀ e. Eff e Int
 
