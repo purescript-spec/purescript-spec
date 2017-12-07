@@ -3,6 +3,7 @@ module Test.Spec.Assertions
   , shouldEqual
   , shouldNotEqual
   , shouldContain
+  , shouldNotContain
   ) where
 
 import Prelude
@@ -10,7 +11,7 @@ import Prelude
 import Control.Monad.Aff           (Aff())
 import Control.Monad.Eff.Exception (error)
 import Control.Monad.Error.Class   (throwError)
-import Data.Foldable               (class Foldable, notElem)
+import Data.Foldable               (class Foldable, notElem, elem)
 
 fail :: forall r. String -> Aff r Unit
 fail msg = throwError $ error $ msg
@@ -29,3 +30,8 @@ shouldContain :: forall r f a. Show a => Eq a => Show (f a) => Foldable f => f a
 shouldContain c e =
   when (e `notElem` c) $
     fail $ (show e) <> " ∉ " <> (show c)
+
+shouldNotContain :: forall r f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff r Unit
+shouldNotContain c e =
+  when (e `elem` c) $
+    fail $ (show e) <> " ∈ " <> (show c)
