@@ -7,7 +7,7 @@ PureScript Spec is a testing framework for Purescript, inspired by
 
 ## Documentation
 
-* [PureScript Spec - The Guide](http://purescript-spec.wickstrom.tech) explains
+* [PureScript Spec - The Guide](https://owickstrom.github.io/purescript-spec/) explains
 in detail how to use purescript-spec. **You should probably start here.**
 * [purescript-spec on Pursuit](https://pursuit.purescript.org/packages/purescript-spec)
   features version information and API documentation.
