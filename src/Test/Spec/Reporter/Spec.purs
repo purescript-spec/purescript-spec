@@ -1,18 +1,18 @@
 module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
+
 import Data.Array as Array
-import Data.String as String
-import Test.Spec.Color as Color
-import Test.Spec.Runner.Event as Event
-import Test.Spec.Speed as Speed
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.String.CodeUnits as CodeUnits
+import Effect.Console (log)
 import Test.Spec.Color (colored)
+import Test.Spec.Color as Color
 import Test.Spec.Reporter.Base (defaultSummary, defaultReporter)
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event as Event
+import Test.Spec.Speed as Speed
 
-specReporter
-  :: ∀ e. Reporter (console :: CONSOLE | e)
+specReporter :: Reporter
 specReporter
   = defaultReporter { indent: 0, numFailures: 0 } update
  where
@@ -47,4 +47,4 @@ specReporter
        in s' <$ (fm s'.indent)
 
     -- TODO: move this somewhere central
-    indent i = String.fromCharArray $ Array.replicate i ' '
+    indent i = CodeUnits.fromCharArray $ Array.replicate i ' '

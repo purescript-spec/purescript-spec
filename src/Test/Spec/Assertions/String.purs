@@ -5,17 +5,17 @@ module Test.Spec.Assertions.String (
 
 import Prelude
 
-import Control.Monad.Aff           (Aff())
-import Control.Monad.Error.Class   (throwError)
-import Control.Monad.Eff.Exception (error)
-import Data.String                 (Pattern(..), contains)
+import Control.Monad.Error.Class (throwError)
+import Data.String (Pattern(..), contains)
+import Effect.Aff (Aff)
+import Effect.Exception (error)
 
-shouldContain :: forall r. String -> String -> Aff r Unit
+shouldContain :: String -> String -> Aff Unit
 shouldContain s subs =
   when (not $ contains (Pattern subs) s) $
     throwError $ error $ show subs <> " ∉ " <> show s
 
-shouldNotContain :: forall r. String -> String -> Aff r Unit
+shouldNotContain :: String -> String -> Aff Unit
 shouldNotContain s subs =
   when (contains (Pattern subs) s) $
     throwError $ error $ show subs <> " ∈ " <> show s

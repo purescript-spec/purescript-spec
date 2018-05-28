@@ -3,7 +3,7 @@
 When you have a spec, you need a runner to actually run it and get the results.
 PureScript Spec comes with a NodeJS runner, `run`, which takes an array of
 *reporters* and a spec to run. What you get back is a test-running program of
-type `Eff r ()`. The effect rows in `r` depend on what you do in your specs and
+type `Effect ()`. The effect rows in `r` depend on what you do in your specs and
 what reporters you are using. The program can be run using
 [Pulp](https://github.com/bodil/pulp).
 

@@ -1,6 +1,5 @@
 module Test.Spec.Runner
-       ( RunnerEffects
-       , run
+       ( run
        , run'
        , runSpec
        , runSpec'
@@ -9,18 +8,17 @@ module Test.Spec.Runner
        , Config
        , TestEvents
        , Reporter
-       , PROCESS
        ) where
 
 import Prelude
 
 import Control.Alternative ((<|>))
-import Control.Monad.Aff (Aff, attempt, delay, makeAff, runAff, throwError, try)
-import Control.Monad.Eff (Eff, kind Effect)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (logShow)
-import Control.Monad.Eff.Exception (Error, error)
-import Control.Monad.Eff.Exception as Error
+import Effect (Effect)
+import Effect.Aff (Aff, attempt, delay, makeAff, runAff, throwError, try)
+import Effect.Class (liftEffect)
+import Effect.Console (logShow)
+import Effect.Exception (Error, error)
+import Effect.Exception as Error
 import Control.Monad.Trans.Class (lift)
 import Control.Parallel (sequential, parallel)
 import Data.Array (singleton)
@@ -28,14 +26,13 @@ import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Monoid (mempty)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (for)
 import Pipes ((>->), yield)
 import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Spec, Group(..), Result(..), SpecEffects, collect)
+import Test.Spec (Spec, Group(..), Result(..), collect)
 import Test.Spec as Spec
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
@@ -43,13 +40,9 @@ import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
 
-foreign import data PROCESS :: Effect
+foreign import exit :: Int -> Effect Unit
 
-foreign import exit :: forall eff. Int -> Eff (process :: PROCESS | eff) Unit
-
-type RunnerEffects e = SpecEffects (process :: PROCESS | e)
-
-foreign import dateNow :: ∀ e. Eff e Int
+foreign import dateNow :: Effect Int
 
 type Config = {
   slow :: Int
@@ -77,19 +70,17 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
     go acc _ = acc
 
 makeTimeout
-  :: ∀ e
-   . Int
-  -> Aff e Unit
+  :: Int
+  -> Aff Unit
 makeTimeout time = do
   delay (Milliseconds $ toNumber time)
   makeAff \cb -> mempty <$ do
     cb <<< Left $ error $ "test timed out after " <> show time <> "ms"
 
 timeout
-  :: ∀ e
-   . Int
-  -> Aff (RunnerEffects e) Unit
-  -> Aff (RunnerEffects e) Unit
+  :: Int
+  -> Aff Unit
+  -> Aff Unit
 timeout time t = do
   sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
     >>= either throwError pure
@@ -102,10 +93,9 @@ timeout time t = do
 -- prodocer has completed and still benefit from the array of results the way
 -- the runner sees it.
 _run
-  :: ∀ e
-   . Config
-  -> Spec (RunnerEffects e) Unit
-  -> Producer Event (Aff (RunnerEffects e)) (Array (Group Result))
+  :: Config
+  -> Spec Unit
+  -> Producer Event Aff (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
   r <- for (trim $ collect spec) runGroup
@@ -115,11 +105,11 @@ _run config spec = do
   where
   runGroup (It only name test) = do
     yield Event.Test
-    start    <- lift $ liftEff dateNow
+    start    <- lift $ liftEffect dateNow
     e        <- lift $ attempt case config.timeout of
                                       Just t -> timeout t test
                                       _      -> test
-    duration <- lift $ (_ - start) <$> liftEff dateNow
+    duration <- lift $ (_ - start) <$> liftEffect dateNow
     yield $ either
       (\err ->
         let msg = Error.message err
@@ -141,29 +131,26 @@ _run config spec = do
 
 -- Run a spec, returning the results, without any reporting
 runSpec'
-  :: ∀ e
-   . Config
-  -> Spec (RunnerEffects e) Unit
-  -> Aff (RunnerEffects e) (Array (Group Result))
+  :: Config
+  -> Spec Unit
+  -> Aff (Array (Group Result))
 runSpec' config spec = P.runEffectRec $ _run config spec //> const (pure unit)
 
 runSpec
-  :: ∀ e
-   . Spec (RunnerEffects e) Unit
-  -> Aff (RunnerEffects e) (Array (Group Result))
+  :: Spec Unit
+  -> Aff (Array (Group Result))
 runSpec spec = P.runEffectRec $ _run defaultConfig spec //> const (pure unit)
 
-type TestEvents e = Producer Event (Aff e) (Array (Group Result))
+type TestEvents = Producer Event Aff (Array (Group Result))
 
-type Reporter e = Pipe Event Event (Aff e) (Array (Group Result))
+type Reporter = Pipe Event Event Aff (Array (Group Result))
 
 -- Run the spec, report results and exit the program upon completion
 run'
-  :: ∀ e
-   . Config
-  -> Array (Reporter (RunnerEffects e))
-  -> Spec (RunnerEffects e) Unit
-  -> Eff  (RunnerEffects e) Unit
+  :: Config
+  -> Array Reporter
+  -> Spec Unit
+  -> Effect Unit
 run' config reporters spec = void do
   let events = foldl (>->) (_run config spec) reporters
   runAff (either onError onSuccess) (P.runEffectRec (P.for events onEvent))
@@ -171,18 +158,17 @@ run' config reporters spec = void do
   where
     onEvent _ = pure unit
 
-    onError :: Error -> Eff (RunnerEffects e) Unit
+    onError :: Error -> Effect Unit
     onError err = do withAttrs [31] $ logShow err
                      exit 1
 
-    onSuccess :: Array (Group Result) -> Eff (RunnerEffects e) Unit
+    onSuccess :: Array (Group Result) -> Effect Unit
     onSuccess results = if successful results
                         then exit 0
                         else exit 1
 
 run
-  :: ∀ e
-   . Array (Reporter (RunnerEffects e))
-  -> Spec (RunnerEffects e) Unit
-  -> Eff  (RunnerEffects e) Unit
+  :: Array Reporter
+  -> Spec Unit
+  -> Effect Unit
 run = run' defaultConfig

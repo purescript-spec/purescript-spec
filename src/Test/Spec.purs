@@ -4,7 +4,6 @@ module Test.Spec (
   Result(..),
   Group(..),
   Spec(..),
-  SpecEffects,
   describe,
   describeOnly,
   pending,
@@ -17,10 +16,8 @@ module Test.Spec (
 
 import Prelude
 import Control.Monad.State as State
-import Control.Monad.Aff (Aff)
-import Control.Monad.Aff.AVar (AVAR)
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Exception (Error)
+import Effect.Aff (Aff)
+import Effect.Exception (Error)
 import Control.Monad.State (State, modify, execState, runState)
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
@@ -58,21 +55,18 @@ instance eqGroup :: Eq t => Eq (Group t) where
   eq _                   _                   = false
 
 -- Specifications with unevaluated tests.
-type SpecEffects e =  ( console :: CONSOLE
-                      , avar    :: AVAR
-                      | e)
-type Spec  eff t = State (Array (Group (Aff eff Unit))) t
+type Spec t = State (Array (Group (Aff Unit))) t
 
-collect :: forall r. Spec r Unit
-        -> Array (Group (Aff r Unit))
+collect :: Spec Unit
+        -> Array (Group (Aff Unit))
 collect r = snd $ runState r []
 
 -- | Count the total number of tests in a spec
-countTests :: forall r. Spec r Unit -> Int
+countTests :: Spec Unit -> Int
 countTests spec = execState (for (collect spec) go) 0
   where
   go (Describe _ _ xs) = for_ xs go
-  go _ = State.modify (_ + 1)
+  go _ = void $ State.modify (_ + 1)
 
 ---------------------
 --       DSL       --
@@ -80,57 +74,57 @@ countTests spec = execState (for (collect spec) go) 0
 
 -- | Combine a group of specs into a described hierarchy that either has the
 -- |"only" modifier applied or not.
-_describe :: forall r. Boolean
+_describe :: Boolean
          -> String
-         -> Spec r Unit
-         -> Spec r Unit
+         -> Spec Unit
+         -> Spec Unit
 _describe only name its =
   modify (_ <> [Describe only name (collect its)]) $> unit
 
 -- | Combine a group of specs into a described hierarchy.
-describe :: forall r. String
-         -> Spec r Unit
-         -> Spec r Unit
+describe :: String
+         -> Spec Unit
+         -> Spec Unit
 describe = _describe false
 
 -- | Combine a group of specs into a described hierarchy and mark it as the
 -- | only group to actually be evaluated. (useful for quickly narrowing down
 -- | on a set)
-describeOnly :: forall r. String
-         -> Spec r Unit
-         -> Spec r Unit
+describeOnly :: String
+         -> Spec Unit
+         -> Spec Unit
 describeOnly = _describe true
 
 -- | Create a pending spec.
-pending :: forall r. String
-        -> Spec r Unit
-pending name = modify $ \p -> p <> [Pending name]
+pending :: String
+        -> Spec Unit
+pending name = void $ modify $ \p -> p <> [Pending name]
 
 -- | Create a pending spec with a body that is ignored by
 -- | the runner. It can be useful for documenting what the
 -- | spec should test when non-pending.
-pending' :: forall r. String
-        -> Aff r Unit
-        -> Spec r Unit
+pending' :: String
+        -> Aff Unit
+        -> Spec Unit
 pending' name _ = pending name
 
 -- | Create a spec with a description that either has the "only" modifier
 -- | applied or not
-_it :: forall eff. Boolean
+_it :: Boolean
    -> String
-   -> Aff eff Unit
-   -> Spec eff Unit
+   -> Aff Unit
+   -> Spec Unit
 _it only description tests = modify (_ <> [It only description tests]) $> unit
 
 -- | Create a spec with a description.
-it :: forall eff. String
-   -> Aff  eff Unit
-   -> Spec  eff Unit
+it :: String
+   -> Aff Unit
+   -> Spec Unit
 it = _it false
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
-itOnly :: forall eff. String
-   -> Aff eff Unit
-   -> Spec eff Unit
+itOnly :: String
+   -> Aff Unit
+   -> Spec Unit
 itOnly = _it true

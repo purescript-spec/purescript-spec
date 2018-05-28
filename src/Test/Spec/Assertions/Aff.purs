@@ -4,12 +4,12 @@ module Test.Spec.Assertions.Aff (
 
 import Prelude
 
-import Control.Monad.Aff           (Aff, attempt)
-import Control.Monad.Eff.Exception (error)
+import Effect.Aff                  (Aff, attempt)
+import Effect.Exception            (error)
 import Control.Monad.Error.Class   (throwError)
 import Data.Either                 (Either(..))
 
-expectError :: forall r t. Aff r t -> Aff r Unit
+expectError :: forall t. Aff t -> Aff Unit
 expectError a = do
   e <- attempt a
   case e of
