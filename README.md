@@ -16,6 +16,10 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **3.0.0**
+  * Upgrade to PureScript 0.12.x, which is non-backwards compatible to 0.11.x.
+* **2.0.0**
+  * Update to purescript-aff 4
 * **1.0.0**
   * _No additions from 0.14.0._
 * **0.14.0**
