@@ -5,37 +5,38 @@ module Test.Spec.Reporter.Base
        ) where
 
 import Prelude
-import Control.Monad.Eff.Exception as Error
-import Control.Monad.State as State
-import Data.Array as Array
-import Data.String as String
-import Test.Spec as S
-import Test.Spec.Color as Color
-import Test.Spec.Summary as Summary
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+
 import Control.Monad.State (StateT, evalStateT)
+import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
 import Data.Array ((:), reverse)
+import Data.Array as Array
 import Data.Foldable (intercalate)
+import Data.String.CodeUnits as CodeUnits
 import Data.Traversable (for_)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
+import Effect.Exception as Error
 import Pipes (await, yield)
 import Pipes.Core (Pipe)
 import Test.Spec (Group, Result(..))
+import Test.Spec as S
 import Test.Spec.Color (colored)
+import Test.Spec.Color as Color
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Summary (Summary(..))
+import Test.Spec.Summary as Summary
 
 -- TODO: move this somewhere central
 indent :: Int -> String
-indent i = String.fromCharArray $ Array.replicate i ' '
+indent i = CodeUnits.fromCharArray $ Array.replicate i ' '
 
-defaultUpdate :: forall s e. s -> Event -> Eff e s
+defaultUpdate :: forall s. s -> Event -> Effect s
 defaultUpdate s _ = pure s
 
-defaultSummary :: forall e. Array (Group Result) -> Eff (console :: CONSOLE | e) Unit
+defaultSummary :: Array (Group Result) -> Effect Unit
 defaultSummary xs = do
   case Summary.summarize xs of
     (Count passed failed pending) -> do
@@ -47,22 +48,21 @@ defaultSummary xs = do
 
 
 printFailures
-  :: forall e
-   . Array (Group Result)
-  -> Eff (console :: CONSOLE | e) Unit
+  :: Array (Group Result)
+  -> Effect Unit
 printFailures xs = void $ evalStateT (go [] xs) 0
   where
     go
       :: Array String
       -> Array (Group Result)
-      -> StateT Int (Eff (console :: CONSOLE | e)) Unit
+      -> StateT Int Effect Unit
     go crumbs groups =
       for_ groups case _ of
         S.Describe _ n xs' -> go (n:crumbs) xs'
         S.It _ n (Failure err) ->
           let label = intercalate " " (reverse $ n:crumbs)
             in do
-                State.modify (_ + 1)
+                _ <- State.modify (_ + 1)
                 i <- State.get
                 lift $ log $ show i <> ") " <> label
                 lift $ log $ colored Color.ErrorMessage $ indent 2 <> Error.message err
@@ -87,11 +87,11 @@ scanWithStateM step begin = do
 -- | A default reporter implementation that can be used as a base to build
 -- | other reporters on top of.
 defaultReporter
-  :: ∀ s e.
+  :: ∀ s.
      s
-  -> (s -> Event -> Eff e s)
-  -> Reporter e
+  -> (s -> Event -> Effect s)
+  -> Reporter
 defaultReporter initialState onEvent = do
   scanWithStateM dispatch (pure initialState)
   where
-    dispatch s e = liftEff (onEvent s e)
+    dispatch s e = liftEffect(onEvent s e)

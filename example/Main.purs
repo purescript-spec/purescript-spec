@@ -1,15 +1,15 @@
 module Main where
 
 import Prelude
-import Control.Monad.Aff (delay)
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
+import Effect.Aff (delay)
 import Data.Time.Duration (Milliseconds(..))
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (RunnerEffects, run)
+import Test.Spec.Runner (run)
 
-main :: Eff (RunnerEffects ()) Unit
+main :: Effect Unit
 main = run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do

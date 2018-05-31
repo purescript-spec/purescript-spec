@@ -1,8 +1,8 @@
 # Writing Specs
 
 The basic building block of spec writing is `it`, which creates a spec with a
-*spec body*. Spec bodies have the type `Aff r Unit`, which is similar to the
-`Eff` type, but with the addition of asynchronicity. When specs are run, they
+*spec body*. Spec bodies have the type `Aff Unit`, which is similar to the
+`Effect` type, but with the addition of asynchronicity. When specs are run, they
 are considered successful, or *passing*, if the Aff computation does not result
 in an error. For more information, see [purescript-aff](https://github.com/slamdata/purescript-aff).
 
@@ -80,14 +80,14 @@ image](#header-image) looks like this:
 module Main where
 
 import Prelude
-import Control.Monad.Aff (later')
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
+import Effect.Aff (later')
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (RunnerEffects, run)
+import Test.Spec.Runner (run)
 
-main :: Eff (RunnerEffects ()) Unit
+main :: Effect Unit
 main = run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do
@@ -103,15 +103,6 @@ main = run [consoleReporter] do
         res <- later' 100 $ pure "Alligator"
         res `shouldEqual` "Alligator"
       it "is PureScript 0.10.x compatible" $ pure unit
-```
-
-`RunnerEffects` is a convenience type alias that includes the effect rows used
-by the Node runner, meaning you do not have to type them all out if you want
-to have a type annotation for your `main` function. You can pass any extra
-effect rows used in your own tests:
-
-```purescript
-main :: Eff (RunnerEffects (random :: RANDOM, buffer :: BUFFER)) Unit
 ```
 
 ## Combining Specs

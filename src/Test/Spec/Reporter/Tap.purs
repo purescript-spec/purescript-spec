@@ -4,7 +4,7 @@ import Prelude
 import Data.String.Regex as Regex
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary as Summary
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Effect.Console (log)
 import Data.Either (fromRight)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(Pattern), joinWith, split)
@@ -16,7 +16,7 @@ import Test.Spec.Summary (Summary(..))
 
 type TapReporterState = Int
 
-tapReporter :: ∀ e. Reporter (console :: CONSOLE | e)
+tapReporter :: Reporter
 tapReporter =
  defaultReporter 1 update
  where

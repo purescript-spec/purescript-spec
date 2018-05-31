@@ -49,7 +49,7 @@
 <p>Given that you already have a PureScript project setup, the first thing to do is installing <code>purescript-spec</code> as a <em>development dependency</em>.</p>
 <pre class="bash"><code>bower install --save-dev purescript-spec</code></pre>
 <h2 id="writing-specs">Writing Specs</h2>
-<p>The basic building block of spec writing is <code>it</code>, which creates a spec with a <em>spec body</em>. Spec bodies have the type <code>Aff r Unit</code>, which is similar to the <code>Eff</code> type, but with the addition of asynchronicity. When specs are run, they are considered successful, or <em>passing</em>, if the Aff computation does not result in an error. For more information, see <a href="https://github.com/slamdata/purescript-aff">purescript-aff</a>.</p>
+<p>The basic building block of spec writing is <code>it</code>, which creates a spec with a <em>spec body</em>. Spec bodies have the type <code>Aff Unit</code>, which is similar to the <code>Effect</code> type, but with the addition of asynchronicity. When specs are run, they are considered successful, or <em>passing</em>, if the Aff computation does not result in an error. For more information, see <a href="https://github.com/slamdata/purescript-aff">purescript-aff</a>.</p>
 <p>In the following example we use <code>pure unit</code> as a body, which does nothing. It will not throw an error, and the spec will always pass.</p>
 <pre class="purescript"><code>it &quot;does nothing&quot; $ pure unit</code></pre>
 <p>A more interesting test would assert something. Let’s check that addition works!</p>
@@ -84,14 +84,14 @@
 <pre class="purescript"><code>module Main where
 
 import Prelude
-import Control.Monad.Aff (later&#39;)
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
+import Effect.Aff (later&#39;)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (RunnerEffects, run)
+import Test.Spec.Runner (run)
 
-main :: Eff (RunnerEffects ()) Unit
+main :: Effect Unit
 main = run [consoleReporter] do
   describe &quot;purescript-spec&quot; do
     describe &quot;Attributes&quot; do
@@ -107,8 +107,6 @@ main = run [consoleReporter] do
         res &lt;- later&#39; 100 $ pure &quot;Alligator&quot;
         res `shouldEqual` &quot;Alligator&quot;
       it &quot;is PureScript 0.10.x compatible&quot; $ pure unit</code></pre>
-<p><code>RunnerEffects</code> is a convenience type alias that includes the effect rows used by the Node runner, meaning you do not have to type them all out if you want to have a type annotation for your <code>main</code> function. You can pass any extra effect rows used in your own tests:</p>
-<pre class="purescript"><code>main :: Eff (RunnerEffects (random :: RANDOM, buffer :: BUFFER)) Unit</code></pre>
 <h3 id="combining-specs">Combining Specs</h3>
 <p>You can split specs into multiple files and combine them using regular monadic bind, e.g. with <code>do</code> expressions.</p>
 <pre class="purescript"><code>baseSpecs = do
@@ -131,7 +129,7 @@ main = run [consoleReporter] do
 <h3 id="quickcheck">QuickCheck</h3>
 <p>You can use <a href="https://github.com/purescript/purescript-quickcheck">QuickCheck</a> together with the <a href="https://github.com/owickstrom/purescript-spec-quickcheck">purescript-spec-quickcheck</a> adapter to get nice output formatting for QuickCheck tests.</p>
 <h2 id="running">Running</h2>
-<p>When you have a spec, you need a runner to actually run it and get the results. PureScript Spec comes with a NodeJS runner, <code>run</code>, which takes an array of <em>reporters</em> and a spec to run. What you get back is a test-running program of type <code>Eff r ()</code>. The effect rows in <code>r</code> depend on what you do in your specs and what reporters you are using. The program can be run using <a href="https://github.com/bodil/pulp">Pulp</a>.</p>
+<p>When you have a spec, you need a runner to actually run it and get the results. PureScript Spec comes with a NodeJS runner, <code>run</code>, which takes an array of <em>reporters</em> and a spec to run. What you get back is a test-running program of type <code>Effect ()</code>. The effect rows in <code>r</code> depend on what you do in your specs and what reporters you are using. The program can be run using <a href="https://github.com/bodil/pulp">Pulp</a>.</p>
 <pre class="bash"><code>pulp test</code></pre>
 <p>If you’re not using pulp, you can compile the test program using <code>psc</code>. The following command compiles all PureScript modules in <code>test</code> and <code>src</code>.</p>
 <pre class="bash"><code>psc -o output/tests &#39;test/**/*.purs&#39; &#39;src/**/*.purs&#39;</code></pre>

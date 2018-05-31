@@ -7,7 +7,6 @@ module Test.Spec.Summary (
 import Prelude
 
 import Data.Foldable (foldMap)
-import Data.Monoid   (class Monoid)
 
 import Test.Spec (Group(..), Result(..))
 

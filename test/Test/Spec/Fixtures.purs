@@ -5,14 +5,14 @@ import Prelude
 import Test.Spec            (Spec, describe, describeOnly, it, itOnly, pending)
 import Test.Spec.Assertions (shouldEqual)
 
-successTest :: forall r. Spec r Unit
+successTest :: Spec Unit
 successTest =
   describe "a" do
     describe "b" do
       it "works" do
         1 `shouldEqual` 1
 
-sharedDescribeTest :: forall r. Spec r Unit
+sharedDescribeTest :: Spec Unit
 sharedDescribeTest =
   describe "a" do
     describe "b" do
@@ -22,7 +22,7 @@ sharedDescribeTest =
       it "also works" do
         1 `shouldEqual` 1
 
-duplicatedDescribeTest :: forall r. Spec r Unit
+duplicatedDescribeTest :: Spec Unit
 duplicatedDescribeTest =
   describe "a" do
     describe "b" do
@@ -34,7 +34,7 @@ duplicatedDescribeTest =
         it "second" do
           1 `shouldEqual` 1
 
-describeOnlyTest :: forall r. Spec r Unit
+describeOnlyTest :: Spec Unit
 describeOnlyTest =
   describeOnly "a" do
     describe "b" do
@@ -44,7 +44,7 @@ describeOnlyTest =
       it "also works" do
         1 `shouldEqual` 1
 
-describeOnlyNestedTest :: forall r. Spec r Unit
+describeOnlyNestedTest :: Spec Unit
 describeOnlyNestedTest =
   describe "a" do
     describeOnly "b" do
@@ -54,7 +54,7 @@ describeOnlyNestedTest =
       it "also works" do
         1 `shouldEqual` 1
 
-itOnlyTest :: forall r. Spec r Unit
+itOnlyTest :: Spec Unit
 itOnlyTest =
   describe "a" do
     describe "b" do
@@ -64,8 +64,8 @@ itOnlyTest =
       it "also works" do
         1 `shouldEqual` 1
 
-failureTest :: forall r. Spec r Unit
+failureTest :: Spec Unit
 failureTest = it "fails" $ 1 `shouldEqual` 2
 
-pendingTest :: forall r. Spec r Unit
+pendingTest :: Spec Unit
 pendingTest = pending "is not written yet"

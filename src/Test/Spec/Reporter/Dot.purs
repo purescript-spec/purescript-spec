@@ -4,7 +4,6 @@ import Prelude
 import Test.Spec.Color as Color
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
-import Control.Monad.Eff.Console (CONSOLE)
 import Test.Spec.Color (colored)
 import Test.Spec.Console (write) as Console
 import Test.Spec.Reporter.Base (defaultReporter)
@@ -13,9 +12,7 @@ import Test.Spec.Runner (Reporter)
 type DotReporterState = Int
 type DotReporterConfig = { width :: Int }
 
-dotReporter
-  :: DotReporterConfig
-  -> ∀ e. Reporter (console :: CONSOLE | e)
+dotReporter :: DotReporterConfig -> Reporter
 dotReporter { width } =
   defaultReporter (-1) update
 

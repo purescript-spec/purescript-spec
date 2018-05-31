@@ -15,15 +15,15 @@
     "url": "git://github.com/owickstrom/purescript-spec.git"
   },
   "dependencies": {
-    "purescript-console": "^3.0.0",
-    "purescript-aff": "^4.0.0",
-    "purescript-exceptions": "^3.1.0",
-    "purescript-strings": "^3.3.1",
-    "purescript-prelude": "^3.1.0",
-    "purescript-transformers": "^3.4.0",
-    "purescript-monoid": "^3.2.0",
-    "purescript-foldable-traversable": "^3.6.1",
-    "purescript-pipes": "^5.0.0",
-    "purescript-ansi": "^4.0.0"
+    "purescript-console": "^4.1.0",
+    "purescript-aff": "^5.0.0",
+    "purescript-exceptions": "^4.0.0",
+    "purescript-strings": "^4.0.0",
+    "purescript-prelude": "^4.0.0",
+    "purescript-transformers": "^4.0.0",
+    "purescript-foldable-traversable": "^4.0.0",
+    "purescript-pipes": "^6.0.0",
+    "purescript-ansi": "^5.0.0",
+    "purescript-generics-rep": "^6.0.0"
   }
 }

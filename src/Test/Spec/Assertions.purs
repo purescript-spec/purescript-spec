@@ -8,30 +8,30 @@ module Test.Spec.Assertions
 
 import Prelude
 
-import Control.Monad.Aff           (Aff())
-import Control.Monad.Eff.Exception (error)
+import Effect.Aff                  (Aff())
+import Effect.Exception            (error)
 import Control.Monad.Error.Class   (throwError)
 import Data.Foldable               (class Foldable, notElem, elem)
 
-fail :: forall r. String -> Aff r Unit
+fail :: String -> Aff Unit
 fail msg = throwError $ error $ msg
 
-shouldEqual :: forall r t. Show t => Eq t => t -> t -> Aff r Unit
+shouldEqual :: forall t. Show t => Eq t => t -> t -> Aff Unit
 shouldEqual v1 v2 =
   when (v1 /= v2) $
     fail $ show v1 <> " ≠ " <> show v2
 
-shouldNotEqual :: forall r t. Show t => Eq t => t -> t -> Aff r Unit
+shouldNotEqual :: forall t. Show t => Eq t => t -> t -> Aff Unit
 shouldNotEqual v1 v2 =
   when (v1 == v2) $
     fail $ show v1 <> " = " <> show v2
 
-shouldContain :: forall r f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff r Unit
+shouldContain :: forall f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff Unit
 shouldContain c e =
   when (e `notElem` c) $
     fail $ (show e) <> " ∉ " <> (show c)
 
-shouldNotContain :: forall r f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff r Unit
+shouldNotContain :: forall f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff Unit
 shouldNotContain c e =
   when (e `elem` c) $
     fail $ (show e) <> " ∈ " <> (show c)
