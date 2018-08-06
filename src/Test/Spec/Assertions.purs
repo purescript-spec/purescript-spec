@@ -4,6 +4,8 @@ module Test.Spec.Assertions
   , shouldNotEqual
   , shouldContain
   , shouldNotContain
+  , shouldNotSatisfy
+  , shouldSatisfy
   ) where
 
 import Prelude
@@ -25,6 +27,16 @@ shouldNotEqual :: forall t. Show t => Eq t => t -> t -> Aff Unit
 shouldNotEqual v1 v2 =
   when (v1 == v2) $
     fail $ show v1 <> " = " <> show v2
+
+shouldSatisfy :: forall t. Show t => t -> (t -> Boolean) -> Aff Unit
+shouldSatisfy v pred =
+  unless (pred v) $
+    fail $ show v <> " doesn't satisfy predicate"
+
+shouldNotSatisfy :: forall t. Show t => t -> (t -> Boolean) -> Aff Unit
+shouldNotSatisfy v pred =
+  when (pred v) $
+    fail $ show v <> " satisfies predicate, but should not"
 
 shouldContain :: forall f a. Show a => Eq a => Show (f a) => Foldable f => f a -> a -> Aff Unit
 shouldContain c e =

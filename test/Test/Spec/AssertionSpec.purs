@@ -4,7 +4,7 @@ import Prelude
 import Effect.Exception (error)
 import Control.Monad.Error.Class (throwError)
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldContain, shouldNotContain) as A
+import Test.Spec.Assertions (shouldContain, shouldNotContain, shouldNotSatisfy, shouldSatisfy) as A
 import Test.Spec.Assertions.Aff (expectError) as AF
 import Test.Spec.Assertions.String (shouldContain, shouldNotContain) as AS
 
@@ -26,6 +26,19 @@ assertionSpec =
               "foobar" `AS.shouldNotContain` "baz"
             it "rejects strings that contains substrings" $
               AF.expectError $ "bazbar" `AS.shouldNotContain` "baz"
+
+        describe "Predicates" do
+          describe "shouldSatisfy" do
+            it "accepts values where predicate returns true" $
+              3 `A.shouldSatisfy` (_ > 2)
+            it "rejects values where predicate returns false" $
+              AF.expectError $ 3 `A.shouldSatisfy` (_ < 2)
+
+          describe "shouldNotSatisfy" do
+            it "accepts values where predicate returns false" $
+              3 `A.shouldNotSatisfy` (_ < 2)
+            it "rejects values where predicate returns true" $
+              AF.expectError $ 3 `A.shouldNotSatisfy` (_ > 2)
 
         describe "Foldable" do
           describe "for some foldable" do
