@@ -11,16 +11,19 @@ module Test.Spec (
   it,
   itOnly,
   collect,
-  countTests
+  countTests,
+  class Delay
   ) where
 
 import Prelude
-import Control.Monad.State as State
-import Effect.Aff (Aff)
-import Effect.Exception (Error)
+
 import Control.Monad.State (State, modify, execState, runState)
+import Control.Monad.State as State
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
+import Effect.Aff (Aff)
+import Effect.Exception (Error)
+import Unsafe.Coerce (unsafeCoerce)
 
 type Name = String
 type Only = Boolean
@@ -104,8 +107,8 @@ pending name = void $ modify $ \p -> p <> [Pending name]
 -- | the runner. It can be useful for documenting what the
 -- | spec should test when non-pending.
 pending' :: String
-        -> Aff Unit
-        -> Spec Unit
+         -> (Delay => Aff Unit)
+         -> Spec Unit
 pending' name _ = pending name
 
 -- | Create a spec with a description that either has the "only" modifier
@@ -118,13 +121,33 @@ _it only description tests = modify (_ <> [It only description tests]) $> unit
 
 -- | Create a spec with a description.
 it :: String
-   -> Aff Unit
+   -> (Delay => Aff Unit)
    -> Spec Unit
-it = _it false
+it description tests = _it false description (delayAff tests)
 
 -- | Create a spec with a description and mark it as the only one to
 -- | be run. (useful for quickly narrowing down on a single test)
 itOnly :: String
-   -> Aff Unit
+   -> (Delay => Aff Unit)
    -> Spec Unit
-itOnly = _it true
+itOnly description tests = _it true description (delayAff tests)
+
+-- | A dummy constraint used to delay evaluation of expressions.
+class Delay
+
+-- | Delay evaluation of an `Aff` action until its execution.
+-- | 
+-- | >>> const unit (unsafeCrashWith "fail" :: Aff Unit)
+-- | Error: fail
+-- | >>> const unit (delayAff (unsafeCrashWith "fail" :: Aff Unit))
+-- | unit
+-- |
+-- | This is useful for `Aff` actions used in tests, which can sometimes
+-- | crash during evaluation, causing the test suite construction to fail.
+-- | Using this function, the failure can be postponed until it can be caught
+-- | by the test driver.
+-- |
+-- | A similar trick is used in the
+-- | [call-by-name](https://github.com/natefaubion/purescript-call-by-name) library.
+delayAff :: forall a. (Delay => Aff a) -> Aff a
+delayAff x = pure unit >>= (unsafeCoerce :: (Delay => Aff a) -> (Unit -> Aff a)) x
