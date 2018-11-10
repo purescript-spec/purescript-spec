@@ -7,7 +7,7 @@ PureScript Spec is a testing framework for Purescript, inspired by
 
 ## Documentation
 
-* [PureScript Spec - The Guide](https://owickstrom.github.io/purescript-spec/) explains
+* [PureScript Spec - The Guide](https://purescript-spec.github.io/purescript-spec/) explains
 in detail how to use purescript-spec. **You should probably start here.**
 * [purescript-spec on Pursuit](https://pursuit.purescript.org/packages/purescript-spec)
   features version information and API documentation.
@@ -85,7 +85,7 @@ in detail how to use purescript-spec. **You should probably start here.**
 ## Contribute
 
 If you have any issues or possible improvements please file them as
-[GitHub Issues](https://github.com/owickstrom/purescript-spec/issues). Pull
+[GitHub Issues](https://github.com/purescript-spec/purescript-spec/issues). Pull
 requests are encouraged.
 
 ## License
