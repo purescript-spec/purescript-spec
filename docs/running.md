@@ -48,7 +48,7 @@ In addition to the regular `run` function, there is also `run'`, which takes a
 ```purescript
 main = run' testConfig [consoleReporter] mySpec
   where
-    testConfig = { slow: 5000, timeout: Just 10000 }
+    testConfig = { slow: 5000, timeout: Just 10000, exit: false }
 ```
 
 The `Test.Spec.Runner` module provides a `defaultConfig` value which you

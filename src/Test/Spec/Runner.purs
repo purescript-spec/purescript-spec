@@ -47,12 +47,14 @@ foreign import dateNow :: Effect Int
 type Config = {
   slow :: Int
 , timeout :: Maybe Int
+, exit :: Boolean
 }
 
 defaultConfig :: Config
 defaultConfig = {
   slow: 75
 , timeout: Just 2000
+, exit: true
 }
 
 trim :: ∀ r. Array (Group r) -> Array (Group r)
@@ -145,7 +147,7 @@ type TestEvents = Producer Event Aff (Array (Group Result))
 
 type Reporter = Pipe Event Event Aff (Array (Group Result))
 
--- Run the spec, report results and exit the program upon completion
+-- Run the spec, report results and (if configured as such) exit the program upon completion
 run'
   :: Config
   -> Array Reporter
@@ -160,12 +162,13 @@ run' config reporters spec = void do
 
     onError :: Error -> Effect Unit
     onError err = do withAttrs [31] $ logShow err
-                     exit 1
+                     when config.exit do
+                       exit 1
 
     onSuccess :: Array (Group Result) -> Effect Unit
-    onSuccess results = if successful results
-                        then exit 0
-                        else exit 1
+    onSuccess results = when config.exit do
+                          let code = if successful results then 1 else 0
+                          exit code
 
 run
   :: Array Reporter
