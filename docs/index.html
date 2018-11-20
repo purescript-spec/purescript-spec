@@ -84,8 +84,10 @@
 <pre class="purescript"><code>module Main where
 
 import Prelude
+
+import Data.Time.Duration (Milliseconds(..))
 import Effect (Effect)
-import Effect.Aff (later&#39;)
+import Effect.Aff (delay)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
@@ -104,9 +106,9 @@ main = run [consoleReporter] do
       it &quot;runs in the browser&quot; $ pure unit
       it &quot;supports streaming reporters&quot; $ pure unit
       it &quot;supports async specs&quot; do
-        res &lt;- later&#39; 100 $ pure &quot;Alligator&quot;
+        res &lt;- delay (Milliseconds 100.0) $&gt; &quot;Alligator&quot;
         res `shouldEqual` &quot;Alligator&quot;
-      it &quot;is PureScript 0.10.x compatible&quot; $ pure unit</code></pre>
+      it &quot;is PureScript 0.12.x compatible&quot; $ pure unit</code></pre>
 <h3 id="combining-specs">Combining Specs</h3>
 <p>You can split specs into multiple files and combine them using regular monadic bind, e.g. with <code>do</code> expressions.</p>
 <pre class="purescript"><code>baseSpecs = do
@@ -132,9 +134,9 @@ main = run [consoleReporter] do
 <p>When you have a spec, you need a runner to actually run it and get the results. PureScript Spec comes with a NodeJS runner, <code>run</code>, which takes an array of <em>reporters</em> and a spec to run. What you get back is a test-running program of type <code>Effect ()</code>. The effect rows in <code>r</code> depend on what you do in your specs and what reporters you are using. The program can be run using <a href="https://github.com/bodil/pulp">Pulp</a>.</p>
 <pre class="bash"><code>pulp test</code></pre>
 <p>If you’re not using pulp, you can compile the test program using <code>psc</code>. The following command compiles all PureScript modules in <code>test</code> and <code>src</code>.</p>
-<pre class="bash"><code>psc -o output/tests &#39;test/**/*.purs&#39; &#39;src/**/*.purs&#39;</code></pre>
+<pre class="bash"><code>psc -o output &#39;test/**/*.purs&#39; &#39;src/**/*.purs&#39;</code></pre>
 <p>After that has finished, you can run the test program using NodeJS.</p>
-<pre><code>NODE_PATH=output/tests node -e &quot;require(&#39;Test.Main&#39;).main();&quot;</code></pre>
+<pre><code>NODE_PATH=output node -e &quot;require(&#39;Test.Main&#39;).main();&quot;</code></pre>
 <p><strong>NOTE:</strong> A test program using <code>Test.Spec.Runner.run</code> cannot be browserified and run in the browser, it requires NodeJS. To run your tests in a browser, see <a href="#browser-testing">Browser Testing</a> below.</p>
 <h3 id="reporters">Reporters</h3>
 <p>Reporters can be passed to the runner, e.g. <code>run [reporter1, ..., reporterN] spec</code>. Currently there are these reporters available:</p>

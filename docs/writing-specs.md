@@ -80,8 +80,10 @@ image](#header-image) looks like this:
 module Main where
 
 import Prelude
+
+import Data.Time.Duration (Milliseconds(..))
 import Effect (Effect)
-import Effect.Aff (later')
+import Effect.Aff (delay)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
@@ -100,9 +102,9 @@ main = run [consoleReporter] do
       it "runs in the browser" $ pure unit
       it "supports streaming reporters" $ pure unit
       it "supports async specs" do
-        res <- later' 100 $ pure "Alligator"
+        res <- delay (Milliseconds 100.0) $> "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.10.x compatible" $ pure unit
+      it "is PureScript 0.12.x compatible" $ pure unit
 ```
 
 ## Combining Specs
