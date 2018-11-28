@@ -167,7 +167,7 @@ run' config reporters spec = void do
 
     onSuccess :: Array (Group Result) -> Effect Unit
     onSuccess results = when config.exit do
-                          let code = if successful results then 1 else 0
+                          let code = if successful results then 0 else 1
                           exit code
 
 run
