@@ -87,14 +87,14 @@ import Prelude
 
 import Data.Time.Duration (Milliseconds(..))
 import Effect (Effect)
-import Effect.Aff (delay)
+import Effect.Aff (launchAff_, delay)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (run)
 
 main :: Effect Unit
-main = run [consoleReporter] do
+main = launchAff_ $ run [consoleReporter] do
   describe &quot;purescript-spec&quot; do
     describe &quot;Attributes&quot; do
       it &quot;awesome&quot; do
@@ -149,11 +149,11 @@ main = run [consoleReporter] do
 </ul>
 <h3 id="passing-runner-configuration">Passing Runner Configuration</h3>
 <p>In addition to the regular <code>run</code> function, there is also <code>run'</code>, which takes a <code>Config</code> record.</p>
-<pre class="purescript"><code>main = run&#39; testConfig [consoleReporter] mySpec
+<pre class="purescript"><code>main = launchAff_ $ run&#39; testConfig [consoleReporter] mySpec
   where
     testConfig = { slow: 5000, timeout: Just 10000, exit: false }</code></pre>
 <p>The <code>Test.Spec.Runner</code> module provides a <code>defaultConfig</code> value which you can use to override only specific values.</p>
-<pre class="purescript"><code>main = run&#39; testConfig [consoleReporter] mySpec
+<pre class="purescript"><code>main = launchAff_ $ run&#39; testConfig [consoleReporter] mySpec
   where
     testConfig = defaultConfig { slow = 100 }</code></pre>
 <h3 id="automatically-discovering-specs">Automatically Discovering Specs</h3>
