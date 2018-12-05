@@ -46,7 +46,7 @@ In addition to the regular `run` function, there is also `run'`, which takes a
 `Config` record.
 
 ```purescript
-main = run' testConfig [consoleReporter] mySpec
+main = launchAff_ $ run' testConfig [consoleReporter] mySpec
   where
     testConfig = { slow: 5000, timeout: Just 10000, exit: false }
 ```
@@ -55,7 +55,7 @@ The `Test.Spec.Runner` module provides a `defaultConfig` value which you
 can use to override only specific values.
 
 ```purescript
-main = run' testConfig [consoleReporter] mySpec
+main = launchAff_ $ run' testConfig [consoleReporter] mySpec
   where
     testConfig = defaultConfig { slow = 100 }
 ```

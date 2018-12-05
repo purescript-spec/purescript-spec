@@ -83,14 +83,14 @@ import Prelude
 
 import Data.Time.Duration (Milliseconds(..))
 import Effect (Effect)
-import Effect.Aff (delay)
+import Effect.Aff (launchAff_, delay)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (run)
 
 main :: Effect Unit
-main = run [consoleReporter] do
+main = launchAff_ $ run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do
       it "awesome" do

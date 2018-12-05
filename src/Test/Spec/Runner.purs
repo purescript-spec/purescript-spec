@@ -14,7 +14,7 @@ import Prelude
 
 import Control.Alternative ((<|>))
 import Effect (Effect)
-import Effect.Aff (Aff, attempt, delay, makeAff, runAff, throwError, try)
+import Effect.Aff (Aff, attempt, delay, makeAff, throwError, try)
 import Effect.Class (liftEffect)
 import Effect.Console (logShow)
 import Effect.Exception (Error, error)
@@ -29,7 +29,6 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (for)
 import Pipes ((>->), yield)
-import Pipes (for) as P
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Spec, Group(..), Result(..), collect)
@@ -131,13 +130,15 @@ _run config spec = do
     Describe only name <$> (for xs runGroup)
     <* yield Event.SuiteEnd
 
--- Run a spec, returning the results, without any reporting
+-- | Run a spec, returning the results, without any reporting
 runSpec'
   :: Config
   -> Spec Unit
   -> Aff (Array (Group Result))
 runSpec' config spec = P.runEffectRec $ _run config spec //> const (pure unit)
 
+-- | Run a spec with the default config, returning the results, without any
+-- | reporting
 runSpec
   :: Spec Unit
   -> Aff (Array (Group Result))
@@ -147,31 +148,34 @@ type TestEvents = Producer Event Aff (Array (Group Result))
 
 type Reporter = Pipe Event Event Aff (Array (Group Result))
 
--- Run the spec, report results and (if configured as such) exit the program upon completion
+-- | Run the spec with `config`, report results and (if configured as such)
+-- | exit the program upon completion
 run'
   :: Config
   -> Array Reporter
   -> Spec Unit
-  -> Effect Unit
-run' config reporters spec = void do
-  let events = foldl (>->) (_run config spec) reporters
-  runAff (either onError onSuccess) (P.runEffectRec (P.for events onEvent))
-
+  -> Aff Unit
+run' config reporters spec = do
+  let reportedEvents = P.runEffectRec $ events //> drain
+  either onError onSuccess =<< try reportedEvents
   where
-    onEvent _ = pure unit
+    drain = const (pure unit)
+    events = foldl (>->) (_run config spec) reporters
 
-    onError :: Error -> Effect Unit
-    onError err = do withAttrs [31] $ logShow err
-                     when config.exit do
-                       exit 1
+    onError :: Error -> Aff Unit
+    onError err = liftEffect do
+       withAttrs [31] $ logShow err
+       when config.exit (exit 1)
 
-    onSuccess :: Array (Group Result) -> Effect Unit
-    onSuccess results = when config.exit do
-                          let code = if successful results then 0 else 1
-                          exit code
+    onSuccess :: Array (Group Result) -> Aff Unit
+    onSuccess results = liftEffect $
+      when config.exit do
+        let code = if successful results then 0 else 1
+        exit code
 
+-- | Run the spec with the default config
 run
   :: Array Reporter
   -> Spec Unit
-  -> Effect Unit
+  -> Aff Unit
 run = run' defaultConfig
