@@ -6,7 +6,7 @@ import Control.Monad.Error.Class (throwError)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldContain, shouldNotContain, shouldNotSatisfy, shouldSatisfy) as A
 import Test.Spec.Assertions.Aff (expectError) as AF
-import Test.Spec.Assertions.String (shouldContain, shouldNotContain) as AS
+import Test.Spec.Assertions.String (shouldContain, shouldNotContain, shouldStartWith, shouldEndWith) as AS
 
 assertionSpec :: Spec Unit
 assertionSpec =
@@ -26,6 +26,18 @@ assertionSpec =
               "foobar" `AS.shouldNotContain` "baz"
             it "rejects strings that contains substrings" $
               AF.expectError $ "bazbar" `AS.shouldNotContain` "baz"
+
+          describe "shouldStartWith" do
+            it "accepts strings that start with prefix" $
+              "hello, world" `AS.shouldStartWith` "hello"
+            it "rejects strings that do not start with prefix" $
+              AF.expectError $ "hello" `AS.shouldStartWith` "hello, world"
+
+          describe "shouldEndWith" do
+            it "accepts strings that end with suffix" $
+              "hello, world" `AS.shouldEndWith` "world"
+            it "rejects strings that do not end with suffix" $
+              AF.expectError $ "world" `AS.shouldEndWith` "hello, world"
 
         describe "Predicates" do
           describe "shouldSatisfy" do
