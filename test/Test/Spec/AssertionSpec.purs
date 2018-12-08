@@ -5,7 +5,7 @@ import Effect.Exception (error)
 import Control.Monad.Error.Class (throwError)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldContain, shouldNotContain, shouldNotSatisfy, shouldSatisfy) as A
-import Test.Spec.Assertions.Aff (expectError) as AF
+import Test.Spec.Assertions.Aff (expectError, shouldReturn, shouldNotReturn) as AF
 import Test.Spec.Assertions.String (shouldContain, shouldNotContain, shouldStartWith, shouldEndWith) as AS
 
 assertionSpec :: Spec Unit
@@ -71,9 +71,25 @@ assertionSpec =
                 AF.expectError $ f `A.shouldNotContain` contained
 
 
-        describe "Aff" $
+        describe "Aff" do
+          let contained = "nono"
+              notcontained = "zzz"
+              f = pure contained
+
           describe "expectError" do
             it "returns unit when given an error" $
               AF.expectError $ throwError $ error "omg"
             it "returns an error when given a non-error" $
               AF.expectError $ AF.expectError $ pure "ok"
+
+          describe "shouldReturn" do
+            it "accepts that `Aff String` contains \"nono\"" $
+              f `AF.shouldReturn` contained
+            it "rejects that `Aff String` contains \"zzz\"" $
+              AF.expectError $ f `AF.shouldReturn` notcontained
+
+          describe "shouldNotReturn" do
+            it "accepts f does not contain \"zzz\"" $
+              f `AF.shouldNotReturn` notcontained
+            it "rejects that `Aff String` does not contain \"zzz\"" $
+              AF.expectError $ f `AF.shouldNotReturn` contained
