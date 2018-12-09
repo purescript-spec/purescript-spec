@@ -16,7 +16,7 @@ import Control.Monad.Error.Class   (throwError)
 import Data.Foldable               (class Foldable, notElem, elem)
 
 fail :: String -> Aff Unit
-fail msg = throwError $ error $ msg
+fail = throwError <<< error
 
 shouldEqual :: forall t. Show t => Eq t => t -> t -> Aff Unit
 shouldEqual v1 v2 =

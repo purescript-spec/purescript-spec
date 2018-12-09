@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 import Effect (Effect)
-import Effect.Aff (delay)
+import Effect.Aff (delay, launchAff_)
 import Data.Time.Duration (Milliseconds(..))
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -10,7 +10,7 @@ import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (run)
 
 main :: Effect Unit
-main = run [consoleReporter] do
+main = launchAff_ $ run [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do
       it "awesome" do
@@ -24,4 +24,4 @@ main = run [consoleReporter] do
       it "supports async specs" do
         res <- delay (Milliseconds 100.0) *> pure "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.10.x compatible" $ pure unit
+      it "is PureScript 0.12.x compatible" $ pure unit
