@@ -15,6 +15,7 @@
     "url": "git://github.com/purescript-spec/purescript-spec.git"
   },
   "dependencies": {
+    "purescript-avar": "^3.0.0",
     "purescript-console": "^4.1.0",
     "purescript-aff": "^5.0.0",
     "purescript-exceptions": "^4.0.0",
