@@ -6,6 +6,8 @@ module Test.Spec (
   Spec(..),
   describe,
   describeOnly,
+  parallel,
+  sequential,
   pending,
   pending',
   it,
@@ -18,7 +20,7 @@ import Prelude
 import Control.Monad.State as State
 import Effect.Aff (Aff)
 import Effect.Exception (Error)
-import Control.Monad.State (State, modify, execState, runState)
+import Control.Monad.State (State, execState, runState)
 import Data.Traversable (for, for_)
 import Data.Tuple (snd)
 
@@ -27,6 +29,8 @@ type Only = Boolean
 
 data Group t
   = Describe Only Name (Array (Group t))
+  | Parallel (Array (Group t))
+  | Sequential (Array (Group t))
   | It Only Name t
   | Pending Name
 
@@ -44,11 +48,15 @@ instance eqResult :: Eq Result where
   eq _ _ = false
 
 instance showGroup :: Show t => Show (Group t) where
+  show (Parallel groups) = "Parallel " <> show groups
+  show (Sequential groups) = "Sequential " <> show groups
   show (Describe only name groups) = "Describe " <> show only <> " " <> show name <> " " <> show groups
   show (It only name test) = "It " <> show only <> " " <> show name <> " " <> show test
   show (Pending name) = "Describe " <> show name
 
 instance eqGroup :: Eq t => Eq (Group t) where
+  eq (Parallel g1)       (Parallel g2)       = g1 == g2
+  eq (Sequential g1)     (Sequential g2)     = g1 == g2
   eq (Describe o1 n1 g1) (Describe o2 n2 g2) = o1 == o2 && n1 == n2 && g1 == g2
   eq (It o1 n1 t1)       (It o2 n2 t2)       = o1 == o2 && n1 == n2 && t1 == t2
   eq (Pending n1)        (Pending n2)        = n1 == n2
@@ -74,12 +82,12 @@ countTests spec = execState (for (collect spec) go) 0
 
 -- | Combine a group of specs into a described hierarchy that either has the
 -- |"only" modifier applied or not.
-_describe :: Boolean
+_describe :: Only
          -> String
          -> Spec Unit
          -> Spec Unit
-_describe only name its =
-  modify (_ <> [Describe only name (collect its)]) $> unit
+_describe opts name its =
+  State.modify_ (_ <> [Describe opts name (collect its)])
 
 -- | Combine a group of specs into a described hierarchy.
 describe :: String
@@ -95,10 +103,20 @@ describeOnly :: String
          -> Spec Unit
 describeOnly = _describe true
 
+-- | marks all spec items of the given spec to be safe for parallel evaluation.
+parallel :: Spec Unit
+         -> Spec Unit
+parallel its = State.modify_ (_ <> [Parallel (collect its)])
+
+-- | marks all spec items of the given spec to be evaluated sequentially.
+sequential :: Spec Unit
+           -> Spec Unit
+sequential its = State.modify_ (_ <> [Sequential (collect its)])
+
 -- | Create a pending spec.
 pending :: String
         -> Spec Unit
-pending name = void $ modify $ \p -> p <> [Pending name]
+pending name = State.modify_ (_ <> [Pending name])
 
 -- | Create a pending spec with a body that is ignored by
 -- | the runner. It can be useful for documenting what the
@@ -114,7 +132,7 @@ _it :: Boolean
    -> String
    -> Aff Unit
    -> Spec Unit
-_it only description tests = modify (_ <> [It only description tests]) $> unit
+_it only description tests = State.modify_ (_ <> [It only description tests])
 
 -- | Create a spec with a description.
 it :: String

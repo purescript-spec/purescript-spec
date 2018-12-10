@@ -13,21 +13,22 @@ module Test.Spec.Runner
 import Prelude
 
 import Control.Alternative ((<|>))
-import Effect (Effect)
-import Effect.Aff (Aff, attempt, delay, makeAff, throwError, try)
-import Effect.Class (liftEffect)
-import Effect.Console (logShow)
-import Effect.Exception (Error, error)
-import Effect.Exception as Error
 import Control.Monad.Trans.Class (lift)
-import Control.Parallel (sequential, parallel)
+import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (singleton)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Time.Duration (Milliseconds(..))
-import Data.Traversable (for)
+import Data.Traversable (class Traversable, for)
+import Effect (Effect)
+import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
+import Effect.Aff.AVar as AV
+import Effect.Class (liftEffect)
+import Effect.Console (logShow)
+import Effect.Exception (Error, error)
+import Effect.Exception as Error
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
@@ -61,7 +62,7 @@ trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
   where
   findOnly :: Group r -> Maybe (Group r)
   findOnly g@(It true _ _) = pure g
-  findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g else Nothing
+  findOnly g@(Describe {only} _ gs) = findJust findOnly gs <|> if only then pure g else Nothing
   findOnly _ = Nothing
 
   findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
@@ -99,12 +100,32 @@ _run
   -> Producer Event Aff (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
-  r <- for (trim $ collect spec) runGroup
+  r <- for (trim $ collect spec) (runGroup false)
   yield (Event.End r)
   pure r
-
   where
-  runGroup (It only name test) = do
+  -- https://github.com/felixSchl/purescript-pipes/issues/16
+  mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
+  mergeProducers ps = do
+    var <- lift AV.empty
+
+    fib <- lift $ forkAff do
+      let consumer i = lift (AV.put i var) *> pure unit
+      x <- parTraverse (\p -> P.runEffectRec $ p //> consumer) ps
+      AV.kill (error "finished") var
+      pure x
+
+    let
+      loop = do
+        res <- lift $ try (AV.take var)
+        case res of
+          Left err -> lift $ joinFiber fib
+          Right e -> do
+            yield e
+            loop
+    loop
+  runGroup :: Boolean -> Group (Aff Unit) -> Producer Event Aff (Group Result)
+  runGroup isPar (It only name test) = do
     yield Event.Test
     start    <- lift $ liftEffect dateNow
     e        <- lift $ attempt case config.timeout of
@@ -121,14 +142,23 @@ _run config spec = do
     yield Event.TestEnd
     pure $ It only name $ either Failure (const Success) e
 
-  runGroup (Pending name) = do
+  runGroup isPar (Pending name) = do
     yield $ Event.Pending name
     pure $ Pending name
 
-  runGroup (Describe only name xs) = do
+  runGroup _ (Parallel xs) = do
+    Parallel <$> mergeProducers (runGroup true <$> xs)
+
+  runGroup _ (Sequential xs) = do
+    Sequential <$> for xs (runGroup false)
+
+  runGroup isPar (Describe only name xs) = do
     yield $ Event.Suite name
-    Describe only name <$> (for xs runGroup)
-    <* yield Event.SuiteEnd
+    x <- Describe only name <$> if isPar
+      then mergeProducers (runGroup isPar <$> xs)
+      else for xs (runGroup isPar)
+    yield Event.SuiteEnd
+    pure x
 
 -- | Run a spec, returning the results, without any reporting
 runSpec'
