@@ -1,7 +1,6 @@
 module Test.Spec.RunnerSpec where
 
 import Prelude
-
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
 import Test.Spec (Group(..), Result(..), Spec, describe, it)
