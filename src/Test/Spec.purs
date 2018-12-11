@@ -28,9 +28,6 @@ import Control.Monad.Writer (Writer, execWriter, mapWriter, tell)
 import Data.Array (snoc)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Traversable (for, for_)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
@@ -45,27 +42,41 @@ data Group t
   | It Only Name t
   | Pending Name
 
-derive instance genericGroup :: Generic (Group t) _
-instance showGroup :: Show t => Show (Group t) where show = genericShow
-instance eqGroup :: Eq t => Eq (Group t) where eq = genericEq
-
 data Result
   = Success
   | Failure Error
 
 instance showResult :: Show Result where
   show Success = "Success"
-  show (Failure err) = "(Failure " <> show err <> ")"
+  show (Failure err) = "Failure (Error ...)"
 
 instance eqResult :: Eq Result where
   eq Success Success = true
-  eq (Failure err1) (Failure err2) = show err1 == show err2
+  eq (Failure _) (Failure _) = true
   eq _ _ = false
 
+instance showGroup :: Show t => Show (Group t) where
+  show (SetExecution execution groups) = "SetExecution " <> show execution <> " " <> show groups
+  show (Describe only name groups) = "Describe " <> show only <> " " <> show name <> " " <> show groups
+  show (It only name test) = "It " <> show only <> " " <> show name <> " " <> show test
+  show (Pending name) = "Describe " <> show name
+
+instance eqGroup :: Eq t => Eq (Group t) where
+  eq (SetExecution e1 g1) (SetExecution e2 g2) = e1 == e2 && g1 == g2
+  eq (Describe o1 n1 g1)  (Describe o2 n2 g2)  = o1 == o2 && n1 == n2 && g1 == g2
+  eq (It o1 n1 t1)        (It o2 n2 t2)        = o1 == o2 && n1 == n2 && t1 == t2
+  eq (Pending n1)         (Pending n2)         = n1 == n2
+  eq _                    _                    = false
+
 data Execution = Parallel | Sequential
-derive instance genericExecution :: Generic Execution _
-instance showExecution :: Show Execution where show = genericShow
-instance eqExecution :: Eq Execution where eq = genericEq
+instance showExecution :: Show Execution where
+  show Parallel = "Parallel"
+  show Sequential = "Sequential"
+
+instance eqExecution :: Eq Execution where
+  eq Parallel Parallel = true
+  eq Sequential Sequential = true
+  eq _ _ = false
 
 
 -- Specifications with unevaluated tests.
