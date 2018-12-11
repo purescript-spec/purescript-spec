@@ -14,6 +14,8 @@ import Prelude
 
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.Writer (execWriter)
+import Control.MonadZero (guard)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (singleton)
 import Data.Either (Either(..), either)
@@ -32,7 +34,7 @@ import Effect.Exception as Error
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Spec, Group(..), Result(..), collect)
+import Test.Spec (Execution(..), Group(..), Result(..), Spec)
 import Test.Spec as Spec
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
@@ -56,14 +58,15 @@ defaultConfig = {
 , timeout: Just 2000
 , exit: true
 }
-
 trim :: ∀ r. Array (Group r) -> Array (Group r)
+
 trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
   where
   findOnly :: Group r -> Maybe (Group r)
-  findOnly g@(It true _ _) = pure g
-  findOnly g@(Describe {only} _ gs) = findJust findOnly gs <|> if only then pure g else Nothing
-  findOnly _ = Nothing
+  findOnly g@(It only _ _) = guard only *> pure g
+  findOnly g@(Describe only _ gs) = findJust findOnly gs <|> if only then pure g else Nothing
+  findOnly (SetExecution _ gs) = findJust findOnly gs
+  findOnly (Pending _) = Nothing
 
   findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
   findJust f = foldl go Nothing
@@ -100,31 +103,11 @@ _run
   -> Producer Event Aff (Array (Group Result))
 _run config spec = do
   yield (Event.Start (Spec.countTests spec))
-  r <- for (trim $ collect spec) (runGroup false)
+  r <- for (trim $ execWriter spec) (runGroup Sequential)
   yield (Event.End r)
   pure r
   where
-  -- https://github.com/felixSchl/purescript-pipes/issues/16
-  mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
-  mergeProducers ps = do
-    var <- lift AV.empty
-
-    fib <- lift $ forkAff do
-      let consumer i = lift (AV.put i var) *> pure unit
-      x <- parTraverse (\p -> P.runEffectRec $ p //> consumer) ps
-      AV.kill (error "finished") var
-      pure x
-
-    let
-      loop = do
-        res <- lift $ try (AV.take var)
-        case res of
-          Left err -> lift $ joinFiber fib
-          Right e -> do
-            yield e
-            loop
-    loop
-  runGroup :: Boolean -> Group (Aff Unit) -> Producer Event Aff (Group Result)
+  runGroup :: Execution -> Group (Aff Unit) -> Producer Event Aff (Group Result)
   runGroup isPar (It only name test) = do
     yield Event.Test
     start    <- lift $ liftEffect dateNow
@@ -146,19 +129,40 @@ _run config spec = do
     yield $ Event.Pending name
     pure $ Pending name
 
-  runGroup _ (Parallel xs) = do
-    Parallel <$> mergeProducers (runGroup true <$> xs)
-
-  runGroup _ (Sequential xs) = do
-    Sequential <$> for xs (runGroup false)
+  runGroup _ (SetExecution isPar xs) = do
+    SetExecution isPar <$> loop xs isPar
 
   runGroup isPar (Describe only name xs) = do
     yield $ Event.Suite name
-    x <- Describe only name <$> if isPar
-      then mergeProducers (runGroup isPar <$> xs)
-      else for xs (runGroup isPar)
-    yield Event.SuiteEnd
+    Describe only name <$> loop xs isPar
+      <* yield Event.SuiteEnd
+  
+  loop xs = case _ of
+    Parallel -> mergeProducers (runGroup Parallel <$> xs)
+    Sequential -> for xs (runGroup Sequential)
+
+
+-- https://github.com/felixSchl/purescript-pipes/issues/16
+mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
+mergeProducers ps = do
+  var <- lift AV.empty
+
+  fib <- lift $ forkAff do
+    let consumer i = lift (AV.put i var) *> pure unit
+    x <- parTraverse (\p -> P.runEffectRec $ p //> consumer) ps
+    AV.kill (error "finished") var
     pure x
+
+  let
+    loop = do
+      res <- lift $ try (AV.take var)
+      case res of
+        Left err -> lift $ joinFiber fib
+        Right e -> do
+          yield e
+          loop
+  loop
+
 
 -- | Run a spec, returning the results, without any reporting
 runSpec'

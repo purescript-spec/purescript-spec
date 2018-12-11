@@ -24,6 +24,7 @@ summarize = foldMap \g -> case g of
     (It _ _ (Failure _)) -> Count 0 1 0
     (Pending _)          -> Count 0 0 1
     (Describe _ _ dgs)   -> summarize dgs
+    (SetExecution _ dgs) -> summarize dgs
 
 successful :: Array (Group Result) -> Boolean
 successful groups =
