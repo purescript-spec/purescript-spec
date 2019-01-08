@@ -121,7 +121,7 @@ baseSpecs = do
 ```
 
 This is often used to combine all specs into a single spec that can be passed
-to the test runner, if not using [purescript-spec-discovery](https://github.com/owickstrom/purescript-spec-discovery).
+to the test runner, if not using [purescript-spec-discovery](https://github.com/purescript-spec/purescript-spec-discovery).
 
 ## Running A Subset of the Specs
 
@@ -150,5 +150,74 @@ describe "Module" do
 ## QuickCheck
 
 You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
-together with the [purescript-spec-quickcheck](https://github.com/owickstrom/purescript-spec-quickcheck)
+together with the [purescript-spec-quickcheck](https://github.com/purescript-spec/purescript-spec-quickcheck)
 adapter to get nice output formatting for QuickCheck tests.
+
+
+## Parallel spec execution
+
+You can use `parallel` to mark specs for parallel execution. This is useful
+if you want to speed up your tests by not waiting for some async action
+to resolve. so if you have:
+
+```purescript
+describe "delay" do
+  it "proc 1" do
+    delay $ Milliseconds 500.0
+  it "proc 2" do
+    delay $ Milliseconds 500.0
+  it "proc 3" do
+    delay $ Milliseconds 1000.0
+```
+
+It would take `2000 ms` to finish. But, by sticking in `parallel`, it would take `1000 ms`:
+
+```diff
+- describe "delay" do
++ describe "delay" $ parallel do
+```
+
+**NOTE** that if you are logging things to console, by using `parallel`
+order of log messages will be mixed. For example if you had:
+
+```purescript
+describe "delay" do
+  it "proc 1" do
+    log $ "start 1"
+    delay $ Milliseconds 500.0
+    log $ "end 1"
+  it "proc 2" do
+    log $ "start 2"
+    delay $ Milliseconds 500.0
+    log $ "end 2"
+  it "proc 3" do
+    log $ "start 3"
+    delay $ Milliseconds 1000.0
+    log $ "end 3"
+```
+
+you would see messages in this order:
+
+```
+start 1
+end 1
+start 2
+end 2
+start 3
+end 3
+```
+
+but if you have used `parallel` then messages will come in this order:
+
+```
+start 1
+start 2
+start 3
+end 1
+end 2
+end 3
+```
+
+`purescript-spec` itself is not providing any specific solution for this
+issue but you can take a look at [/test/Test/Spec/HoistSpec.purs](https://github.com/purescript-spec/purescript-spec/blob/master/test/Test/Spec/HoistSpec.purs) 
+for some inspiration.
