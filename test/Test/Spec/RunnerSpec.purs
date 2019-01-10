@@ -1,12 +1,18 @@
 module Test.Spec.RunnerSpec where
 
 import Prelude
+
+import Control.Monad.Writer (execWriter)
+import Data.Bifunctor (bimap)
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
+import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
-import Test.Spec (Group(..), Result(..), Spec, describe, it)
+import Test.Spec (Item(..), Spec, Tree(..), describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
-import Test.Spec.Runner (runSpec)
+import Test.Spec.Tree (discardUnfocused)
 
 runnerSpec :: Spec Unit
 runnerSpec =
@@ -14,22 +20,39 @@ runnerSpec =
     describe "Spec" $
       describe "Runner" do
         it "collects \"it\" and \"pending\" in Describe groups" do
-          results <- runSpec successTest
-          results `shouldEqual` [Describe false "a" [Describe false "b" [It false "works" Success]]]
+          runSpecFocused successTest `shouldEqual` 
+            [ Node (Left "a") 
+              [ Node (Left "b") [ Leaf "works" $ Just false ]
+              ]
+            ]
         it "collects \"it\" and \"pending\" with shared Describes" do
-          results <- runSpec sharedDescribeTest
-          results `shouldEqual` [Describe false "a" [Describe false "b" [It false "works" Success],
-                                                     Describe false "c" [It false "also works" Success]]]
+          runSpecFocused sharedDescribeTest `shouldEqual` 
+            [ Node (Left "a") 
+              [ Node (Left "b") [ Leaf "works" $ Just false ]
+              , Node (Left "c") [ Leaf "also works" $ Just false ]
+              ]
+            ]
         it "filters using \"only\" modifier on \"describe\" block" do
-          results <- runSpec describeOnlyTest
-          results `shouldEqual` [Describe true "a" [Describe false "b" [It false "works" Success],
-                                                    Describe false "c" [It false "also works" Success]]]
+          runSpecFocused describeOnlyTest `shouldEqual` 
+            [ Node (Left "a") 
+              [ Node (Left "b") [ Leaf "works" $ Just true ]
+              , Node (Left "c") [ Leaf "also works" $ Just true ]
+              ]
+            ]
         it "filters using \"only\" modifier on nested \"describe\" block" do
-          results <- runSpec describeOnlyNestedTest
-          results `shouldEqual` [Describe true "b" [It false "works" Success]]
+          runSpecFocused describeOnlyNestedTest `shouldEqual` 
+            [ Node (Left "a") 
+              [ Node (Left "b") [ Leaf "works" $ Just true ]
+              ]
+            ]
         it "filters using \"only\" modifier on \"it\" block" do
-          results <- runSpec itOnlyTest
-          results `shouldEqual` [It true "works" Success]
+          runSpecFocused itOnlyTest `shouldEqual` 
+            [ Node (Left "a") 
+              [ Node (Left "b") [ Leaf "works" $ Just true ]
+              ]
+            ]
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
+  where
+    runSpecFocused t = discardUnfocused (execWriter t) <#> bimap (const unit) (un Item >>> _.isFocused)

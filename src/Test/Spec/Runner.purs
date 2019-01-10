@@ -16,7 +16,7 @@ import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (execWriterT)
 import Control.Parallel (parTraverse, parallel, sequential)
-import Data.Array (all, groupBy, mapMaybe)
+import Data.Array (groupBy)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either(..), either)
@@ -39,12 +39,12 @@ import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Result(..), Spec, SpecM, SpecTree, Tree(..))
-import Test.Spec as Spec
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
+import Test.Spec.Tree (countTests, discardUnfocused, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -63,18 +63,6 @@ defaultConfig =
   , exit: true
   }
 
-filterFocusedIfAny :: forall c m a. Array (Tree c (Item m a)) -> Array (Tree c (Item m a))
-filterFocusedIfAny ts = case mapMaybe findFocus ts of
-  [] -> ts
-  r -> r
-  where
-  findFocus :: Tree c (Item m a) -> Maybe (Tree c (Item m a))
-  findFocus (Node n ts') = case mapMaybe findFocus ts' of
-    [] -> Nothing
-    r -> Just $ Node n r
-  findFocus t@(Leaf n (Just (Item { isFocused }))) = if isFocused then Nothing else Just t
-  findFocus (Leaf n Nothing) = Nothing
-
 makeTimeout
   :: Int
   -> Aff Unit
@@ -91,10 +79,6 @@ timeout time t = do
   sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
     >>= either throwError pure
 
-allParallelizable :: forall c m a. Tree c (Item m a) -> Boolean
-allParallelizable = case _ of
-  Node _ xs -> all allParallelizable xs
-  Leaf _ x -> let p = x >>= un Item >>> _.isParallelizable in p == Just true || p == Nothing
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
@@ -109,17 +93,17 @@ _run
   => Config
   -> SpecM m Aff Unit Unit
   -> m (Producer Event Aff (Array (Tree Void Result)))
-_run config specs = execWriterT specs <#> filterFocusedIfAny >>> \tests -> do
-  yield (Event.Start (Spec.countTests tests))
+_run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
+  yield (Event.Start (countTests tests))
   r <- loop tests
   yield (Event.End r)
   pure r
   where
     loop :: Array (SpecTree Aff Unit) -> Producer Event Aff (Array (Tree Void Result))
-    loop tests = 
+    loop tests =
       let
         marked :: Array (Tuple Boolean (SpecTree Aff Unit))
-        marked = tests <#> \t -> Tuple (allParallelizable t) t
+        marked = tests <#> \t -> Tuple (isAllParallelizable t) t
         grouped' :: Array (NonEmptyArray (Tuple Boolean (SpecTree Aff Unit)))
         grouped' = groupBy (\a b -> fst a && fst b) marked
         grouped :: Array (Tuple Boolean (Array (SpecTree Aff Unit)))
@@ -158,43 +142,6 @@ _run config specs = execWriterT specs <#> filterFocusedIfAny >>> \tests -> do
       res <- loop xs
       yield Event.SuiteEnd
       pure [ Node (Left name) res ]
-  
-    -- Parallel -> mergeProducers (runGroup Parallel <$> xs)
-    -- Sequential -> for xs (runGroup Sequential)
-  -- runGroup :: Execution -> Group (Aff Unit) -> Producer Event Aff (Tree Void Result)
-  -- runGroup isPar (It only name test) = do
-  --   yield Event.Test
-  --   start    <- lift $ liftEffect dateNow
-  --   e        <- lift $ attempt case config.timeout of
-  --                                     Just t -> timeout t test
-  --                                     _      -> test
-  --   duration <- lift $ (_ - start) <$> liftEffect dateNow
-  --   yield $ either
-  --     (\err ->
-  --       let msg = Error.message err
-  --           stack = Error.stack err
-  --        in Event.Fail name msg stack)
-  --     (const $ Event.Pass name (speedOf config.slow duration) duration)
-  --     e
-  --   yield Event.TestEnd
-  --   pure $ It only name $ either Failure (const Success) e
-
-  -- runGroup isPar (Pending name) = do
-  --   yield $ Event.Pending name
-  --   pure $ Pending name
-
-  -- runGroup _ (SetExecution isPar xs) = do
-  --   SetExecution isPar <$> loop xs isPar
-
-  -- runGroup isPar (Describe only name xs) = do
-  --   yield $ Event.Suite name
-  --   Describe only name <$> loop xs isPar
-  --     <* yield Event.SuiteEnd
-  
-  -- loop xs = case _ of
-  --   Parallel -> mergeProducers (runGroup Parallel <$> xs)
-  --   Sequential -> for xs (runGroup Sequential)
-
 
 -- https://github.com/felixSchl/purescript-pipes/issues/16
 mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)

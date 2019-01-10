@@ -1,19 +1,20 @@
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-import Test.Spec.Color as Color
-import Test.Spec.Runner.Event as Event
-import Test.Spec.Summary as Summary
-import Effect (Effect)
-import Effect.Console (log)
+
 import Data.Array (init)
 import Data.Foldable (intercalate)
 import Data.Maybe (fromMaybe)
+import Effect (Effect)
+import Effect.Console (log)
 import Test.Spec.Color (colored)
+import Test.Spec.Color as Color
 import Test.Spec.Console (withAttrs)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
+import Test.Spec.Summary as Summary
 
 type ConsoleReporterStateObj = {
   crumbs :: Array String

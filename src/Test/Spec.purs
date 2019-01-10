@@ -1,23 +1,45 @@
 module Test.Spec
   ( Spec
   , SpecM
-  , Tree(..)
-  , Item(..)
+  , module Reexport
   , SpecTree
-  , ActionWith
+  , mapSpecTree
+
+  , ComputationType(..)
+  , hoistSpec
+
+  , Result(..)
+  
   , class Example
   , evaluateExample
-  , describe
-  , describeOnly
+  
   , parallel
   , sequential
 
+  , class FocusWarning
+  , focus
+  , describeOnly
+  , itOnly
+  
+  , describe
+  , it
   , pending
   , pending'
-  , it
-  , itOnly
-  , countTests
-  , Result(..)
+  
+  , aroundWith
+  , around
+  , around_
+
+  , before
+  , before_
+  , beforeWith
+  , beforeAll
+  , beforeAll_
+  
+  , after
+  , after_
+  , afterAll
+  , afterAll_
   ) where
 
 import Prelude
@@ -25,20 +47,15 @@ import Prelude
 import Control.Alt ((<|>))
 import Control.Monad.Error.Class (class MonadError)
 import Control.Monad.Fork.Class (class MonadBracket, bracket)
-import Control.Monad.State (execState)
-import Control.Monad.State as State
-import Control.Monad.Writer (WriterT(..), mapWriterT, runWriterT, tell)
+import Control.Monad.Writer (WriterT, mapWriterT, tell)
 import Data.Array (any)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Bifunctor (bimap)
 import Data.Either (Either(..), either)
-import Data.Foldable (class Foldable, foldMapDefaultL, foldl, foldr)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Function (applyFlipped)
 import Data.Identity (Identity)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Newtype (class Newtype, over, un)
-import Data.Traversable (for, for_)
-import Data.Tuple (Tuple(..))
+import Data.Maybe (Maybe(..))
+import Data.Newtype (over, un)
 import Effect.AVar (AVar)
 import Effect.AVar as AVarEff
 import Effect.Aff (Aff, error, throwError, try)
@@ -46,75 +63,38 @@ import Effect.Aff.AVar as AVar
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (Error)
-
--- TODO remove this
-anExample :: Spec Unit
-anExample = do
-  describe "foo" do
-    it "asd" do
-      pure unit
-    it "asd" do
-      pure unit
-    before (pure 1) $ after (\a -> let x = a + 1 in pure unit) do
-      it "asd" \num -> do
-        x <- pure $ num + 1
-        pure unit
-      it "asdasdasd" \num -> do
-        x <- pure $ num + 1
-        pure unit
-      beforeWith (const $ pure "asd") do
-        it "asd" \str -> do
-          z <- pure $ str <> "as"
-          pure unit
-        aroundWith (\e str -> let z = str <> "" in pure 1 >>= e <* pure unit) do
-          it "asd" \num -> do
-            z <- pure $ num + 1
-            pure unit
-      beforeWith (\num -> pure $ "asd" <> show (num + 1)) do
-        it "asd" \str -> do
-          z <- pure $ str <> "as"
-          pure unit
-    pure unit
-
-data Tree c a
-  = Node (Either String c) (Array (Tree c a))
-  | Leaf String (Maybe a)
-
-derive instance treeGeneric :: Generic (Tree c a) _
-instance treeEq :: (Eq c, Eq a) => Eq (Tree c a) where eq = genericEq
-instance treeShow :: (Show c, Show a) => Show (Tree c a) where show = genericShow
+import Prim.TypeError (class Warn, Text)
+import Test.Spec.Tree (ActionWith, Item(..), Tree(..)) as Reexport
+import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTree, modifyAroundAction)
 
 
--- instance showGroup :: Show t => Show (Group t) where
---   show (SetExecution execution groups) = "SetExecution " <> show execution <> " " <> show groups
---   show (Describe only name groups) = "Describe " <> show only <> " " <> show name <> " " <> show groups
---   show (It only name test) = "It " <> show only <> " " <> show name <> " " <> show test
---   show (Pending name) = "Describe " <> show name
+type Spec a = SpecM Identity Aff Unit a
+type SpecM m g i a = WriterT (Array (SpecTree g i)) m a
 
--- instance eqGroup :: Eq t => Eq (Group t) where
---   eq (SetExecution e1 g1) (SetExecution e2 g2) = e1 == e2 && g1 == g2
---   eq (Describe o1 n1 g1)  (Describe o2 n2 g2)  = o1 == o2 && n1 == n2 && g1 == g2
---   eq (It o1 n1 t1)        (It o2 n2 t2)        = o1 == o2 && n1 == n2 && t1 == t2
---   eq (Pending n1)         (Pending n2)         = n1 == n2
---   eq _                    _                    = false
-
-
-instance treeFoldable :: Foldable (Tree c) where
-  foldr f i (Leaf _ a) = maybe i (\a' -> f a' i) a
-  foldr f i (Node _ as) = foldr (\a i' -> foldr f i' a) i as
-  foldl f i (Leaf _ a) = maybe i (\a' -> f i a') a
-  foldl f i (Node _ as) = foldl (\i' a -> foldl f i' a) i as
-  foldMap f = foldMapDefaultL f
-
-type ActionWith m a = a -> m Unit
 type SpecTree m a = Tree (ActionWith m a) (Item m a)
-newtype Item m a = Item
-  { isFocused :: Boolean
-  , isParallelizable :: Maybe Boolean
-  , example :: (ActionWith m a -> m Unit) -> m Unit
-  }
 
-derive instance itemNewtype :: Newtype (Item m a) _
+mapSpecTree
+  :: forall m g g' i a i'
+   . Monad m
+   => (SpecTree g i -> SpecTree g' i') 
+   -> SpecM m g i a
+   -> SpecM m g' i' a
+mapSpecTree f = mapWriterT $ map $ map $ map f
+
+data ComputationType = CleanUpWithContext (Array String) | TestWithName (NonEmptyArray String)
+
+hoistSpec :: forall m i a b. Monad m => (ComputationType -> a ~> b) -> SpecM m a i ~> SpecM m b i
+hoistSpec f = mapSpecTree $ bimapTree onCleanUp onTest
+  where
+    onCleanUp :: Array String -> (ActionWith a i) -> ActionWith b i
+    onCleanUp name around' = \i -> f (CleanUpWithContext name) (around' i)
+    onTest :: NonEmptyArray String -> Item a i -> Item b i
+    onTest name = over Item \item ->
+      let
+        e :: ((i -> b Unit) -> b Unit) -> b Unit
+        e g = g (f (TestWithName name) <<< item.example <<< applyFlipped)
+      in item { example = e }
+
 
 class Example t arg m | t -> arg, t -> m where
   evaluateExample :: t -> (ActionWith m arg -> m Unit) -> m Unit
@@ -127,33 +107,6 @@ else instance exampleMUnit :: Example (m Unit) Unit m where
   evaluateExample :: (m Unit) -> (ActionWith m Unit -> m Unit) -> m Unit
   evaluateExample t around' = around' $ \_ -> t
 
-
-type Spec a = SpecM Identity Aff Unit a
-type SpecM m g i a = WriterT (Array (SpecTree g i)) m a
-
-bimapTree :: forall a b c d. (a -> b) -> (c -> d) -> Tree a c -> Tree b d
-bimapTree g f = go
-  where
-    go spec = case spec of
-      Node d xs -> Node (map g d) (map go xs)
-      Leaf n item -> Leaf n (map f item)
-
-mapSpecTree
-  :: forall m g g' i a i'
-   . Monad m
-   => (SpecTree g i -> SpecTree g' i') 
-   -> SpecM m g i a
-   -> SpecM m g' i' a
-mapSpecTree f (specs) = mapWriterT (map ((<$>) (map f))) specs
-
-mapSpecItem
-  :: forall m g g' a b r
-   . Monad m
-  => (ActionWith g a -> ActionWith g' b)
-  -> (Item g a -> Item g' b)
-  -> SpecM m g a r
-  -> SpecM m g' b r
-mapSpecItem g f = mapSpecTree (bimapTree g f)
 
 data Result
   = Success
@@ -169,28 +122,23 @@ instance eqResult :: Eq Result where
   eq _ _ = false
 
 
--- | Count the total number of tests in a spec
-countTests :: forall g i. Array (SpecTree g i) -> Int
-countTests g = execState (for g go) 0
-  where
-  go (Node _ xs) = for_ xs go
-  go (Leaf _ _) = State.modify_ (_ + 1)
+-- | Nullary class used to raise a custom warning for the focusing functions.
+class FocusWarning
 
+instance warn :: Warn (Text "Test.Spec.focus usage") => FocusWarning
 
 -- ---------------------
 -- --       DSL       --
 -- ---------------------
 
-
 -- | `focus` focuses all spec items of the given spec.
 -- |
 -- | Applying `focus` to a spec with focused spec items has no effect.
-focus :: forall m g i a. Monad m => SpecM m g i a -> SpecM m g i a
-focus test = WriterT do
-  Tuple res xs <- runWriterT test
-  pure $ Tuple res $ if any (any $ un Item >>> _.isFocused) xs
+focus :: forall m g i a. FocusWarning => Monad m => SpecM m g i a -> SpecM m g i a
+focus = mapWriterT $ map $ map \xs ->
+  if any (any $ un Item >>> _.isFocused) xs
     then xs
-    else map (bimapTree identity (\(Item r) -> Item r {isFocused = true})) xs
+    else map (bimap identity (\(Item r) -> Item r {isFocused = true})) xs
 
 
 -- | Combine a group of specs into a described hierarchy.
@@ -200,9 +148,7 @@ describe
   => String
   -> SpecM m g i a
   -> SpecM m g i a
-describe name test = WriterT do
-  Tuple res group <- runWriterT test
-  pure $ Tuple res [Node (Left name) group]
+describe name = mapWriterT $ map $ map \group -> [Node (Left name) group]
 
 
 -- | Combine a group of specs into a described hierarchy and mark it as the
@@ -210,7 +156,8 @@ describe name test = WriterT do
 -- | on a set)
 describeOnly
   :: forall m g i a
-   . Monad m
+   . FocusWarning
+  => Monad m
   => String
   -> SpecM m g i a
   -> SpecM m g i a
@@ -222,7 +169,7 @@ parallel
    . Monad m
   => SpecM m g i a
   -> SpecM m g i a
-parallel = mapSpecItem identity (setParallelizable true)
+parallel = mapSpecTree $ bimap identity (setParallelizable true)
 
 -- | marks all spec items of the given spec to be evaluated sequentially.
 sequential
@@ -230,7 +177,7 @@ sequential
    . Monad m
   => SpecM m g i a
   -> SpecM m g i a
-sequential = mapSpecItem identity (setParallelizable false)
+sequential = mapSpecTree $ bimap identity (setParallelizable false)
 
 setParallelizable :: forall g a. Boolean -> Item g a -> Item g a
 setParallelizable value = over Item \i -> i{isParallelizable = i.isParallelizable <|> Just value}
@@ -274,12 +221,18 @@ it name test = tell
 -- | be run. (useful for quickly narrowing down on a single test)
 itOnly
   :: forall m t arg g
-   . Monad m
+   . FocusWarning
+  => Monad m
   => Example t arg g
   => String
   -> t
   -> SpecM m g arg Unit
 itOnly = map focus <<< it
+
+
+-- ---------------------
+-- --      HOOKS      --
+-- ---------------------
 
 -- | Run a custom action before and/or after every spec item.
 aroundWith
@@ -288,13 +241,7 @@ aroundWith
   => (ActionWith g i -> ActionWith g i')
   -> SpecM m g i a
   -> SpecM m g i' a
-aroundWith action = mapSpecItem action (modifyAroundAction action)
-
-
-modifyAroundAction :: forall g a b. (ActionWith g a -> ActionWith g b) -> Item g a -> Item g b
-modifyAroundAction action (Item item) = Item $ item
-  { example = \aroundAction -> item.example (aroundAction <<< action)
-  }
+aroundWith action = mapSpecTree $ bimap action (modifyAroundAction action)
 
 -- | Run a custom action before and/or after every spec item.
 around_ :: forall m g i a. Monad m => (g Unit -> g Unit) -> SpecM m g i a -> SpecM m g i a
@@ -356,9 +303,7 @@ memoize var action = do
 
 -- | Run a custom action after the last spec item.
 afterAll :: forall m g i a. Monad m => ActionWith g i -> SpecM m g i a -> SpecM m g i a
-afterAll action spec = WriterT do
-  Tuple res group <- runWriterT spec
-  pure $ Tuple res [Node (Right action) group]
+afterAll action = mapWriterT $ map $ map \group -> [Node (Right action) group]
 
 -- | Run a custom action after the last spec item.
 afterAll_ :: forall m g i a. Monad m => g Unit -> SpecM m g i a -> SpecM m g i a
