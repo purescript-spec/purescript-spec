@@ -65,7 +65,7 @@ consoleReporter = defaultReporter initialState update
             withAttrs [1, 35] $ log $ intercalate " » " s.crumbs
             action
 
-      printSummary = Summary.summarize >>> \(Count passed failed pending) -> do
+      printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
         log ""
         withAttrs [1] $ log "Summary"
         printPassedFailed passed failed

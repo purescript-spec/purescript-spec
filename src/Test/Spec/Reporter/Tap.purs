@@ -35,7 +35,7 @@ tapReporter =
         Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
     Event.End results -> do
       case Summary.summarize results of
-        (Count passed failed pending) -> do
+        (Count {passed, failed, pending}) -> do
           log $ "# tests " <> show (failed + passed + pending)
           log $ "# pass "  <> show (passed + pending)
           log $ "# fail "  <> show failed

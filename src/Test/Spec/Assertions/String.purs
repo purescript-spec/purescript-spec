@@ -7,10 +7,10 @@ module Test.Spec.Assertions.String
 
 import Prelude
 
-import Control.Monad.Error.Class (throwError)
+import Control.Monad.Error.Class (class MonadThrow)
 import Data.String (Pattern(..), contains)
-import Effect.Aff (Aff)
-import Effect.Exception (error)
+import Effect.Exception (Error)
+import Test.Spec.Assertions (fail)
 
 foreign import _startsWith :: String -> String -> Boolean
 foreign import _endsWith :: String -> String -> Boolean
@@ -20,37 +20,37 @@ foreign import _endsWith :: String -> String -> Boolean
 -- | ```purescript
 -- | string `shouldStartWith` prefix
 -- | ```
-shouldStartWith :: String -> String -> Aff Unit
+shouldStartWith :: forall m. MonadThrow Error m => String -> String -> m Unit
 shouldStartWith s prefix =
   when (not $ _startsWith prefix s) $
-     throwError $ error $ show s <> " does not start with " <> show prefix
+     fail $ show s <> " does not start with " <> show prefix
 
 -- | Asserts `string` ends with `suffix`
 -- |
 -- | ```purescript
 -- | string `shouldEndWith` suffix
 -- | ```
-shouldEndWith :: String -> String -> Aff Unit
+shouldEndWith :: forall m. MonadThrow Error m => String -> String -> m Unit
 shouldEndWith s suffix =
   when (not $ _endsWith suffix s) $
-     throwError $ error $ show s <> " does not end with " <> show suffix
+     fail $ show s <> " does not end with " <> show suffix
 
 -- | Asserts `string` contains `subs`
 -- |
 -- | ```purescript
 -- | string `shouldContain` subs
 -- | ```
-shouldContain :: String -> String -> Aff Unit
+shouldContain :: forall m. MonadThrow Error m => String -> String -> m Unit
 shouldContain s subs =
   when (not $ contains (Pattern subs) s) $
-    throwError $ error $ show subs <> " ∉ " <> show s
+    fail $ show subs <> " ∉ " <> show s
 
 -- | Asserts `string` does not contain `subs`
 -- |
 -- | ```purescript
 -- | string `shouldContain` subs
 -- | ```
-shouldNotContain :: String -> String -> Aff Unit
+shouldNotContain :: forall m. MonadThrow Error m => String -> String -> m Unit
 shouldNotContain s subs =
   when (contains (Pattern subs) s) $
-    throwError $ error $ show subs <> " ∈ " <> show s
+    fail $ show subs <> " ∈ " <> show s

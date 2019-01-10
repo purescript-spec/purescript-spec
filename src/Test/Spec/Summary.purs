@@ -7,27 +7,25 @@ module Test.Spec.Summary (
 import Prelude
 
 import Data.Foldable (foldMap)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype, un)
+import Test.Spec (Result(..), Tree(..))
 
-import Test.Spec (Group(..), Result(..))
-
-data Summary = Count Int Int Int
+newtype Summary = Count { passed :: Int, failed :: Int, pending :: Int }
+derive instance newtypeSummary :: Newtype Summary _
 
 instance semigroupCount :: Semigroup Summary where
-  append (Count p1 f1 s1) (Count p2 f2 s2) = Count (p1 + p2) (f1 + f2) (s1 + s2)
+  append (Count c1) (Count c2) = Count $ c1 + c2
 
 instance monoidCount :: Monoid Summary where
-  mempty = Count 0 0 0
+  mempty = Count zero
 
-summarize :: Array (Group Result) -> Summary
-summarize = foldMap \g -> case g of
-    (It _ _ Success)     -> Count 1 0 0
-    (It _ _ (Failure _)) -> Count 0 1 0
-    (Pending _)          -> Count 0 0 1
-    (Describe _ _ dgs)   -> summarize dgs
-    (SetExecution _ dgs) -> summarize dgs
+summarize :: forall a. Array (Tree a Result) -> Summary
+summarize = foldMap case _ of
+  (Leaf _ (Just Success))     -> Count { passed: 1, failed: 0, pending: 0 }
+  (Leaf _ (Just (Failure _))) -> Count { passed: 0, failed: 1, pending: 0 }
+  (Leaf _ Nothing)            -> Count { passed: 0, failed: 0, pending: 1 }
+  (Node _ dgs)                -> summarize dgs
 
-successful :: Array (Group Result) -> Boolean
-successful groups =
-  case summarize groups of
-    (Count _ 0 _) -> true
-    _             -> false
+successful :: forall a. Array (Tree a Result) -> Boolean
+successful groups = (un Count $ summarize groups).failed == 0
