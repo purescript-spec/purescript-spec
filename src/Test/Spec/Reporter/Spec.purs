@@ -16,13 +16,14 @@ specReporter :: Reporter
 specReporter
   = defaultReporter { indent: 0, numFailures: 0 } update
  where
+  -- TODO coordinate events when multiple test/suites are running in parallel
   update s = case _ of
     Event.Start _ -> s <$ log ""
-    Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
-    Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
-    Event.Pending name -> s <$ do
+    Event.Suite path name -> modIndent (_ + 1) $ \_ -> _log name
+    Event.SuiteEnd path   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
+    Event.Pending path name -> s <$ do
       _log $ colored Color.Pending $ "- " <> name
-    Event.Pass name speed ms -> s <$ do
+    Event.Pass path name speed ms -> s <$ do
       _log $ colored Color.Checkmark "✓︎"
               <> " "
               <> colored Color.Pass name
@@ -33,7 +34,7 @@ specReporter
                           label = " (" <> show ms <> "ms)"
                       in colored col label
 
-    Event.Fail name _ _ ->
+    Event.Fail path name _ _ ->
       let s' = s { numFailures = s.numFailures + 1 }
        in s' <$ (_log $ colored Color.Fail $ show s'.numFailures <> ") " <> name)
 

@@ -12,28 +12,35 @@ type Duration = Int
 type NumberOfTests = Int
 type Stack = String
 
+newtype PathItem = PathItem { name :: Maybe String, index :: Int}
+
+derive newtype instance showIdTerm :: Show PathItem
+derive newtype instance eqIdTerm :: Eq PathItem
+
+type Path = Array PathItem
+
 data Event
   = Start NumberOfTests
-  | Suite Name
-  | Test
-  | TestEnd
-  | SuiteEnd
-  | Fail Name Message (Maybe Stack)
-  | Pass Name Speed Duration
-  | Pending Name
+  | Suite Path Name
+  | Test Path
+  | TestEnd Path
+  | SuiteEnd Path
+  | Fail Path Name Message (Maybe Stack)
+  | Pass Path Name Speed Duration
+  | Pending Path Name
   | End (Array (Tree Void Result))
 
 instance showEvent :: Show Event where
   show =
     case _ of
       Start n -> "Start " <> show n
-      Suite name ->  "Suite " <> name
-      Test -> "Test"
-      TestEnd -> "TestEnd"
-      SuiteEnd -> "SuiteEnd"
-      Fail name msg _ -> "Fail " <> name <> ": " <> msg
-      Pass name speed duration -> "Pass " <> name <> " "
+      Suite path name -> "Suite " <> show path <> ": " <> name
+      Test path -> "Test " <> show path
+      TestEnd path -> "TestEnd " <> show path
+      SuiteEnd path -> "SuiteEnd " <> show path
+      Fail path name msg _ -> "Fail " <> show path <> " " <> name <> ": " <> msg
+      Pass path name speed duration -> "Pass " <> show path <> " " <> name <> " "
                                   <> show speed <> " "
                                   <> show duration
-      Pending name -> "Pending " <> name
+      Pending path name -> "Pending " <> show path <> " " <> name
       End results -> "End " <> show results

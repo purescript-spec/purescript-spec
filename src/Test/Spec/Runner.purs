@@ -16,7 +16,7 @@ import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (execWriterT)
 import Control.Parallel (parTraverse, parallel, sequential)
-import Data.Array (groupBy)
+import Data.Array (groupBy, mapWithIndex)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either(..), either)
@@ -27,7 +27,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (class Traversable, for)
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
 import Effect.Aff.AVar as AV
@@ -79,6 +79,7 @@ timeout time t = do
   sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
     >>= either throwError pure
 
+type TestWithPath r = {test :: SpecTree Aff Unit, path :: Event.Path | r}
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
@@ -95,53 +96,56 @@ _run
   -> m (Producer Event Aff (Array (Tree Void Result)))
 _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.Start (countTests tests))
-  r <- loop tests
+  let
+    indexer index test = {test, path: [Event.PathItem {name: Nothing, index}]}
+  r <- loop $ mapWithIndex indexer tests
   yield (Event.End r)
   pure r
   where
-    loop :: Array (SpecTree Aff Unit) -> Producer Event Aff (Array (Tree Void Result))
+    loop :: Array (TestWithPath ()) -> Producer Event Aff (Array (Tree Void Result))
     loop tests =
       let
-        marked :: Array (Tuple Boolean (SpecTree Aff Unit))
-        marked = tests <#> \t -> Tuple (isAllParallelizable t) t
-        grouped' :: Array (NonEmptyArray (Tuple Boolean (SpecTree Aff Unit)))
-        grouped' = groupBy (\a b -> fst a && fst b) marked
-        grouped :: Array (Tuple Boolean (Array (SpecTree Aff Unit)))
-        grouped = grouped' <#> \g -> Tuple (fst $ NEA.head g) $ snd <$> NEA.toArray g
+        marked :: Array (TestWithPath (isParallelizable :: Boolean))
+        marked = tests <#> \{test,path} -> {isParallelizable: isAllParallelizable test, test, path}
+        grouped' :: Array (NonEmptyArray (TestWithPath (isParallelizable :: Boolean)))
+        grouped' = groupBy (\a b -> a.isParallelizable && b.isParallelizable) marked
+        grouped :: Array (Tuple Boolean (Array (TestWithPath ())))
+        grouped = grouped' <#> \g -> Tuple ((NEA.head g).isParallelizable) $ (\{test,path} -> {test,path}) <$> NEA.toArray g
       in join <$> for grouped \(Tuple isParallelizable xs) -> join <$> if isParallelizable
         then mergeProducers (runGroup <$> xs)
         else for xs runGroup
 
-    runGroup :: SpecTree Aff Unit -> Producer Event Aff (Array (Tree Void Result))
-    runGroup (Leaf name (Just (Item item))) = do
-      yield Event.Test
-      let test = item.example \a -> a unit
-      start <- lift $ liftEffect dateNow
-      e <- lift $ attempt case config.timeout of
-        Just t -> timeout t test
-        _      -> test
-      duration <- lift $ (_ - start) <$> liftEffect dateNow
-      yield $ either
-        (\err ->
-          let msg = Error.message err
-              stack = Error.stack err
-          in Event.Fail name msg stack)
-        (const $ Event.Pass name (speedOf config.slow duration) duration)
-        e
-      yield Event.TestEnd
-      pure [ Leaf name $ Just $ either Failure (const Success) e ]
-
-    runGroup (Leaf name Nothing) = do
-      yield $ Event.Pending name
-      pure [ Leaf name Nothing ]
-
-    runGroup (Node (Right cleanup) xs) = do
-      loop xs <* lift (cleanup unit)
-    runGroup (Node (Left name) xs) = do
-      yield $ Event.Suite name
-      res <- loop xs
-      yield Event.SuiteEnd
-      pure [ Node (Left name) res ]
+    runGroup :: forall r. TestWithPath r -> Producer Event Aff (Array (Tree Void Result))
+    runGroup {test, path} = case test of
+      (Leaf name (Just (Item item))) -> do
+        yield $ Event.Test path
+        let example = item.example \a -> a unit
+        start <- lift $ liftEffect dateNow
+        e <- lift $ attempt case config.timeout of
+          Just t -> timeout t example
+          _      -> example
+        duration <- lift $ (_ - start) <$> liftEffect dateNow
+        yield $ either
+          (\err ->
+            let msg = Error.message err
+                stack = Error.stack err
+            in Event.Fail path name msg stack)
+          (const $ Event.Pass path name (speedOf config.slow duration) duration)
+          e
+        yield $ Event.TestEnd path
+        pure [ Leaf name $ Just $ either Failure (const Success) e ]
+      (Leaf name Nothing) -> do
+        yield $ Event.Pending path name
+        pure [ Leaf name Nothing ]
+      (Node (Right cleanup) xs) -> do
+        let indexer index x = {test:x, path: path <> [Event.PathItem {name: Nothing, index}]}
+        loop (mapWithIndex indexer xs) <* lift (cleanup unit)
+      (Node (Left name) xs) -> do
+        yield $ Event.Suite path name
+        let indexer index x = {test:x, path: path <> [Event.PathItem {name: Just name, index}]}
+        res <- loop (mapWithIndex indexer xs)
+        yield $ Event.SuiteEnd path
+        pure [ Node (Left name) res ]
 
 -- https://github.com/felixSchl/purescript-pipes/issues/16
 mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)

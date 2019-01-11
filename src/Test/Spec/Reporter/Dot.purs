@@ -18,13 +18,13 @@ dotReporter { width } =
 
   where
     update n = case _ of
-      Event.Pass _ speed ms ->
+      Event.Pass _ _ speed ms ->
         let col = Speed.toColor speed
         in wrap $ Console.write (colored col ".")
-      Event.Fail _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
-      Event.Pending _  -> wrap $ Console.write (colored Color.Pass ",")
-      Event.End _      -> n <$ Console.write "\n"
-      _                -> pure n
+      Event.Fail _ _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
+      Event.Pending _ _ -> wrap $ Console.write (colored Color.Pass ",")
+      Event.End _ -> n <$ Console.write "\n"
+      _ -> pure n
 
       where
         wrap action =

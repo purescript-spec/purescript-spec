@@ -44,14 +44,15 @@ popCrumb s = s {
 consoleReporter :: Reporter
 consoleReporter = defaultReporter initialState update
   where
+  -- TODO coordinate events when multiple test/suites are running in parallel
   update s = case _ of
-    Event.Suite name -> pure (pushCrumb name s)
-    Event.SuiteEnd -> pure (popCrumb s)
-    Event.Pass name _ _ -> flushCrumbs do
+    Event.Suite path name -> pure (pushCrumb name s)
+    Event.SuiteEnd path -> pure (popCrumb s)
+    Event.Pass path name _ _ -> flushCrumbs do
       log $ "  " <> (colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name)
-    Event.Pending name -> flushCrumbs do
+    Event.Pending path name -> flushCrumbs do
       log $ "  " <> (colored Color.Pending $ "~ " <> name)
-    Event.Fail name msg _ -> flushCrumbs do
+    Event.Fail path name msg _ -> flushCrumbs do
       log $ "  " <> (colored Color.Fail $ "✗ " <> name <> ":")
       log ""
       log $ colored Color.Fail $ "  " <> msg

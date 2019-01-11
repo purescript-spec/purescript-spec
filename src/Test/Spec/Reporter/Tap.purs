@@ -22,12 +22,12 @@ tapReporter =
  where
   update n = case _ of
     Event.Start nTests -> n <$ (log $ "1.." <> show nTests)
-    Event.TestEnd -> pure (n + 1)
-    Event.Pending name -> n <$ log do
+    Event.TestEnd _ -> pure (n + 1)
+    Event.Pending _ name -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
-    Event.Pass name _ _ -> n <$ log do
+    Event.Pass _ name _ _ -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name)
-    Event.Fail name msg mStack -> n <$ do
+    Event.Fail _ name msg mStack -> n <$ do
       log $ "not ok " <> show n <> " " <> (escTitle name)
       log $ escMsg msg
       case mStack of
@@ -40,7 +40,6 @@ tapReporter =
           log $ "# pass "  <> show (passed + pending)
           log $ "# fail "  <> show failed
       pure n
-
     _ -> pure n
 
 -- create a TAP-safe title
