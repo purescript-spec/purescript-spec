@@ -51,6 +51,28 @@ assertionSpec =
             it "rejects values where predicate returns true" $
               A.expectError $ 3 `A.shouldNotSatisfy` (_ > 2)
 
+          let contained = "nono"
+              notcontained = "zzz"
+              f = pure contained
+
+          describe "expectError" do
+            it "returns unit when given an error" $
+              A.expectError $ throwError $ error "omg"
+            it "returns an error when given a non-error" $
+              A.expectError $ A.expectError $ pure "ok"
+
+          describe "shouldReturn" do
+            it "accepts that `m String` contains \"nono\"" $
+              f `A.shouldReturn` contained
+            it "rejects that `m String` contains \"zzz\"" $
+              A.expectError $ f `A.shouldReturn` notcontained
+
+          describe "shouldNotReturn" do
+            it "accepts f does not contain \"zzz\"" $
+              f `A.shouldNotReturn` notcontained
+            it "rejects that `m String` does not contain \"zzz\"" $
+              A.expectError $ f `A.shouldNotReturn` contained
+
         describe "Foldable" do
           describe "for some foldable" do
             let f = ["haha", "nono"]
@@ -68,27 +90,3 @@ assertionSpec =
                 f `A.shouldNotContain` notcontained
               it "rejects f that contains a" $
                 A.expectError $ f `A.shouldNotContain` contained
-
-
-        describe "Aff" do
-          let contained = "nono"
-              notcontained = "zzz"
-              f = pure contained
-
-          describe "expectError" do
-            it "returns unit when given an error" $
-              A.expectError $ throwError $ error "omg"
-            it "returns an error when given a non-error" $
-              A.expectError $ A.expectError $ pure "ok"
-
-          describe "shouldReturn" do
-            it "accepts that `Aff String` contains \"nono\"" $
-              f `A.shouldReturn` contained
-            it "rejects that `Aff String` contains \"zzz\"" $
-              A.expectError $ f `A.shouldReturn` notcontained
-
-          describe "shouldNotReturn" do
-            it "accepts f does not contain \"zzz\"" $
-              f `A.shouldNotReturn` notcontained
-            it "rejects that `Aff String` does not contain \"zzz\"" $
-              A.expectError $ f `A.shouldNotReturn` contained
