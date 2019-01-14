@@ -3,6 +3,7 @@ module Test.Spec.Speed where
 import Prelude
 
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Test.Spec.Color (Color)
 import Test.Spec.Color as Color
@@ -10,9 +11,8 @@ import Test.Spec.Color as Color
 data Speed = Fast | Medium | Slow
 
 derive instance genericSpeed :: Generic Speed _
-
-instance showSpeed :: Show Speed
-  where show = genericShow
+instance showSpeed :: Show Speed where show = genericShow
+instance showEq :: Eq Speed where eq = genericEq
 
 speedOf :: Int -> Int -> Speed
 speedOf thresh ms | ms > thresh     = Slow

@@ -121,7 +121,7 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
           (Event.Fail path name)
           (const $ Event.Pass path name (speedOf config.slow duration) duration)
           e
-        pure [ Leaf name $ Just $ either Failure (const Success) e ]
+        pure [ Leaf name $ Just $ either Failure (const $ Success (speedOf config.slow duration) duration) e ]
       (Leaf name Nothing) -> do
         yield $ Event.Pending path name
         pure [ Leaf name Nothing ]

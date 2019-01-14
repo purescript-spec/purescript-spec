@@ -9,6 +9,7 @@ module Test.Spec
   , hoistSpec
 
   , Result(..)
+  , Duration
 
   , class Example
   , evaluateExample
@@ -64,6 +65,7 @@ import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (Error)
 import Prim.TypeError (class Warn, Text)
+import Test.Spec.Speed (Speed)
 import Test.Spec.Tree (ActionWith, Item(..), Tree(..)) as Reexport
 import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTree, modifyAroundAction)
 
@@ -108,16 +110,17 @@ else instance exampleMUnit :: Example (m Unit) Unit m where
   evaluateExample t around' = around' $ \_ -> t
 
 
+type Duration = Int
 data Result
-  = Success
+  = Success Speed Duration
   | Failure Error
 
 instance showResult :: Show Result where
-  show Success = "Success"
+  show (Success speed duration ) = "Success (" <> show speed <> " " <> show duration <> ")"
   show (Failure err) = "Failure (Error ...)"
 
 instance eqResult :: Eq Result where
-  eq Success Success = true
+  eq (Success s1 d1) (Success s2 d2) = s1 == s2 && d1 == d2
   eq (Failure _) (Failure _) = true
   eq _ _ = false
 

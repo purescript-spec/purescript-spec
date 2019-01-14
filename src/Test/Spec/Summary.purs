@@ -22,7 +22,7 @@ instance monoidCount :: Monoid Summary where
 
 summarize :: forall a. Array (Tree a Result) -> Summary
 summarize = foldMap case _ of
-  (Leaf _ (Just Success))     -> Count { passed: 1, failed: 0, pending: 0 }
+  (Leaf _ (Just (Success _ _)))     -> Count { passed: 1, failed: 0, pending: 0 }
   (Leaf _ (Just (Failure _))) -> Count { passed: 0, failed: 1, pending: 0 }
   (Leaf _ Nothing)            -> Count { passed: 0, failed: 0, pending: 1 }
   (Node _ dgs)                -> summarize dgs

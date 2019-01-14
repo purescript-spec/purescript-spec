@@ -13,19 +13,19 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (split, Pattern(..))
 import Data.String.CodeUnits as CodeUnits
-import Effect.Exception (Error)
 import Effect.Exception as Error
+import Test.Spec (Result(..))
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (logWriter, moveUpAndClearLine, tellLn)
 import Test.Spec.Reporter.Base (defaultReporter, defaultSummary)
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
-import Test.Spec.Speed (Speed)
+import Test.Spec.Speed as Speed
 import Test.Spec.Tree (Path)
 
 data RunningItem
-  = RunningTest Path String (Maybe Res)
+  = RunningTest Path String (Maybe Result)
   | PendingTest Path String
   | RunningSuite Path String Boolean
 
@@ -38,14 +38,8 @@ runningItemPath = case _ of
 derive instance runningItemGeneric :: Generic RunningItem _
 instance runningItemShow :: Show RunningItem where show = genericShow
 
-initialState :: Array RunningItem
-initialState = []
-
-type Duration = Int
-data Res = Success Speed Duration | Failure Error
-instance showResult :: Show Res where
-  show (Success speed duration) = "Success ()"
-  show (Failure err) = "Failure (Error ...)"
+initialState :: { runningItem :: Array RunningItem, numFailures :: Int }
+initialState = { runningItem: [], numFailures: 0}
 
 specReporter :: Reporter
 specReporter = defaultReporter initialState case _ of
@@ -71,11 +65,11 @@ specReporter = defaultReporter initialState case _ of
     a -> a
 
   modifyRunningItems f = do
-    currentRunningItems <- get
-    let nextRunningItems = f currentRunningItems
-    put if allRunningItemsAreFinished nextRunningItems then [] else nextRunningItems
-    unless (null currentRunningItems) do
-      let c = lineCount $ execWriter $ writeRunningItems currentRunningItems
+    s <- get
+    let nextRunningItems = f s.runningItem
+    put s{runningItem = if allRunningItemsAreFinished nextRunningItems then [] else nextRunningItems}
+    unless (null s.runningItem) do
+      let c = lineCount $ execWriter $ writeRunningItems s.runningItem
       lift $ sequence_ $ replicate c moveUpAndClearLine
     logWriter $ writeRunningItems nextRunningItems
     where
@@ -92,8 +86,12 @@ specReporter = defaultReporter initialState case _ of
         tellLn $ (indent path) <> (colored Color.Pending $ "- " <> name)
       RunningTest path name Nothing -> do
         tellLn $ (indent path) <> colored Color.Pending "⥀ " <> name
-      RunningTest path name (Just (Success _ _)) -> do
-        tellLn $ (indent path) <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
+      RunningTest path name (Just (Success speed ms)) -> do
+        let
+          speedDetails = case speed of
+            Speed.Fast -> ""
+            _ -> colored (Speed.toColor speed) $ " (" <> show ms <> "ms)"
+        tellLn $ (indent path) <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name <> speedDetails
       RunningTest path name (Just (Failure err)) -> do
         tellLn $ (indent path) <> colored Color.Fail ("✗ " <> name <> ":")
         tellLn $ ""

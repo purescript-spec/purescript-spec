@@ -51,8 +51,8 @@ consoleReporter = defaultReporter initialState case _ of
       a -> a
   Event.Test path name -> do
     modifyRunningItems (_ <> [RunningTest path name Nothing])
-  Event.Pass path name _ _ -> do
-    modifyRunningItems $ updateRunningTestResult path $ Success
+  Event.Pass path name speed ms -> do
+    modifyRunningItems $ updateRunningTestResult path $ Success speed ms
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
   Event.Fail path name err -> do
@@ -90,7 +90,7 @@ consoleReporter = defaultReporter initialState case _ of
         RunningTest _ name Nothing -> tell $ asLine
           [ "  " <> colored Color.Pending "⥀ " <> name
           ]
-        RunningTest _ name (Just Success) -> tell $ asLine
+        RunningTest _ name (Just (Success _ _)) -> tell $ asLine
           [ "  " <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
           ]
         RunningTest _ name (Just (Failure err)) -> tell $ asLine
