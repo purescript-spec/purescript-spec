@@ -14,10 +14,9 @@ import Prelude
 
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (execWriterT)
+import Control.Monad.Writer (execWriterT, tell)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (groupBy, mapWithIndex)
-import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
@@ -27,24 +26,21 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (class Traversable, for)
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
 import Effect.Aff.AVar as AV
 import Effect.Class (liftEffect)
-import Effect.Console (logShow)
 import Effect.Exception (Error, error)
-import Effect.Exception as Error
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Result(..), Spec, SpecM, SpecTree, Tree(..))
-import Test.Spec.Console (withAttrs)
+import Test.Spec.Console (logWriter, withAttrs)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (countTests, discardUnfocused, isAllParallelizable)
+import Test.Spec.Tree (Path, PathItem(..), countTests, discardUnfocused, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -79,7 +75,7 @@ timeout time t = do
   sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
     >>= either throwError pure
 
-type TestWithPath r = {test :: SpecTree Aff Unit, path :: Event.Path | r}
+type TestWithPath r = {test :: SpecTree Aff Unit, path :: Path | r}
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
@@ -97,7 +93,7 @@ _run
 _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.Start (countTests tests))
   let
-    indexer index test = {test, path: [Event.PathItem {name: Nothing, index}]}
+    indexer index test = {test, path: [PathItem {name: Nothing, index}]}
   r <- loop $ mapWithIndex indexer tests
   yield (Event.End r)
   pure r
@@ -105,20 +101,17 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
     loop :: Array (TestWithPath ()) -> Producer Event Aff (Array (Tree Void Result))
     loop tests =
       let
-        marked :: Array (TestWithPath (isParallelizable :: Boolean))
-        marked = tests <#> \{test,path} -> {isParallelizable: isAllParallelizable test, test, path}
-        grouped' :: Array (NonEmptyArray (TestWithPath (isParallelizable :: Boolean)))
-        grouped' = groupBy (\a b -> a.isParallelizable && b.isParallelizable) marked
-        grouped :: Array (Tuple Boolean (Array (TestWithPath ())))
-        grouped = grouped' <#> \g -> Tuple ((NEA.head g).isParallelizable) $ (\{test,path} -> {test,path}) <$> NEA.toArray g
-      in join <$> for grouped \(Tuple isParallelizable xs) -> join <$> if isParallelizable
-        then mergeProducers (runGroup <$> xs)
-        else for xs runGroup
+        noteWithIsAllParallelizable = map \{test,path} -> { isParallelizable: isAllParallelizable test, test, path}
+        groupByIsParallelizable = groupBy (\a b -> a.isParallelizable && b.isParallelizable)
+      in join <$> for (groupByIsParallelizable $ noteWithIsAllParallelizable tests) \g ->
+        join <$> if (NEA.head g).isParallelizable
+          then mergeProducers (runGroup <$> (NEA.toArray g))
+          else for (NEA.toArray g) runGroup
 
     runGroup :: forall r. TestWithPath r -> Producer Event Aff (Array (Tree Void Result))
     runGroup {test, path} = case test of
       (Leaf name (Just (Item item))) -> do
-        yield $ Event.Test path
+        yield $ Event.Test path name
         let example = item.example \a -> a unit
         start <- lift $ liftEffect dateNow
         e <- lift $ attempt case config.timeout of
@@ -126,23 +119,19 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
           _      -> example
         duration <- lift $ (_ - start) <$> liftEffect dateNow
         yield $ either
-          (\err ->
-            let msg = Error.message err
-                stack = Error.stack err
-            in Event.Fail path name msg stack)
+          (Event.Fail path name)
           (const $ Event.Pass path name (speedOf config.slow duration) duration)
           e
-        yield $ Event.TestEnd path
         pure [ Leaf name $ Just $ either Failure (const Success) e ]
       (Leaf name Nothing) -> do
         yield $ Event.Pending path name
         pure [ Leaf name Nothing ]
       (Node (Right cleanup) xs) -> do
-        let indexer index x = {test:x, path: path <> [Event.PathItem {name: Nothing, index}]}
+        let indexer index x = {test:x, path: path <> [PathItem {name: Nothing, index}]}
         loop (mapWithIndex indexer xs) <* lift (cleanup unit)
       (Node (Left name) xs) -> do
         yield $ Event.Suite path name
-        let indexer index x = {test:x, path: path <> [Event.PathItem {name: Just name, index}]}
+        let indexer index x = {test:x, path: path <> [PathItem {name: Just name, index}]}
         res <- loop (mapWithIndex indexer xs)
         yield $ Event.SuiteEnd path
         pure [ Node (Left name) res ]
@@ -207,7 +196,7 @@ run' config reporters spec = _run config spec <#> \runner -> do
   where
     onError :: Error -> Aff Unit
     onError err = liftEffect do
-       withAttrs [31] $ logShow err
+       logWriter $ withAttrs [31] $ tell $ show err <> "\n"
        when config.exit (exit 1)
 
     onSuccess :: Array (Tree Void Result) -> Aff Unit

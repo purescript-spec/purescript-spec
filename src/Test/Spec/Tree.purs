@@ -7,21 +7,27 @@ module Test.Spec.Tree
   , isAllParallelizable
   , discardUnfocused
   , modifyAroundAction
+  , PathItem(..)
+  , Path
+  , parentSuiteName
+  , removeLastIndex
   ) where
 
 import Prelude
 
 import Control.Monad.State (execState)
 import Control.Monad.State as State
-import Data.Array (mapMaybe)
+import Data.Array (mapMaybe, unsnoc)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (class Bifunctor)
-import Data.Either (Either)
+import Data.Either (Either, either)
 import Data.Foldable (class Foldable, all, foldMapDefaultL, foldl, foldr)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Traversable (for, for_)
+import Data.Tuple (Tuple(..))
 
 
 data Tree c a
@@ -37,6 +43,7 @@ instance eqGroup :: (Eq c, Eq a) => Eq (Tree c a) where
   eq (Leaf n1 t1) (Leaf n2 t2) = n1 == n2 && t1 == t2
   eq _                    _                    = false
 
+-- TODO fix name aggregation
 bimapTree :: forall a b c d. (Array String -> a -> b) -> (NonEmptyArray String ->c -> d) -> Tree a c -> Tree b d
 bimapTree g f = go []
   where
@@ -85,7 +92,7 @@ countTests g = execState (for g go) 0
 isAllParallelizable :: forall c m a. Tree c (Item m a) -> Boolean
 isAllParallelizable = case _ of
   Node _ xs -> all isAllParallelizable xs
-  Leaf _ x -> (x >>= un Item >>> _.isParallelizable) == Just true
+  Leaf _ (x) -> x == Nothing || (x >>= un Item >>> _.isParallelizable) == Just true
 
 
 -- | If there is at least one focused element, all paths which don't
@@ -109,3 +116,19 @@ modifyAroundAction action (Item item) = Item $ item
   { example = \aroundAction -> item.example (aroundAction <<< action)
   }
 
+newtype PathItem = PathItem { index :: Int, name :: Maybe String }
+
+derive instance newtypePathItem :: Newtype PathItem _
+derive newtype instance showIdTerm :: Show PathItem
+derive newtype instance pathItemEq :: Eq PathItem
+derive newtype instance pathItemOrd :: Ord PathItem
+
+type Path = Array PathItem
+
+parentSuiteName :: Path -> Array String
+parentSuiteName = mapMaybe (un PathItem >>> _.name)
+
+removeLastIndex :: Path -> Tuple Path (Maybe String)
+removeLastIndex p = case unsnoc p of
+  Nothing -> Tuple [] Nothing
+  Just {init, last: PathItem {name}} -> Tuple init name

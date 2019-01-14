@@ -20,9 +20,9 @@ dotReporter { width } =
     update n = case _ of
       Event.Pass _ _ speed ms ->
         let col = Speed.toColor speed
-        in wrap $ Console.write (colored col ".")
-      Event.Fail _ _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
-      Event.Pending _ _ -> wrap $ Console.write (colored Color.Pass ",")
+        in wrap $ colored col "."
+      Event.Fail _ _ _ -> wrap $ colored Color.Fail "!"
+      Event.Pending _ _ -> wrap $ colored Color.Pass ","
       Event.End _ -> n <$ Console.write "\n"
       _ -> pure n
 
@@ -31,4 +31,4 @@ dotReporter { width } =
           let n' = n + 1
           in n' <$ do
             when (n' `mod` width == 0) (Console.write "\n")
-            action
+            Console.write action

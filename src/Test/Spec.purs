@@ -9,10 +9,10 @@ module Test.Spec
   , hoistSpec
 
   , Result(..)
-  
+
   , class Example
   , evaluateExample
-  
+
   , parallel
   , sequential
 
@@ -20,12 +20,12 @@ module Test.Spec
   , focus
   , describeOnly
   , itOnly
-  
+
   , describe
   , it
   , pending
   , pending'
-  
+
   , aroundWith
   , around
   , around_
@@ -35,7 +35,7 @@ module Test.Spec
   , beforeWith
   , beforeAll
   , beforeAll_
-  
+
   , after
   , after_
   , afterAll
@@ -76,7 +76,7 @@ type SpecTree m a = Tree (ActionWith m a) (Item m a)
 mapSpecTree
   :: forall m g g' i a i'
    . Monad m
-   => (SpecTree g i -> SpecTree g' i') 
+   => (SpecTree g i -> SpecTree g' i')
    -> SpecM m g i a
    -> SpecM m g' i' a
 mapSpecTree f = mapWriterT $ map $ map $ map f
@@ -250,7 +250,7 @@ around_ action = aroundWith $ \e a -> action (e a)
 -- | Run a custom action after every spec item.
 after :: forall m g e f i a. Monad m => MonadBracket e f g => ActionWith g i -> SpecM m g i a -> SpecM m g i a
 after action = aroundWith $ \e x -> e x `finally` action x
-  where 
+  where
   finally :: forall x. g x -> g Unit -> g x
   finally act fin = bracket (pure unit) (\_ _ -> fin) (const act)
 

@@ -1,18 +1,20 @@
 module Test.Spec.Reporter.Tap (tapReporter) where
 
 import Prelude
-import Data.String.Regex as Regex
-import Test.Spec.Runner.Event as Event
-import Test.Spec.Summary as Summary
-import Effect.Console (log)
+
 import Data.Either (fromRight)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(Pattern), joinWith, split)
 import Data.String.Regex (regex)
+import Data.String.Regex as Regex
+import Effect.Console (log)
+import Effect.Exception as Error
 import Partial.Unsafe (unsafePartial)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
+import Test.Spec.Summary as Summary
 
 type TapReporterState = Int
 
@@ -22,15 +24,14 @@ tapReporter =
  where
   update n = case _ of
     Event.Start nTests -> n <$ (log $ "1.." <> show nTests)
-    Event.TestEnd _ -> pure (n + 1)
     Event.Pending _ name -> n <$ log do
       "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
-    Event.Pass _ name _ _ -> n <$ log do
+    Event.Pass _ name _ _ -> n + 1 <$ log do
       "ok " <> show n <> " " <> (escTitle name)
-    Event.Fail _ name msg mStack -> n <$ do
+    Event.Fail _ name err -> n + 1 <$ do
       log $ "not ok " <> show n <> " " <> (escTitle name)
-      log $ escMsg msg
-      case mStack of
+      log $ escMsg $ Error.message err
+      case Error.stack err of
         Nothing -> pure unit
         Just s  -> log $ joinWith "\n" (append "    " <$> split (Pattern "\n") s)
     Event.End results -> do

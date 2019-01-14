@@ -3,12 +3,10 @@ module Test.Spec.HoistSpec where
 import Prelude
 
 import Control.Monad.Reader (ReaderT, ask, runReaderT)
-import Control.Monad.Writer (WriterT, runWriterT, tell)
 import Data.Array.NonEmpty as NAE
 import Data.Identity (Identity)
 import Data.Time.Duration (Milliseconds(..))
-import Data.Traversable (for_, intercalate)
-import Data.Tuple (Tuple(..))
+import Data.Traversable (intercalate)
 import Effect.Aff (Aff, delay)
 import Effect.Aff.Class (liftAff)
 import Effect.Class.Console (log)
@@ -19,21 +17,8 @@ type Spec' t a = SpecM Identity t Unit a
 hoistSpecSpec :: Spec Unit
 hoistSpecSpec = describe "hoist" do
   describe "normal" $ delaySpecExample {log, delay}
-  describe "writer" $ hoistSpecSpecWriterT
   describe "reader" $ hoistSpecSpecReaderT
 
-hoistSpecSpecWriterT :: Spec Unit
-hoistSpecSpecWriterT = go $ parallel do
-  delaySpecExample
-    { log: \s -> tell [s]
-    , delay: \ms -> liftAff $ delay ms
-    }
-  where
-    go :: Spec' (WriterT (Array String) Aff) ~> Spec
-    go = hoistSpec \_ m -> do
-     Tuple res logMsgs <- runWriterT m
-     for_ logMsgs log
-     pure res
 
 hoistSpecSpecReaderT :: Spec Unit
 hoistSpecSpecReaderT = go $ parallel do
@@ -50,6 +35,7 @@ hoistSpecSpecReaderT = go $ parallel do
           TestWithName n -> intercalate " > " $ NAE.toArray n
       in runReaderT m \logMsg -> log $ prefix  <> "| " <> logMsg
 
+-- TODO restore `log`
 delaySpecExample
   :: forall m
   . Monad m
@@ -59,28 +45,29 @@ delaySpecExample
   -> Spec' m Unit
 delaySpecExample opts = describe "delay" do
   it "proc 1" do
-    opts.log "start 1"
+    -- opts.log "start 1"
     opts.delay $ Milliseconds $ 500.0 + 300.0 * 1.0
-    opts.log "done 1"
+    -- opts.log "done 1"
   describe "some" do
     it "proc 2" do
-      opts.log "start 2"
+      -- opts.log "start 2"
       opts.delay $ Milliseconds $ 500.0 + 300.0 * 2.0
-      opts.log "done 2"
+      -- opts.log "done 2"
     it "proc 3" do
-      opts.log "start 3"
+      -- opts.log "start 3"
       opts.delay $ Milliseconds $ 500.0 + 300.0 * 3.0
-      opts.log "done 3"
+      -- opts.log "done 3"
     describe "nesting" do
       it "proc 4" do
-        opts.log "start 4"
+        -- opts.log "start 4"
         opts.delay $ Milliseconds $ 500.0 + 300.0 * 4.0
-        opts.log "done 4"
+        -- opts.log "done 4"
+    describe "nesting" do
       it "proc 5" do
-        opts.log "start 5"
+        -- opts.log "start 5"
         opts.delay $ Milliseconds $ 500.0 + 300.0 * 5.0
-        opts.log "done 5"
+        -- opts.log "done 5"
       it "proc 6" do
-        opts.log "start 6"
+        -- opts.log "start 6"
         opts.delay $ Milliseconds $ 500.0 + 300.0 * 6.0
-        opts.log "done 6"
+        -- opts.log "done 6"
