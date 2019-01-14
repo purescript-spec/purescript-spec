@@ -2,6 +2,8 @@ module Test.Spec.Console
   ( setAttr
   , reset
   , withAttrs
+  , tellLn
+  , tellLns
   , write
   , logWriter
   , moveUpAndClearLine
@@ -10,15 +12,31 @@ module Test.Spec.Console
 import Prelude
 
 import Ansi.Codes (colorSuffix, prefix)
-import Control.Monad.Writer (class MonadWriter, Writer, execWriter, tell)
-import Data.Foldable (foldr)
+import Control.Monad.Writer (class MonadWriter, WriterT, execWriterT, tell)
+import Data.Foldable (foldr, for_)
 import Effect (Effect)
+import Effect.Class (class MonadEffect, liftEffect)
 
 foreign import write :: String -> Effect Unit
 foreign import moveUpAndClearLine :: Effect Unit
 
-logWriter :: Writer String Unit -> Effect Unit
-logWriter = execWriter >>> write
+logWriter :: forall m. MonadEffect m => WriterT String m Unit -> m Unit
+logWriter = execWriterT >=> write >>> liftEffect
+
+tellLn
+  :: forall m
+   . MonadWriter String m
+  => String
+  -> m Unit
+tellLn l = tell $ l <> "\n"
+
+tellLns
+  :: forall m
+   . MonadWriter String m
+  => Array String
+  -> m Unit
+tellLns l = for_ l $ (_<> "\n") >>> tell
+
 
 setAttr
   :: forall m

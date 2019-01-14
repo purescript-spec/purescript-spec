@@ -92,8 +92,7 @@ _run
   -> m (Producer Event Aff (Array (Tree Void Result)))
 _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.Start (countTests tests))
-  let
-    indexer index test = {test, path: [PathItem {name: Nothing, index}]}
+  let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
   r <- loop $ mapWithIndex indexer tests
   yield (Event.End r)
   pure r

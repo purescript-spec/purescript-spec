@@ -17,7 +17,7 @@ import Prelude
 
 import Control.Monad.State (execState)
 import Control.Monad.State as State
-import Data.Array (mapMaybe, unsnoc)
+import Data.Array (mapMaybe, snoc, unsnoc)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (class Bifunctor)
@@ -43,13 +43,14 @@ instance eqGroup :: (Eq c, Eq a) => Eq (Tree c a) where
   eq (Leaf n1 t1) (Leaf n2 t2) = n1 == n2 && t1 == t2
   eq _                    _                    = false
 
--- TODO fix name aggregation
 bimapTree :: forall a b c d. (Array String -> a -> b) -> (NonEmptyArray String ->c -> d) -> Tree a c -> Tree b d
 bimapTree g f = go []
   where
     go :: Array String -> Tree a c -> Tree b d
     go namePath spec = case spec of
-      Node d xs -> Node (map (g namePath) d) (map (go namePath) xs)
+      Node d xs ->
+        let namePath' = either (snoc namePath) (const namePath) d
+        in Node (map (g namePath') d) (map (go namePath') xs)
       Leaf n item -> Leaf n (map (f $ NEA.snoc' namePath n) item)
 
 instance treeBifunctor :: Bifunctor Tree where

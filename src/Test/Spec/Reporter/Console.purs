@@ -2,7 +2,7 @@ module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
 
-import Control.Monad.State (execStateT, get, lift, put)
+import Control.Monad.State (get, lift, put)
 import Control.Monad.Writer (class MonadWriter, execWriter, tell)
 import Data.Array (all, foldMap, groupBy, length, mapMaybe, null, replicate, sortBy)
 import Data.Array.NonEmpty as NEA
@@ -42,26 +42,24 @@ initialState :: Array RunningItem
 initialState = []
 
 consoleReporter :: Reporter
-consoleReporter = defaultReporter initialState $ flip update
+consoleReporter = defaultReporter initialState case _ of
+  Event.Suite path name -> do
+    modifyRunningItems (_ <> [RunningSuite path name false])
+  Event.SuiteEnd path -> do
+    modifyRunningItems $ map case _ of
+      RunningSuite p n _ | p == path -> RunningSuite p n true
+      a -> a
+  Event.Test path name -> do
+    modifyRunningItems (_ <> [RunningTest path name Nothing])
+  Event.Pass path name _ _ -> do
+    modifyRunningItems $ updateRunningTestResult path $ Success
+  Event.Pending path name -> do
+    modifyRunningItems (_ <> [PendingTest path name])
+  Event.Fail path name err -> do
+    modifyRunningItems $ updateRunningTestResult path $ Failure err
+  Event.End results -> logWriter $ printSummary results
+  Event.Start _ -> pure unit
   where
-  update = execStateT <<< case _ of
-    Event.Suite path name -> do
-      modifyRunningItems (_ <> [RunningSuite path name false])
-    Event.SuiteEnd path -> do
-      modifyRunningItems $ map case _ of
-        RunningSuite p n _ | p == path -> RunningSuite p n true
-        a -> a
-    Event.Test path name -> do
-      modifyRunningItems (_ <> [RunningTest path name Nothing])
-    Event.Pass path name _ _ -> do
-      modifyRunningItems $ updateRunningTestResult path $ Success
-    Event.Pending path name -> do
-      modifyRunningItems (_ <> [PendingTest path name])
-    Event.Fail path name err -> do
-      modifyRunningItems $ updateRunningTestResult path $ Failure err
-    Event.End results -> lift $ logWriter $ printSummary results
-    Event.Start _ -> pure unit
-
   updateRunningTestResult path res = map case _ of
     RunningTest p n _ | p == path -> RunningTest p n $ Just res
     a -> a
@@ -73,7 +71,7 @@ consoleReporter = defaultReporter initialState $ flip update
     unless (null currentRunningItems) do
       let c = lineCount $ execWriter $ writeRunningItems currentRunningItems
       lift $ sequence_ $ replicate c moveUpAndClearLine
-    lift $ logWriter $ writeRunningItems nextRunningItems
+    logWriter $ writeRunningItems nextRunningItems
     where
       lineCount str = length (split (Pattern "\n") str) - 1
       allRunningItemsAreFinished = all case _ of
