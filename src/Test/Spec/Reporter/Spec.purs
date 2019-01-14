@@ -2,8 +2,8 @@ module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
 
-import Control.Monad.State (get, lift, put)
-import Control.Monad.Writer (class MonadWriter, execWriter)
+import Control.Monad.State (get, put)
+import Control.Monad.Writer (class MonadWriter, execWriter, tell)
 import Data.Array (all, length, null, sortBy)
 import Data.Array as Array
 import Data.Foldable (for_)
@@ -16,7 +16,7 @@ import Data.String.CodeUnits as CodeUnits
 import Effect.Exception as Error
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
-import Test.Spec.Console (logWriter, moveUpAndClearDown, tellLn)
+import Test.Spec.Console (moveUpAndClearDown, tellLn)
 import Test.Spec.Reporter.Base (defaultReporter, defaultSummary)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
@@ -57,7 +57,7 @@ specReporter = defaultReporter initialState case _ of
       a -> a
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
-  Event.End results -> logWriter $ defaultSummary results
+  Event.End results -> defaultSummary results
   Event.Start _ -> pure unit
   where
   modifyRunningItems f = do
@@ -65,8 +65,8 @@ specReporter = defaultReporter initialState case _ of
     let nextRunningItems = f s.runningItem
     put s{runningItem = if allRunningItemsAreFinished nextRunningItems then [] else nextRunningItems}
     unless (null s.runningItem) do
-      lift $ moveUpAndClearDown $ lineCount $ execWriter $ writeRunningItems s.runningItem
-    logWriter $ writeRunningItems nextRunningItems
+      tell $ moveUpAndClearDown $ lineCount $ execWriter $ writeRunningItems s.runningItem
+    writeRunningItems nextRunningItems
     where
       lineCount str = length (split (Pattern "\n") str) - 1
       allRunningItemsAreFinished = all case _ of

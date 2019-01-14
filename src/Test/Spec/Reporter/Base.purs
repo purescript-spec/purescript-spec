@@ -9,13 +9,14 @@ import Prelude
 import Control.Monad.State (StateT, evalStateT, execStateT)
 import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (class MonadWriter)
+import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
 import Data.Array ((:), reverse)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (intercalate, traverse_)
 import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits as CodeUnits
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception as Error
@@ -26,6 +27,7 @@ import Test.Spec as S
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (tellLn)
+import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event)
@@ -95,9 +97,8 @@ scanWithStateM step begin = do
 defaultReporter
   :: forall s
    . s
-  -> (Event -> StateT s Effect Unit)
+  -> (Event -> StateT s (Writer String) Unit)
   -> Reporter
-defaultReporter initialState onEvent = do
-  scanWithStateM dispatch (pure initialState)
-  where
-    dispatch s e = liftEffect (execStateT (onEvent e) s)
+defaultReporter initialState onEvent = pure initialState # scanWithStateM \s e ->
+  let Tuple res log = runWriter $ execStateT (onEvent e) s
+  in liftEffect $ Console.write log $> res

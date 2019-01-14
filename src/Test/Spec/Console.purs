@@ -11,17 +11,22 @@ module Test.Spec.Console
 
 import Prelude
 
-import Ansi.Codes (colorSuffix, prefix)
+import Ansi.Codes (EraseParam(..), EscapeCode(..), colorSuffix, escapeCodeToString, prefix)
 import Control.Monad.Writer (class MonadWriter, WriterT, execWriterT, tell)
-import Data.Foldable (foldr, for_)
+import Data.Foldable (foldMap, foldr, for_)
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 
 foreign import write :: String -> Effect Unit
-foreign import moveUpAndClearDown :: Int -> Effect Unit
 
 logWriter :: forall m. MonadEffect m => WriterT String m Unit -> m Unit
 logWriter = execWriterT >=> write >>> liftEffect
+
+moveUpAndClearDown :: Int -> String
+moveUpAndClearDown lines = foldMap escapeCodeToString
+  [ Up lines
+  , EraseData ToEnd
+  ]
 
 tellLn
   :: forall m

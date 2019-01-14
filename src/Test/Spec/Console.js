@@ -11,13 +11,3 @@ exports.write = function(s) {
     catch (e) {}
   };
 };
-
-exports.moveUpAndClearDown = function(lines) {
-  return function() {
-    try {
-      process.stderr.moveCursor(0, -lines);
-      process.stderr.clearScreenDown();
-    }
-    catch (e) {}
-  };
-};

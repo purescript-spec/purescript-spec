@@ -10,7 +10,7 @@ import Data.String.Regex (regex)
 import Data.String.Regex as Regex
 import Effect.Exception as Error
 import Partial.Unsafe (unsafePartial)
-import Test.Spec.Console (logWriter, tellLn)
+import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
@@ -21,7 +21,7 @@ import Test.Spec.Summary as Summary
 type TapReporterState = Int
 
 tapReporter :: Reporter
-tapReporter = defaultReporter 1 $ logWriter <<< case _ of
+tapReporter = defaultReporter 1 case _ of
   Event.Start nTests ->
     tellLn $ "1.." <> show nTests
   Event.Pending _ name -> do
