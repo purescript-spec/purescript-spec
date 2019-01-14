@@ -13,8 +13,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (split, Pattern(..))
 import Effect.Exception as Error
-import Test.Spec (Result(..))
-import Test.Spec.Tree (Tree, Path, parentSuiteName, removeLastIndex)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (moveUpAndClearLine, logWriter, withAttrs)
@@ -23,6 +22,7 @@ import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
+import Test.Spec.Tree (Tree, Path, parentSuiteName, removeLastIndex)
 
 data RunningItem
   = RunningTest Path String (Maybe Result)
@@ -51,18 +51,15 @@ consoleReporter = defaultReporter initialState case _ of
       a -> a
   Event.Test path name -> do
     modifyRunningItems (_ <> [RunningTest path name Nothing])
-  Event.Pass path name speed ms -> do
-    modifyRunningItems $ updateRunningTestResult path $ Success speed ms
+  Event.TestEnd path name res -> do
+    modifyRunningItems $ map case _ of
+      RunningTest p n _ | p == path -> RunningTest p n $ Just res
+      a -> a
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
-  Event.Fail path name err -> do
-    modifyRunningItems $ updateRunningTestResult path $ Failure err
   Event.End results -> logWriter $ printSummary results
   Event.Start _ -> pure unit
   where
-  updateRunningTestResult path res = map case _ of
-    RunningTest p n _ | p == path -> RunningTest p n $ Just res
-    a -> a
 
   modifyRunningItems f = do
     currentRunningItems <- get

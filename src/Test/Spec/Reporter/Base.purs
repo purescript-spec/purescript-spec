@@ -21,11 +21,12 @@ import Effect.Class (liftEffect)
 import Effect.Exception as Error
 import Pipes (await, yield)
 import Pipes.Core (Pipe)
-import Test.Spec (Result, Tree)
+import Test.Spec (Tree)
 import Test.Spec as S
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (tellLn)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Summary (Summary(..))
@@ -66,7 +67,7 @@ printFailures xs' = evalStateT (go xs') {i: 0, crumbs: []}
         go xs
         State.modify_ _{crumbs = crumbs}
       S.Node (Right _) xs -> go xs
-      S.Leaf n (Just (S.Failure err)) -> do
+      S.Leaf n (Just (Failure err)) -> do
         {i, crumbs} <- State.modify \s -> s{i = s.i +1}
         let label = intercalate " " (reverse $ n:crumbs)
         tellLn $ show i <> ") " <> label

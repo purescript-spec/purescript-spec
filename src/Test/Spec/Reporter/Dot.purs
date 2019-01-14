@@ -8,6 +8,7 @@ import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (logWriter, tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
@@ -16,8 +17,8 @@ type DotReporterConfig = { width :: Int }
 
 dotReporter :: DotReporterConfig -> Reporter
 dotReporter { width } = defaultReporter (-1) $ logWriter <<< case _ of
-  Event.Pass _ _ speed ms -> wrap $ colored (Speed.toColor speed) "."
-  Event.Fail _ _ _ -> wrap $ colored Color.Fail "!"
+  Event.TestEnd _ _ (Success speed _) -> wrap $ colored (Speed.toColor speed) "."
+  Event.TestEnd _ _ (Failure _) -> wrap $ colored Color.Fail "!"
   Event.Pending _ _ -> wrap $ colored Color.Pass ","
   Event.End _ -> tellLn ""
   _ -> pure unit

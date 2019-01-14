@@ -23,7 +23,6 @@ import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either, either)
 import Data.Foldable (class Foldable, all, foldMapDefaultL, foldl, foldr)
-import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Traversable (for, for_)

@@ -34,8 +34,9 @@ import Effect.Exception (Error, error)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Item(..), Result(..), Spec, SpecM, SpecTree, Tree(..))
+import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
 import Test.Spec.Console (logWriter, withAttrs)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
@@ -117,11 +118,9 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
           Just t -> timeout t example
           _      -> example
         duration <- lift $ (_ - start) <$> liftEffect dateNow
-        yield $ either
-          (Event.Fail path name)
-          (const $ Event.Pass path name (speedOf config.slow duration) duration)
-          e
-        pure [ Leaf name $ Just $ either Failure (const $ Success (speedOf config.slow duration) duration) e ]
+        let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
+        yield $ Event.TestEnd path name res
+        pure [ Leaf name $ Just res ]
       (Leaf name Nothing) -> do
         yield $ Event.Pending path name
         pure [ Leaf name Nothing ]

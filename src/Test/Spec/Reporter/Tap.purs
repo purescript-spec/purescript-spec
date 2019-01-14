@@ -12,6 +12,7 @@ import Effect.Exception as Error
 import Partial.Unsafe (unsafePartial)
 import Test.Spec.Console (logWriter, tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
@@ -27,11 +28,11 @@ tapReporter = defaultReporter 1 $ logWriter <<< case _ of
     n <- get
     tellLn $ "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
     modify_ (_ + 1)
-  Event.Pass _ name _ _ -> do
+  Event.TestEnd _ name (Success _ _) -> do
     n <- get
     tellLn $ "ok " <> show n <> " " <> (escTitle name)
     modify_ (_ + 1)
-  Event.Fail _ name err -> do
+  Event.TestEnd _ name (Failure err) -> do
     n <- get
     tellLn $ "not ok " <> show n <> " " <> (escTitle name)
     tellLn $ escMsg $ Error.message err

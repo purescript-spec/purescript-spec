@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), isJust)
 import Data.String (split, Pattern(..))
 import Data.String.CodeUnits as CodeUnits
 import Effect.Exception as Error
-import Test.Spec (Result(..))
+import Test.Spec.Result (Result(..))
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
 import Test.Spec.Console (logWriter, moveUpAndClearLine, tellLn)
@@ -51,19 +51,15 @@ specReporter = defaultReporter initialState case _ of
       a -> a
   Event.Test path name -> do
     modifyRunningItems (_ <> [RunningTest path name Nothing])
-  Event.Pass path name speed ms -> do
-    modifyRunningItems $ updateRunningTestResult path $ Success speed ms
+  Event.TestEnd path name res -> do
+    modifyRunningItems $ map case _ of
+      RunningTest p n _ | p == path -> RunningTest p n $ Just res
+      a -> a
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
-  Event.Fail path name err -> do
-    modifyRunningItems $ updateRunningTestResult path $ Failure err
   Event.End results -> logWriter $ defaultSummary results
   Event.Start _ -> pure unit
   where
-  updateRunningTestResult path res = map case _ of
-    RunningTest p n _ | p == path -> RunningTest p n $ Just res
-    a -> a
-
   modifyRunningItems f = do
     s <- get
     let nextRunningItems = f s.runningItem
