@@ -12,10 +12,12 @@ exports.write = function(s) {
   };
 };
 
-exports.moveUpAndClearLine = function() {
-  try {
-    process.stderr.moveCursor(0, -1);
-    process.stderr.clearLine(0);
-  }
-  catch (e) {}
+exports.moveUpAndClearDown = function(lines) {
+  return function() {
+    try {
+      process.stderr.moveCursor(0, -lines);
+      process.stderr.clearScreenDown();
+    }
+    catch (e) {}
+  };
 };

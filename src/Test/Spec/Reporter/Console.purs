@@ -4,20 +4,20 @@ import Prelude
 
 import Control.Monad.State (get, lift, put)
 import Control.Monad.Writer (class MonadWriter, execWriter, tell)
-import Data.Array (all, foldMap, groupBy, length, mapMaybe, null, replicate, sortBy)
+import Data.Array (all, foldMap, groupBy, length, mapMaybe, null, sortBy)
 import Data.Array.NonEmpty as NEA
-import Data.Foldable (for_, intercalate, sequence_)
+import Data.Foldable (for_, intercalate)
 import Data.Function (on)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (split, Pattern(..))
 import Effect.Exception as Error
-import Test.Spec.Result (Result(..))
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
-import Test.Spec.Console (moveUpAndClearLine, logWriter, withAttrs)
+import Test.Spec.Console (logWriter, moveUpAndClearDown, withAttrs)
 import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
@@ -66,8 +66,7 @@ consoleReporter = defaultReporter initialState case _ of
     let nextRunningItems = f currentRunningItems
     put if allRunningItemsAreFinished nextRunningItems then [] else nextRunningItems
     unless (null currentRunningItems) do
-      let c = lineCount $ execWriter $ writeRunningItems currentRunningItems
-      lift $ sequence_ $ replicate c moveUpAndClearLine
+      lift $ moveUpAndClearDown $ lineCount $ execWriter $ writeRunningItems currentRunningItems
     logWriter $ writeRunningItems nextRunningItems
     where
       lineCount str = length (split (Pattern "\n") str) - 1

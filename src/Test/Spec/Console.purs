@@ -6,7 +6,7 @@ module Test.Spec.Console
   , tellLns
   , write
   , logWriter
-  , moveUpAndClearLine
+  , moveUpAndClearDown
   ) where
 
 import Prelude
@@ -18,7 +18,7 @@ import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 
 foreign import write :: String -> Effect Unit
-foreign import moveUpAndClearLine :: Effect Unit
+foreign import moveUpAndClearDown :: Int -> Effect Unit
 
 logWriter :: forall m. MonadEffect m => WriterT String m Unit -> m Unit
 logWriter = execWriterT >=> write >>> liftEffect
