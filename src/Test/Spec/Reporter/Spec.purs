@@ -5,14 +5,12 @@ import Prelude
 import Control.Monad.State (class MonadState, get, modify, put)
 import Control.Monad.Writer (class MonadWriter)
 import Data.Array (all, length)
-import Data.Array as Array
 import Data.Foldable (for_)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
-import Data.String.CodeUnits as CodeUnits
 import Data.Tuple (uncurry)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
@@ -67,7 +65,7 @@ print = case _ of
   PrintPending path name -> do
     tellLn $ (indent path) <> (styled Style.cyan $ "- " <> name)
   where
-    indent path = CodeUnits.fromCharArray $ Array.replicate (length path) ' '
+    indent = length >>> Style.indent
 
 specReporter :: Reporter
 specReporter = defaultReporter initialState case _ of

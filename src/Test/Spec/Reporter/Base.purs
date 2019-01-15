@@ -10,12 +10,10 @@ import Control.Monad.State (StateT, evalStateT, execStateT)
 import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
-import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (intercalate, traverse_)
 import Data.List (List(..), (:), reverse)
 import Data.Maybe (Maybe(..))
-import Data.String.CodeUnits as CodeUnits
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -34,9 +32,6 @@ import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
 
--- TODO: move this somewhere central
-indent :: Int -> String
-indent i = CodeUnits.fromCharArray $ Array.replicate i ' '
 
 defaultUpdate :: forall s. s -> Event -> Effect s
 defaultUpdate s _ = pure s
@@ -73,7 +68,7 @@ printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
         {i, crumbs} <- State.modify \s -> s{i = s.i +1}
         let label = intercalate " " (reverse $ n:crumbs)
         tellLn $ show i <> ") " <> label
-        tellLn $ styled Style.red $ indent 2 <> Error.message err
+        tellLn $ styled Style.red $ Style.indent 2 <> Error.message err
       S.Leaf _ _ -> pure unit
 
 -- | Monadic left scan with state.

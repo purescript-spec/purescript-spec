@@ -4,8 +4,10 @@ import Prelude
 
 import Ansi.Codes (GraphicsParam, escapeCodeToString)
 import Ansi.Codes as AnsiCode
+import Data.Array as Array
 import Data.List.NonEmpty as NEL
 import Data.Maybe (Maybe(..))
+import Data.String.CodeUnits as CodeUnits
 
 type Style = Array GraphicsParam
 
@@ -39,3 +41,6 @@ bold = [AnsiCode.PMode AnsiCode.Bold]
 
 magenta :: Style
 magenta = [AnsiCode.PForeground AnsiCode.Magenta]
+
+indent :: Int -> String
+indent i = CodeUnits.fromCharArray $ Array.replicate i ' '
