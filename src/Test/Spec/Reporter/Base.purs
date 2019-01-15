@@ -1,6 +1,5 @@
 module Test.Spec.Reporter.Base
-       ( defaultUpdate
-       , defaultSummary
+       ( defaultSummary
        , defaultReporter
        ) where
 
@@ -15,7 +14,6 @@ import Data.Foldable (intercalate, traverse_)
 import Data.List (List(..), (:), reverse)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception as Error
 import Pipes (await, yield)
@@ -32,9 +30,6 @@ import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
 
-
-defaultUpdate :: forall s. s -> Event -> Effect s
-defaultUpdate s _ = pure s
 
 defaultSummary :: forall m
    . MonadWriter String m
