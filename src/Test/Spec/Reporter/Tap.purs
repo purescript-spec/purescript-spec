@@ -45,9 +45,7 @@ tapReporter = defaultReporter 1 case _ of
     tellLn $ "# tests " <> show (failed + passed + pending)
     tellLn $ "# pass " <> show (passed + pending)
     tellLn $ "# fail " <> show failed
-  Event.Suite _ _ -> pure unit
-  Event.SuiteEnd _ -> pure unit
-  Event.Test _ _ -> pure unit
+  _ -> pure unit
 
 -- create a TAP-safe title
 escMsg :: String -> String

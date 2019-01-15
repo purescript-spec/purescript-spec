@@ -37,7 +37,7 @@ import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
 import Test.Spec.Console (logWriter, withAttrs)
 import Test.Spec.Result (Result(..))
-import Test.Spec.Runner.Event (Event)
+import Test.Spec.Runner.Event (Event, Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
 import Test.Spec.Summary (successful)
@@ -108,10 +108,10 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
           then mergeProducers (runGroup <$> (NEA.toArray g))
           else for (NEA.toArray g) runGroup
 
-    runGroup :: forall r. TestWithPath r -> Producer Event Aff (Array (Tree Void Result))
-    runGroup {test, path} = case test of
+    runGroup :: TestWithPath (isParallelizable :: Boolean) -> Producer Event Aff (Array (Tree Void Result))
+    runGroup {test, path, isParallelizable} = case test of
       (Leaf name (Just (Item item))) -> do
-        yield $ Event.Test path name
+        yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
         let example = item.example \a -> a unit
         start <- lift $ liftEffect dateNow
         e <- lift $ attempt case config.timeout of
@@ -128,7 +128,7 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
         let indexer index x = {test:x, path: path <> [PathItem {name: Nothing, index}]}
         loop (mapWithIndex indexer xs) <* lift (cleanup unit)
       (Node (Left name) xs) -> do
-        yield $ Event.Suite path name
+        yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
         let indexer index x = {test:x, path: path <> [PathItem {name: Just name, index}]}
         res <- loop (mapWithIndex indexer xs)
         yield $ Event.SuiteEnd path

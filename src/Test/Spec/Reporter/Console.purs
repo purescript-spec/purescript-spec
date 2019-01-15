@@ -5,6 +5,7 @@ import Prelude
 import Control.Monad.State (get, put)
 import Control.Monad.Writer (class MonadWriter, execWriter, tell)
 import Data.Array (all, foldMap, groupBy, length, mapMaybe, null, sortBy)
+import Data.Array as Arr
 import Data.Array.NonEmpty as NEA
 import Data.Foldable (for_, intercalate)
 import Data.Function (on)
@@ -19,21 +20,22 @@ import Test.Spec.Console (moveUpAndClearDown, withAttrs)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event (Execution)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
 import Test.Spec.Tree (Tree, Path, parentSuiteName, removeLastIndex)
 
 data RunningItem
-  = RunningTest Path String (Maybe Result)
+  = RunningTest Execution Path String (Maybe Result)
   | PendingTest Path String
-  | RunningSuite Path String Boolean
+  | RunningSuite Execution Path String Boolean
 
 runningItemPath :: RunningItem -> Path
 runningItemPath = case _ of
-  RunningTest p _ _ -> p
+  RunningTest _ p _ _ -> p
   PendingTest p _ -> p
-  RunningSuite p _ _ -> p
+  RunningSuite _ p _ _ -> p
 
 derive instance runningItemGeneric :: Generic RunningItem _
 instance runningItemShow :: Show RunningItem where show = genericShow
@@ -43,17 +45,21 @@ initialState = []
 
 consoleReporter :: Reporter
 consoleReporter = defaultReporter initialState case _ of
-  Event.Suite path name -> do
-    modifyRunningItems (_ <> [RunningSuite path name false])
+  Event.Suite execution path name -> do
+    modifyRunningItems (\r ->
+      (case Arr.unsnoc r of
+        Just {init, last: RunningSuite _ _ _ _} -> init
+        _ -> r) <> [RunningSuite execution path name false]
+      )
   Event.SuiteEnd path -> do
     modifyRunningItems $ map case _ of
-      RunningSuite p n _ | p == path -> RunningSuite p n true
+      RunningSuite e p n _ | p == path -> RunningSuite e p n true
       a -> a
-  Event.Test path name -> do
-    modifyRunningItems (_ <> [RunningTest path name Nothing])
+  Event.Test execution path name -> do
+    modifyRunningItems (_ <> [RunningTest execution path name Nothing])
   Event.TestEnd path name res -> do
     modifyRunningItems $ map case _ of
-      RunningTest p n _ | p == path -> RunningTest p n $ Just res
+      RunningTest e p n _ | p == path -> RunningTest e p n $ Just res
       a -> a
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
@@ -64,7 +70,7 @@ consoleReporter = defaultReporter initialState case _ of
   modifyRunningItems f = do
     currentRunningItems <- get
     let nextRunningItems = f currentRunningItems
-    put if allRunningItemsAreFinished nextRunningItems then [] else nextRunningItems
+    put if (allRunningItemsAreFinished nextRunningItems) then [] else nextRunningItems
     unless (null currentRunningItems) do
       tell $ moveUpAndClearDown $ lineCount $ execWriter $ writeRunningItems currentRunningItems
     writeRunningItems nextRunningItems
@@ -72,8 +78,8 @@ consoleReporter = defaultReporter initialState case _ of
       lineCount str = length (split (Pattern "\n") str) - 1
       allRunningItemsAreFinished = all case _ of
         PendingTest _ _ -> true
-        RunningTest _ _ res -> isJust res
-        RunningSuite _ _ finished -> finished
+        RunningTest _ _ _ res -> isJust res
+        RunningSuite _ _ _ finished -> finished
 
   writeRunningItems :: forall m. MonadWriter String m => Array RunningItem -> m Unit
   writeRunningItems runningItems = do
@@ -83,21 +89,21 @@ consoleReporter = defaultReporter initialState case _ of
         PendingTest _ name -> tell $ asLine
           [ "  " <> (colored Color.Pending $ "~ " <> name)
           ]
-        RunningTest _ name Nothing -> tell $ asLine
+        RunningTest _ _ name Nothing -> tell $ asLine
           [ "  " <> colored Color.Pending "⥀ " <> name
           ]
-        RunningTest _ name (Just (Success _ _)) -> tell $ asLine
+        RunningTest _ _ name (Just (Success _ _)) -> tell $ asLine
           [ "  " <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
           ]
-        RunningTest _ name (Just (Failure err)) -> tell $ asLine
+        RunningTest _ _ name (Just (Failure err)) -> tell $ asLine
           [ "  " <> colored Color.Fail ("✗ " <> name <> ":")
           , ""
           , "  " <> colored Color.Fail (Error.message err)
           ]
-        RunningSuite _ _ _ -> pure unit
+        RunningSuite _ _ _ _ -> pure unit
     where
       removeSuitesNodes = mapMaybe case _ of
-        RunningSuite _ _ _ -> Nothing
+        RunningSuite _ _ _ _ -> Nothing
         a -> Just a
       sortByPath = sortBy \a b -> on compare (runningItemPath) a b
       groupeBySuite = groupBy (on (==) $ runningItemPath >>> removeLastIndex)

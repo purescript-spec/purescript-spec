@@ -23,10 +23,9 @@ logWriter :: forall m. MonadEffect m => WriterT String m Unit -> m Unit
 logWriter = execWriterT >=> write >>> liftEffect
 
 moveUpAndClearDown :: Int -> String
-moveUpAndClearDown lines = foldMap escapeCodeToString
-  [ Up lines
-  , EraseData ToEnd
-  ]
+moveUpAndClearDown lines = foldMap escapeCodeToString case lines of
+  0 -> [ HorizontalAbsolute 0, EraseData ToEnd ]
+  n -> [ PreviousLine lines, EraseData ToEnd ]
 
 tellLn
   :: forall m

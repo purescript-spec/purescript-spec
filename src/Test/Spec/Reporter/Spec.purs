@@ -20,20 +20,21 @@ import Test.Spec.Console (moveUpAndClearDown, tellLn)
 import Test.Spec.Reporter.Base (defaultReporter, defaultSummary)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event (Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
 import Test.Spec.Tree (Path)
 
 data RunningItem
-  = RunningTest Path String (Maybe Result)
+  = RunningTest Execution Path String (Maybe Result)
   | PendingTest Path String
-  | RunningSuite Path String Boolean
+  | RunningSuite Execution Path String Boolean
 
 runningItemPath :: RunningItem -> Path
 runningItemPath = case _ of
-  RunningTest p _ _ -> p
+  RunningTest _ p _ _ -> p
   PendingTest p _ -> p
-  RunningSuite p _ _ -> p
+  RunningSuite _ p _ _ -> p
 
 derive instance runningItemGeneric :: Generic RunningItem _
 instance runningItemShow :: Show RunningItem where show = genericShow
@@ -43,17 +44,17 @@ initialState = { runningItem: [], numFailures: 0}
 
 specReporter :: Reporter
 specReporter = defaultReporter initialState case _ of
-  Event.Suite path name -> do
-    modifyRunningItems (_ <> [RunningSuite path name false])
+  Event.Suite execution path name -> do
+    modifyRunningItems (_ <> [RunningSuite execution path name false])
   Event.SuiteEnd path -> do
     modifyRunningItems $ map case _ of
-      RunningSuite p n _ | p == path -> RunningSuite p n true
+      RunningSuite e p n _ | p == path -> RunningSuite e p n true
       a -> a
-  Event.Test path name -> do
-    modifyRunningItems (_ <> [RunningTest path name Nothing])
+  Event.Test execution path name -> do
+    modifyRunningItems (_ <> [RunningTest execution path name Nothing])
   Event.TestEnd path name res -> do
     modifyRunningItems $ map case _ of
-      RunningTest p n _ | p == path -> RunningTest p n $ Just res
+      RunningTest e p n _ | p == path -> RunningTest e p n $ Just res
       a -> a
   Event.Pending path name -> do
     modifyRunningItems (_ <> [PendingTest path name])
@@ -71,27 +72,28 @@ specReporter = defaultReporter initialState case _ of
       lineCount str = length (split (Pattern "\n") str) - 1
       allRunningItemsAreFinished = all case _ of
         PendingTest _ _ -> true
-        RunningTest _ _ res -> isJust res
-        RunningSuite _ _ finished -> finished
+        RunningTest _ _ _ res -> isJust res
+        RunningSuite Sequential _ _ finished -> true
+        RunningSuite Parallel _ _ finished -> finished
 
   writeRunningItems :: forall m. MonadWriter String m => Array RunningItem -> m Unit
   writeRunningItems runningItems = do
     for_ (sortByPath runningItems) case _ of
       PendingTest path name -> do
         tellLn $ (indent path) <> (colored Color.Pending $ "- " <> name)
-      RunningTest path name Nothing -> do
+      RunningTest e path name Nothing -> do
         tellLn $ (indent path) <> colored Color.Pending "⥀ " <> name
-      RunningTest path name (Just (Success speed ms)) -> do
+      RunningTest e path name (Just (Success speed ms)) -> do
         let
           speedDetails = case speed of
             Speed.Fast -> ""
             _ -> colored (Speed.toColor speed) $ " (" <> show ms <> "ms)"
         tellLn $ (indent path) <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name <> speedDetails
-      RunningTest path name (Just (Failure err)) -> do
+      RunningTest e path name (Just (Failure err)) -> do
         tellLn $ (indent path) <> colored Color.Fail ("✗ " <> name <> ":")
         tellLn $ ""
         tellLn $ (indent path) <> colored Color.Fail (Error.message err)
-      RunningSuite path name _ -> tellLn $ (indent path) <> name
+      RunningSuite e path name _ -> tellLn $ (indent path) <> name
     where
       sortByPath = sortBy \a b -> on compare (runningItemPath) a b
       indent path = CodeUnits.fromCharArray $ Array.replicate (length path) ' '
