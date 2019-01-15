@@ -1,20 +1,20 @@
 module Test.Spec.Runner
-       ( run
-       , run'
-       , runSpec
-       , runSpec'
-       , defaultConfig
-       , timeout
-       , Config
-       , TestEvents
-       , Reporter
-       ) where
+  ( run
+  , run'
+  , runSpec
+  , runSpec'
+  , defaultConfig
+  , timeout
+  , Config
+  , TestEvents
+  , Reporter
+  ) where
 
 import Prelude
 
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (execWriterT, tell)
+import Control.Monad.Writer (execWriterT)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (groupBy, mapWithIndex)
 import Data.Array.NonEmpty as NEA
@@ -35,7 +35,9 @@ import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
-import Test.Spec.Console (logWriter, withAttrs)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
+import Test.Spec.Console (logWriter, tellLn)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
 import Test.Spec.Runner.Event as Event
@@ -194,7 +196,7 @@ run' config reporters spec = _run config spec <#> \runner -> do
   where
     onError :: Error -> Aff Unit
     onError err = liftEffect do
-       logWriter $ withAttrs [31] $ tell $ show err <> "\n"
+       logWriter $ tellLn $ styled Style.red (show err)
        when config.exit (exit 1)
 
     onSuccess :: Array (Tree Void Result) -> Aff Unit

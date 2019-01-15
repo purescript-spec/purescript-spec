@@ -5,8 +5,8 @@ import Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Test.Spec.Color (Color)
-import Test.Spec.Color as Color
+import Test.Spec.Style (Style)
+import Test.Spec.Style as Style
 
 data Speed = Fast | Medium | Slow
 
@@ -19,11 +19,7 @@ speedOf thresh ms | ms > thresh     = Slow
 speedOf thresh ms | ms > thresh / 2 = Medium
 speedOf _      _                    = Fast
 
-toColor' :: Int -> Int -> Color
-toColor' thresh ms = toColor $ speedOf thresh ms
-
-toColor :: Speed -> Color
-toColor Fast   = Color.Fast
-toColor Medium = Color.Medium
-toColor Slow   = Color.Slow
-
+toStyle :: Speed -> Style
+toStyle Fast   = Style.dim
+toStyle Medium = Style.yellow
+toStyle Slow   = Style.red

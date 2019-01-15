@@ -24,8 +24,8 @@ import Pipes (await, yield)
 import Pipes.Core (Pipe)
 import Test.Spec (Tree)
 import Test.Spec as S
-import Test.Spec.Color (colored)
-import Test.Spec.Color as Color
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Console (tellLn)
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
@@ -48,9 +48,9 @@ defaultSummary :: forall m
 defaultSummary xs = do
   case Summary.summarize xs of
     (Count {passed, failed, pending}) -> do
-      when (passed  > 0) $ tellLn $ colored Color.Green   $ show passed  <> " passing"
-      when (pending > 0) $ tellLn $ colored Color.Pending $ show pending <> " pending"
-      when (failed  > 0) $ tellLn $ colored Color.Fail    $ show failed  <> " failed"
+      when (passed  > 0) $ tellLn $ styled Style.green $ show passed  <> " passing"
+      when (pending > 0) $ tellLn $ styled Style.cyan $ show pending <> " pending"
+      when (failed  > 0) $ tellLn $ styled Style.red $ show failed  <> " failed"
   tellLn ""
   printFailures xs
 
@@ -73,7 +73,7 @@ printFailures xs' = evalStateT (go xs') {i: 0, crumbs: []}
         {i, crumbs} <- State.modify \s -> s{i = s.i +1}
         let label = intercalate " " (reverse $ n:crumbs)
         tellLn $ show i <> ") " <> label
-        tellLn $ colored Color.ErrorMessage $ indent 2 <> Error.message err
+        tellLn $ styled Style.red $ indent 2 <> Error.message err
       S.Leaf _ _ -> pure unit
 
 -- | Monadic left scan with state.

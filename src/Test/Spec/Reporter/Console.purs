@@ -13,9 +13,9 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple (uncurry)
 import Effect.Exception as Error
-import Test.Spec.Color (colored)
-import Test.Spec.Color as Color
-import Test.Spec.Console (tellLn, withAttrs)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
+import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
@@ -54,18 +54,18 @@ print path a = do
     case s.lastPrintedSuitePath of
       Just p | p == suite.path -> pure unit
       _ -> do
-        withAttrs [1, 35] $ tellLn
+        tellLn $ styled (Style.bold <> Style.magenta)
           $ intercalate " » " (parentSuiteName suite.path <> [suite.name])
         put s{lastPrintedSuitePath = Just suite.path}
   case a of
     PrintTest name (Success speed ms) -> do
-      tellLn $ "  " <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
+      tellLn $ "  " <> styled Style.green "✓︎ " <> styled Style.dim name
     PrintTest name (Failure err) -> do
-      tellLn $ "  " <> colored Color.Fail ("✗ " <> name <> ":")
+      tellLn $ "  " <> styled Style.red ("✗ " <> name <> ":")
       tellLn $ ""
-      tellLn $ "  " <> colored Color.Fail (Error.message err)
+      tellLn $ "  " <> styled Style.red (Error.message err)
     PrintPending name -> do
-      tellLn $ "  " <> colored Color.Pending ("~ " <> name)
+      tellLn $ "  " <> styled Style.cyan ("~ " <> name)
 
 type State = { runningItem :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
 
@@ -124,7 +124,7 @@ consoleReporter = defaultReporter initialState case _ of
 printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
 printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
   tellLn ""
-  withAttrs [1] $ tellLn "Summary"
+  tellLn $ styled Style.bold "Summary"
   printPassedFailed passed failed
   printPending pending
   tellLn ""
@@ -134,12 +134,12 @@ printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
       let total = p + f
           testStr = pluralize "test" total
           amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
-          attrs = if f > 0 then [31] else [32]
-      withAttrs attrs $ tellLn amount
+          color = if f > 0 then Style.red else Style.dim
+      tellLn $ styled color amount
 
     printPending :: Int -> m Unit
     printPending p
-      | p > 0     = withAttrs [33] $ tellLn $ show p <> " " <> pluralize "test" p <> " pending"
+      | p > 0     = tellLn $ styled Style.yellow $ show p <> " " <> pluralize "test" p <> " pending"
       | otherwise = pure unit
 
     pluralize :: String -> Int -> String

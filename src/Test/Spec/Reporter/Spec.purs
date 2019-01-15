@@ -14,8 +14,8 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
 import Data.String.CodeUnits as CodeUnits
 import Data.Tuple (uncurry)
-import Test.Spec.Color (colored)
-import Test.Spec.Color as Color
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter, defaultSummary)
 import Test.Spec.Result (Result(..))
@@ -59,13 +59,13 @@ print = case _ of
     let
       speedDetails = case speed of
         Speed.Fast -> ""
-        _ -> colored (Speed.toColor speed) $ " (" <> show ms <> "ms)"
-    tellLn $ (indent path) <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name <> speedDetails
+        _ -> styled (Speed.toStyle speed) $ " (" <> show ms <> "ms)"
+    tellLn $ (indent path) <> styled Style.green "✓︎ " <> styled Style.dim name <> speedDetails
   PrintTest path name (Failure err) -> do
     {numFailures} <- modify \s -> s{numFailures = s.numFailures +1}
-    tellLn $ (indent path) <> colored Color.Fail (show numFailures <> ") " <> name)
+    tellLn $ (indent path) <> styled Style.red (show numFailures <> ") " <> name)
   PrintPending path name -> do
-    tellLn $ (indent path) <> (colored Color.Pending $ "- " <> name)
+    tellLn $ (indent path) <> (styled Style.cyan $ "- " <> name)
   where
     indent path = CodeUnits.fromCharArray $ Array.replicate (length path) ' '
 
