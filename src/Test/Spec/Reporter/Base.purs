@@ -10,10 +10,10 @@ import Control.Monad.State (StateT, evalStateT, execStateT)
 import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
-import Data.Array ((:), reverse)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (intercalate, traverse_)
+import Data.List (List(..), (:), reverse)
 import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits as CodeUnits
 import Data.Tuple (Tuple(..))
@@ -24,13 +24,13 @@ import Pipes (await, yield)
 import Pipes.Core (Pipe)
 import Test.Spec (Tree)
 import Test.Spec as S
-import Test.Spec.Style (styled)
-import Test.Spec.Style as Style
 import Test.Spec.Console (tellLn)
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
 
@@ -59,9 +59,9 @@ printFailures
    . MonadWriter String m
   => Array (Tree Void Result)
   -> m Unit
-printFailures xs' = evalStateT (go xs') {i: 0, crumbs: []}
+printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
   where
-    go :: Array (Tree Void Result) -> StateT { i :: Int, crumbs :: Array String } m Unit
+    go :: Array (Tree Void Result) -> StateT { i :: Int, crumbs :: List String } m Unit
     go = traverse_ case _ of
       S.Node (Left n) xs -> do
         {crumbs} <- State.get
