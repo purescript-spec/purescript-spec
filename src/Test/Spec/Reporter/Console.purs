@@ -4,35 +4,74 @@ import Prelude
 
 import Control.Monad.State (class MonadState, get, put)
 import Control.Monad.Writer (class MonadWriter)
-import Data.Array (all)
 import Data.Foldable (for_, intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust)
-import Data.Tuple (uncurry)
+import Data.Maybe (Maybe(..), isNothing)
 import Effect.Exception as Error
-import Test.Spec.Style (styled)
-import Test.Spec.Style as Style
 import Test.Spec.Console (tellLn)
-import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultUpdate)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
-import Test.Spec.Runner.Event (Execution(..))
 import Test.Spec.Runner.Event as Event
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
 import Test.Spec.Tree (Path, Tree, parentSuite, parentSuiteName)
 
-data RunningItem
-  = RunningTest String (Maybe Result)
-  | RunningPending String
-  | RunningSuite String Boolean
+type State = { runningItems :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
 
-derive instance runningItemGeneric :: Generic RunningItem _
-instance runningItemShow :: Show RunningItem where show = genericShow
+initialState :: State
+initialState = { runningItems: Map.empty, lastPrintedSuitePath: Nothing }
 
+consoleReporter :: Reporter
+consoleReporter = defaultReporter initialState $ defaultUpdate
+  { getRunningItems: _.runningItems
+  , putRunningItems: flip _{runningItems = _}
+  , printFinishedItem: \path -> case _ of
+      RunningTest name (Just res) -> print path $ PrintTest name res
+      RunningPending name -> print path $ PrintPending name
+      _ -> pure unit
+  , update: case _ of
+      Event.TestEnd path name res -> do
+        {runningItems} <- get
+        when (isNothing $ Map.lookup path runningItems) do
+          print path $ PrintTest name res
+      Event.Pending path name -> do
+        {runningItems} <- get
+        when (Map.isEmpty runningItems) do
+          print path $ PrintPending name
+      Event.End results -> printSummary results
+      _ -> pure unit
+  }
+
+printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
+printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
+  tellLn ""
+  tellLn $ styled Style.bold "Summary"
+  printPassedFailed passed failed
+  printPending pending
+  tellLn ""
+  where
+    printPassedFailed :: Int -> Int -> m Unit
+    printPassedFailed p f = do
+      let total = p + f
+          testStr = pluralize "test" total
+          amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
+          color = if f > 0 then Style.red else Style.dim
+      tellLn $ styled color amount
+
+    printPending :: Int -> m Unit
+    printPending p
+      | p > 0     = tellLn $ styled Style.yellow $ show p <> " " <> pluralize "test" p <> " pending"
+      | otherwise = pure unit
+
+    pluralize :: String -> Int -> String
+    pluralize s 1 = s
+    pluralize s _ = s <> "s"
 
 data PrintAction
   = PrintTest String Result
@@ -66,82 +105,3 @@ print path a = do
       tellLn $ "  " <> styled Style.red (Error.message err)
     PrintPending name -> do
       tellLn $ "  " <> styled Style.cyan ("~ " <> name)
-
-type State = { runningItem :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
-
-initialState :: State
-initialState = { runningItem: Map.empty, lastPrintedSuitePath: Nothing }
-
-consoleReporter :: Reporter
-consoleReporter = defaultReporter initialState case _ of
-  Event.Suite Sequential path name ->
-    pure unit
-  Event.Suite Parallel path name -> do
-    modifyRunningItems $ Map.insert path $ RunningSuite name false
-  Event.SuiteEnd path -> do
-    modifyRunningItems $ flip Map.update path case _ of
-      RunningSuite n _ -> Just $ RunningSuite n true
-      a -> Nothing
-  Event.Test Sequential path name -> do
-    pure unit
-  Event.Test Parallel path name -> do
-    modifyRunningItems $ Map.insert path $ RunningTest name Nothing
-  Event.TestEnd path name res -> do
-    {runningItem} <- get
-    case Map.lookup path runningItem of
-      Just (RunningTest n _) ->
-        modifyRunningItems $ Map.insert path $ RunningTest n $ Just res
-      _ ->
-        print path $ PrintTest name res
-  Event.Pending path name -> do
-    {runningItem} <- get
-    if Map.isEmpty runningItem
-      then print path $ PrintPending name
-      else modifyRunningItems $ Map.insert path $ RunningPending name
-  Event.End results -> printSummary results
-  Event.Start _ -> pure unit
-  where
-  modifyRunningItems f = do
-    s <- get
-    let
-      nextRunningItems = f s.runningItem
-      allFinished = all runningItemIsFinished nextRunningItems
-    put s{runningItem = if allFinished then Map.empty else nextRunningItems}
-
-    when allFinished do
-      for_ (asArray $ Map.toUnfoldable nextRunningItems) $ uncurry \path -> case _ of
-        RunningTest name (Just res) -> print path $ PrintTest name res
-        RunningPending name -> print path $ PrintPending name
-        _ -> pure unit
-    where
-      asArray = identity :: Array ~> Array
-      runningItemIsFinished = case _ of
-        RunningPending _ -> true
-        RunningTest _ res -> isJust res
-        RunningSuite _ finished -> finished
-
-
-printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
-printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
-  tellLn ""
-  tellLn $ styled Style.bold "Summary"
-  printPassedFailed passed failed
-  printPending pending
-  tellLn ""
-  where
-    printPassedFailed :: Int -> Int -> m Unit
-    printPassedFailed p f = do
-      let total = p + f
-          testStr = pluralize "test" total
-          amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
-          color = if f > 0 then Style.red else Style.dim
-      tellLn $ styled color amount
-
-    printPending :: Int -> m Unit
-    printPending p
-      | p > 0     = tellLn $ styled Style.yellow $ show p <> " " <> pluralize "test" p <> " pending"
-      | otherwise = pure unit
-
-    pluralize :: String -> Int -> String
-    pluralize s 1 = s
-    pluralize s _ = s <> "s"
