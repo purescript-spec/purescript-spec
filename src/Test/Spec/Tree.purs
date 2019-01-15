@@ -10,7 +10,7 @@ module Test.Spec.Tree
   , PathItem(..)
   , Path
   , parentSuiteName
-  , removeLastIndex
+  , parentSuite
   ) where
 
 import Prelude
@@ -128,7 +128,8 @@ type Path = Array PathItem
 parentSuiteName :: Path -> Array String
 parentSuiteName = mapMaybe (un PathItem >>> _.name)
 
-removeLastIndex :: Path -> Tuple Path (Maybe String)
-removeLastIndex p = case unsnoc p of
-  Nothing -> Tuple [] Nothing
-  Just {init, last: PathItem {name}} -> Tuple init name
+parentSuite :: Path -> Maybe { path :: Path, name :: String }
+parentSuite = flip foldr Nothing case _, _ of
+  PathItem {name: Just name}, Nothing -> Just {path: [], name}
+  PathItem {name: Nothing}, Nothing -> Nothing
+  p, Just acc -> Just acc{path = [p] <> acc.path}

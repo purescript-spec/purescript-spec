@@ -2,120 +2,132 @@ module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
 
-import Control.Monad.State (get, put)
-import Control.Monad.Writer (class MonadWriter, execWriter, tell)
-import Data.Array (all, foldMap, groupBy, length, mapMaybe, null, sortBy)
-import Data.Array as Arr
-import Data.Array.NonEmpty as NEA
+import Control.Monad.State (class MonadState, get, put)
+import Control.Monad.Writer (class MonadWriter)
+import Data.Array (all)
 import Data.Foldable (for_, intercalate)
-import Data.Function (on)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
-import Data.String (split, Pattern(..))
+import Data.Tuple (uncurry)
 import Effect.Exception as Error
 import Test.Spec.Color (colored)
 import Test.Spec.Color as Color
-import Test.Spec.Console (moveUpAndClearDown, withAttrs)
+import Test.Spec.Console (tellLn, withAttrs)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
-import Test.Spec.Runner.Event (Execution)
+import Test.Spec.Runner.Event (Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
-import Test.Spec.Tree (Tree, Path, parentSuiteName, removeLastIndex)
+import Test.Spec.Tree (Path, Tree, parentSuite, parentSuiteName)
 
 data RunningItem
-  = RunningTest Execution Path String (Maybe Result)
-  | PendingTest Path String
-  | RunningSuite Execution Path String Boolean
-
-runningItemPath :: RunningItem -> Path
-runningItemPath = case _ of
-  RunningTest _ p _ _ -> p
-  PendingTest p _ -> p
-  RunningSuite _ p _ _ -> p
+  = RunningTest String (Maybe Result)
+  | RunningPending String
+  | RunningSuite String Boolean
 
 derive instance runningItemGeneric :: Generic RunningItem _
 instance runningItemShow :: Show RunningItem where show = genericShow
 
-initialState :: Array RunningItem
-initialState = []
+
+data PrintAction
+  = PrintTest String Result
+  | PrintPending String
+
+derive instance printActionGeneric :: Generic PrintAction _
+instance printActionShow :: Show PrintAction where show = genericShow
+
+print
+  :: forall s m
+   . MonadState { lastPrintedSuitePath :: Maybe Path | s} m
+  => MonadWriter String m
+  => Path
+  -> PrintAction
+  -> m Unit
+print path a = do
+  for_ (parentSuite path) \suite -> do
+    s <- get
+    case s.lastPrintedSuitePath of
+      Just p | p == suite.path -> pure unit
+      _ -> do
+        withAttrs [1, 35] $ tellLn
+          $ intercalate " » " (parentSuiteName suite.path <> [suite.name])
+        put s{lastPrintedSuitePath = Just suite.path}
+  case a of
+    PrintTest name (Success speed ms) -> do
+      tellLn $ "  " <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
+    PrintTest name (Failure err) -> do
+      tellLn $ "  " <> colored Color.Fail ("✗ " <> name <> ":")
+      tellLn $ ""
+      tellLn $ "  " <> colored Color.Fail (Error.message err)
+    PrintPending name -> do
+      tellLn $ "  " <> colored Color.Pending ("~ " <> name)
+
+type State = { runningItem :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
+
+initialState :: State
+initialState = { runningItem: Map.empty, lastPrintedSuitePath: Nothing }
 
 consoleReporter :: Reporter
 consoleReporter = defaultReporter initialState case _ of
-  Event.Suite execution path name -> do
-    modifyRunningItems (\r ->
-      (case Arr.unsnoc r of
-        Just {init, last: RunningSuite _ _ _ _} -> init
-        _ -> r) <> [RunningSuite execution path name false]
-      )
+  Event.Suite Sequential path name ->
+    pure unit
+  Event.Suite Parallel path name -> do
+    modifyRunningItems $ Map.insert path $ RunningSuite name false
   Event.SuiteEnd path -> do
-    modifyRunningItems $ map case _ of
-      RunningSuite e p n _ | p == path -> RunningSuite e p n true
-      a -> a
-  Event.Test execution path name -> do
-    modifyRunningItems (_ <> [RunningTest execution path name Nothing])
+    modifyRunningItems $ flip Map.update path case _ of
+      RunningSuite n _ -> Just $ RunningSuite n true
+      a -> Nothing
+  Event.Test Sequential path name -> do
+    pure unit
+  Event.Test Parallel path name -> do
+    modifyRunningItems $ Map.insert path $ RunningTest name Nothing
   Event.TestEnd path name res -> do
-    modifyRunningItems $ map case _ of
-      RunningTest e p n _ | p == path -> RunningTest e p n $ Just res
-      a -> a
+    {runningItem} <- get
+    case Map.lookup path runningItem of
+      Just (RunningTest n _) ->
+        modifyRunningItems $ Map.insert path $ RunningTest n $ Just res
+      _ ->
+        print path $ PrintTest name res
   Event.Pending path name -> do
-    modifyRunningItems (_ <> [PendingTest path name])
+    {runningItem} <- get
+    if Map.isEmpty runningItem
+      then print path $ PrintPending name
+      else modifyRunningItems $ Map.insert path $ RunningPending name
   Event.End results -> printSummary results
   Event.Start _ -> pure unit
   where
-
   modifyRunningItems f = do
-    currentRunningItems <- get
-    let nextRunningItems = f currentRunningItems
-    put if (allRunningItemsAreFinished nextRunningItems) then [] else nextRunningItems
-    unless (null currentRunningItems) do
-      tell $ moveUpAndClearDown $ lineCount $ execWriter $ writeRunningItems currentRunningItems
-    writeRunningItems nextRunningItems
-    where
-      lineCount str = length (split (Pattern "\n") str) - 1
-      allRunningItemsAreFinished = all case _ of
-        PendingTest _ _ -> true
-        RunningTest _ _ _ res -> isJust res
-        RunningSuite _ _ _ finished -> finished
+    s <- get
+    let
+      nextRunningItems = f s.runningItem
+      allFinished = all runningItemIsFinished nextRunningItems
+    put s{runningItem = if allFinished then Map.empty else nextRunningItems}
 
-  writeRunningItems :: forall m. MonadWriter String m => Array RunningItem -> m Unit
-  writeRunningItems runningItems = do
-    for_ (groupeBySuite $ sortByPath $ removeSuitesNodes runningItems) \g -> do
-      logCrumbs (parentSuiteName $ runningItemPath $ NEA.head g)
-      for_ (NEA.toArray g ) case _ of
-        PendingTest _ name -> tell $ asLine
-          [ "  " <> (colored Color.Pending $ "~ " <> name)
-          ]
-        RunningTest _ _ name Nothing -> tell $ asLine
-          [ "  " <> colored Color.Pending "⥀ " <> name
-          ]
-        RunningTest _ _ name (Just (Success _ _)) -> tell $ asLine
-          [ "  " <> colored Color.Checkmark "✓︎ " <> colored Color.Pass name
-          ]
-        RunningTest _ _ name (Just (Failure err)) -> tell $ asLine
-          [ "  " <> colored Color.Fail ("✗ " <> name <> ":")
-          , ""
-          , "  " <> colored Color.Fail (Error.message err)
-          ]
-        RunningSuite _ _ _ _ -> pure unit
+    when allFinished do
+      for_ (asArray $ Map.toUnfoldable nextRunningItems) $ uncurry \path -> case _ of
+        RunningTest name (Just res) -> print path $ PrintTest name res
+        RunningPending name -> print path $ PrintPending name
+        _ -> pure unit
     where
-      removeSuitesNodes = mapMaybe case _ of
-        RunningSuite _ _ _ _ -> Nothing
-        a -> Just a
-      sortByPath = sortBy \a b -> on compare (runningItemPath) a b
-      groupeBySuite = groupBy (on (==) $ runningItemPath >>> removeLastIndex)
+      asArray = identity :: Array ~> Array
+      runningItemIsFinished = case _ of
+        RunningPending _ -> true
+        RunningTest _ res -> isJust res
+        RunningSuite _ finished -> finished
 
 
 printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
 printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
-  tell $ asLine [""]
-  withAttrs [1] $ tell $ asLine ["Summary"]
+  tellLn ""
+  withAttrs [1] $ tellLn "Summary"
   printPassedFailed passed failed
   printPending pending
-  tell $ asLine [""]
+  tellLn ""
   where
     printPassedFailed :: Int -> Int -> m Unit
     printPassedFailed p f = do
@@ -123,19 +135,13 @@ printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
           testStr = pluralize "test" total
           amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
           attrs = if f > 0 then [31] else [32]
-      withAttrs attrs $ tell $ asLine [amount]
+      withAttrs attrs $ tellLn amount
 
     printPending :: Int -> m Unit
     printPending p
-      | p > 0     = withAttrs [33] $ tell $ asLine [show p <> " " <> pluralize "test" p <> " pending"]
+      | p > 0     = withAttrs [33] $ tellLn $ show p <> " " <> pluralize "test" p <> " pending"
       | otherwise = pure unit
 
-logCrumbs :: forall m. MonadWriter String m => Array String -> m Unit
-logCrumbs crumbs = withAttrs [1, 35] $ tell $ asLine [intercalate " » " crumbs]
-
-asLine :: Array String -> String
-asLine = foldMap (_ <> "\n")
-
-pluralize :: String -> Int -> String
-pluralize s 1 = s
-pluralize s _ = s <> "s"
+    pluralize :: String -> Int -> String
+    pluralize s 1 = s
+    pluralize s _ = s <> "s"
