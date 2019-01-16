@@ -92,7 +92,7 @@ countTests g = execState (for g go) 0
 isAllParallelizable :: forall c m a. Tree c (Item m a) -> Boolean
 isAllParallelizable = case _ of
   Node _ xs -> all isAllParallelizable xs
-  Leaf _ (x) -> x == Nothing || (x >>= un Item >>> _.isParallelizable) == Just true
+  Leaf _ x -> x == Nothing || (x >>= un Item >>> _.isParallelizable) == Just true
 
 
 -- | If there is at least one focused element, all paths which don't
