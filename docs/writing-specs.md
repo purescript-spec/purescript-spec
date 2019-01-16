@@ -178,7 +178,7 @@ It would take `2000 ms` to finish. But, by sticking in `parallel`, it would take
 ```
 
 **NOTE** that if you are logging things to console, by using `parallel`
-order of log messages will be mixed. For example if you had:
+order of log messages is less deterministic. For example if you had:
 
 ```purescript
 describe "delay" do
@@ -219,5 +219,109 @@ end 3
 ```
 
 `purescript-spec` itself is not providing any specific solution for this
-issue but you can take a look at [/test/Test/Spec/HoistSpec.purs](https://github.com/purescript-spec/purescript-spec/blob/master/test/Test/Spec/HoistSpec.purs) 
+issue but you can take a look at [/test/Test/Spec/HoistSpec.purs](https://github.com/purescript-spec/purescript-spec/blob/master/test/Test/Spec/HoistSpec.purs)
 for some inspiration.
+
+## Using hooks
+
+`before_` runs a custom action before every spec item. For example, if you
+have an action `flushDb` which flushes your database, you can run it before
+every spec item with:
+
+```purescript
+main :: Spec Unit
+main = before_ flushDb do
+  describe "/api/users/count" do
+    it "returns the number of users" do
+      post "/api/users/create" "name=Jay"
+      get "/api/users/count" `shouldReturn` 1
+
+    describe "when there are no users" do
+      it "returns 0" do
+        get "/api/users/count" `shouldReturn` 0
+```
+
+Similarly, `after_` runs a custom action after every spec item:
+
+```purescript
+main :: Spec Unit
+main = after_ truncateDatabase do
+  describe "createUser" do
+    it "creates a new user" do
+      let eva = User (UserId 1) (Name "Eva")
+      createUser eva
+      getUser (UserId 1) `shouldReturn` eva
+
+  describe "countUsers" do
+    it "counts all registered users" do
+      countUsers `shouldReturn` 0
+```
+
+`around_` is passed an action for each spec item so that it can perform
+whatever setup and teardown is necessary.
+
+```purescript
+serveStubbedApi :: String -> Int -> Aff Server
+stopServer :: Server -> Aff Unit
+
+withStubbedApi :: Aff Unit -> Aff Unit
+withStubbedApi action =
+  bracket (serveStubbedApi "localhost" 80)
+          stopServer
+          (const action)
+
+main :: Spec Unit
+main = around_ withStubbedApi do
+  describe "api client" do
+    it "should authenticate" do
+      c <- newClient (Just ("user", "pass"))
+      get c "/api/auth" `shouldReturn` status200
+
+    it "should allow anonymous access" do
+      c <- newClient Nothing
+      get c "/api/dogs" `shouldReturn` status200
+```
+
+Hooks support passing values to spec items (for example, if you wanted
+to open a database connection before each item and pass the connection in).
+This can be done with `before`, `around` and `after`. Here's an example
+for how to use `around`:
+
+```purescript
+openConnection :: Aff Connection
+openConnection = ...
+
+closeConnection :: Connection -> Aff Unit
+closeConnection = ...
+
+withDatabaseConnection :: (Connection -> Aff Unit) -> Aff Unit
+withDatabaseConnection = bracket openConnection closeConnection
+
+spec :: Spec Unit
+spec = do
+  around withDatabaseConnection do
+    describe "createRecipe" do
+      it "creates a new recipe" $ \c -> do
+        let ingredients = [Eggs, Butter, Flour, Sugar]
+        createRecipe c (Recipe "Cake" ingredients)
+        getRecipe c "Cake" `shouldReturn` ingredients
+```
+
+Hooks support nesting too:
+
+```purescript
+spec :: Spec Unit
+spec = do
+  before (pure 1) $ after (\a -> a `shouldEqual` 1) do
+    it "before & after usage" \num -> do
+      num `shouldEqual` 1
+    beforeWith (\num -> num `shouldEqual` 1 *> pure true) do
+      it "beforeWith usage" \bool -> do
+        bool `shouldEqual` true
+      aroundWith (\computation bool -> bool `shouldEqual` true *> pure "fiz" >>= computation <* pure unit) do
+        it "aroundWith usage" \str -> do
+          str `shouldEqual` "fiz"
+    beforeWith (\num -> num `shouldEqual` 1 *> pure (show num)) do
+      it "beforeWith" \str -> do
+        str `shouldEqual` "1"
+```
