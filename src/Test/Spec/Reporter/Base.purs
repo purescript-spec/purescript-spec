@@ -66,7 +66,7 @@ printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
         State.modify_ _{crumbs = n : crumbs}
         go xs
         State.modify_ _{crumbs = crumbs}
-      S.Node (Right _) xs -> go xs
+      S.Node (Right v) xs -> absurd v
       S.Leaf n (Just (Failure err)) -> do
         {i, crumbs} <- State.modify \s -> s{i = s.i +1}
         let label = intercalate " " (reverse $ n:crumbs)
