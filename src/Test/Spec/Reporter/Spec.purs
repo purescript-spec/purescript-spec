@@ -7,9 +7,11 @@ import Control.Monad.Writer (class MonadWriter)
 import Data.Array (length)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing)
+import Data.Time.Duration (Milliseconds(..))
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultSummary, defaultUpdate)
 import Test.Spec.Result (Result(..))
@@ -68,11 +70,11 @@ print
 print path = case _ of
   PrintSuite name -> do
     tellLn $ indent path <> name
-  PrintTest name (Success speed ms) -> do
+  PrintTest name (Success speed (Milliseconds ms)) -> do
     let
       speedDetails = case speed of
         Speed.Fast -> ""
-        _ -> styled (Speed.toStyle speed) $ " (" <> show ms <> "ms)"
+        _ -> styled (Speed.toStyle speed) $ " (" <> show (Int.round ms) <> "ms)"
     tellLn $ (indent path) <> styled Style.green "✓︎ " <> styled Style.dim name <> speedDetails
   PrintTest name (Failure err) -> do
     {numFailures} <- modify \s -> s{numFailures = s.numFailures +1}

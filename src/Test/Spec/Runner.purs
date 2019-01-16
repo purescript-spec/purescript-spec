@@ -18,10 +18,12 @@ import Control.Monad.Writer (execWriterT)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (groupBy, mapWithIndex)
 import Data.Array.NonEmpty as NEA
+import Data.DateTime.Instant (unInstant)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
+import Data.Function (on)
 import Data.Identity (Identity(..))
-import Data.Int (toNumber)
+import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
@@ -31,47 +33,46 @@ import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError,
 import Effect.Aff.AVar as AV
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, error)
+import Effect.Now (now)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
-import Test.Spec.Style (styled)
-import Test.Spec.Style as Style
 import Test.Spec.Console (logWriter, tellLn)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
 import Test.Spec.Tree (Path, PathItem(..), countTests, discardUnfocused, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
-foreign import dateNow :: Effect Int
-
 type Config =
-  { slow :: Int
-  , timeout :: Maybe Int
+  { slow :: Milliseconds
+  , timeout :: Maybe Milliseconds
   , exit :: Boolean
   }
 
 defaultConfig :: Config
 defaultConfig =
-  { slow: 75
-  , timeout: Just 2000
+  { slow: Milliseconds 75.0
+  , timeout: Just $ Milliseconds 2000.0
   , exit: true
   }
 
 makeTimeout
-  :: Int
+  :: Milliseconds
   -> Aff Unit
-makeTimeout time = do
-  delay (Milliseconds $ toNumber time)
+makeTimeout ms@(Milliseconds ms') = do
+  delay ms
   makeAff \cb -> mempty <$ do
-    cb <<< Left $ error $ "test timed out after " <> show time <> "ms"
+    cb <<< Left $ error $ "test timed out after " <> show (Int.round ms') <> "ms"
 
 timeout
-  :: Int
+  :: Milliseconds
   -> Aff Unit
   -> Aff Unit
 timeout time t = do
@@ -115,11 +116,12 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
       (Leaf name (Just (Item item))) -> do
         yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
         let example = item.example \a -> a unit
-        start <- lift $ liftEffect dateNow
+        start <- lift $ liftEffect now
         e <- lift $ attempt case config.timeout of
           Just t -> timeout t example
           _      -> example
-        duration <- lift $ (_ - start) <$> liftEffect dateNow
+        end <- liftEffect now
+        let duration = Milliseconds $ on (-) (unInstant >>> un Milliseconds) end start
         let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
         yield $ Event.TestEnd path name res
         pure [ Leaf name $ Just res ]

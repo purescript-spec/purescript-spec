@@ -3,14 +3,14 @@ module Test.Spec.Result where
 import Prelude
 
 import Data.Function (on)
+import Data.Time.Duration (Milliseconds)
 import Effect.Exception (Error)
 import Effect.Exception as Error
 import Test.Spec.Speed (Speed)
 
 
-type Duration = Int
 data Result
-  = Success Speed Duration
+  = Success Speed Milliseconds
   | Failure Error
 
 instance showResult :: Show Result where

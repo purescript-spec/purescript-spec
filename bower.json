@@ -26,6 +26,7 @@
     "purescript-pipes": "^6.0.0",
     "purescript-ansi": "^5.0.0",
     "purescript-generics-rep": "^6.0.0",
-    "purescript-fork": "^4.0.0"
+    "purescript-fork": "^4.0.0",
+    "purescript-now": "^4.0.0"
   }
 }
