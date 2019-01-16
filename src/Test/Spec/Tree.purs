@@ -17,7 +17,7 @@ import Prelude
 
 import Control.Monad.State (execState)
 import Control.Monad.State as State
-import Data.Array (mapMaybe, snoc, unsnoc)
+import Data.Array (mapMaybe, snoc)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (class Bifunctor)
@@ -26,7 +26,6 @@ import Data.Foldable (class Foldable, all, foldMapDefaultL, foldl, foldr)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Traversable (for, for_)
-import Data.Tuple (Tuple(..))
 
 
 data Tree c a
