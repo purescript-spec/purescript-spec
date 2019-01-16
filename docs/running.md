@@ -1,10 +1,9 @@
 # Running
 
 When you have a spec, you need a runner to actually run it and get the results.
-PureScript Spec comes with a NodeJS runner, `run`, which takes an array of
+PureScript Spec comes with a NodeJS runner, `runSpec`, which takes an array of
 *reporters* and a spec to run. What you get back is a test-running program of
-type `Effect ()`. The effect rows in `r` depend on what you do in your specs and
-what reporters you are using. The program can be run using
+type `Aff Unit`. The program can be run using
 [Pulp](https://github.com/bodil/pulp).
 
 ```bash
@@ -25,13 +24,13 @@ After that has finished, you can run the test program using NodeJS.
 NODE_PATH=output node -e "require('Test.Main').main();"
 ```
 
-**NOTE:** A test program using `Test.Spec.Runner.run` cannot be browserified
+**NOTE:** A test program using `Test.Spec.Runner.runSpec` cannot be browserified
 and run in the browser, it requires NodeJS. To run your tests in a browser,
 see [Browser Testing](#browser-testing) below.
 
 ## Reporters
 
-Reporters can be passed to the runner, e.g. `run [reporter1, ..., reporterN]
+Reporters can be passed to the runner, e.g. `runSpec [reporter1, ..., reporterN]
 spec`. Currently there are these reporters available:
 
 * `consoleReporter` in `Test.Spec.Reporter.Console`
@@ -42,11 +41,13 @@ spec`. Currently there are these reporters available:
 
 ## Passing Runner Configuration
 
-In addition to the regular `run` function, there is also `run'`, which takes a
-`Config` record.
+In addition to the regular `runSpec` function, there is also `runSpecT`, which also
+takes `Config` record. also instead of `Spec Unit` it takes `SpecT Aff Unit m Unit`
+and returns `m (Aff (Array (Tree Void Result)))`. if we specialize the `m` to `Identity`
+then code will look like this:
 
 ```purescript
-main = launchAff_ $ run' testConfig [consoleReporter] mySpec
+main = launchAff_ $ un Identity $ runSpecT testConfig [consoleReporter] mySpec
   where
     testConfig = { slow: 5000, timeout: Just 10000, exit: false }
 ```

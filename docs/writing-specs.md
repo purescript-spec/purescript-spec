@@ -87,10 +87,10 @@ import Effect.Aff (launchAff_, delay)
 import Test.Spec (pending, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (run)
+import Test.Spec.Runner (runSpec)
 
 main :: Effect Unit
-main = launchAff_ $ run [consoleReporter] do
+main = launchAff_ $ runSpec [consoleReporter] do
   describe "purescript-spec" do
     describe "Attributes" do
       it "awesome" do
@@ -146,6 +146,21 @@ describe "Module" do
   describe "Sub Module B"
     it "does feature Y" ...
 ```
+
+There is also `focus` which can be used to select some specific group for execution
+
+```purescript
+describe "Module" do
+  describe "Sub Module A"
+    it "does feature X" ...
+  focus $ describe "Sub Module B" do -- all tests passed to focus will be executed
+    it "does feature Y" ...
+    it "does feature Z" ...
+    describe "Sub Module C" do
+      it "does feature P" ...
+```
+
+
 
 ## QuickCheck
 
