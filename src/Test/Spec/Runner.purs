@@ -1,10 +1,7 @@
 module Test.Spec.Runner
-  ( run
-  , run'
+  ( runSpecM
   , runSpec
-  , runSpec'
   , defaultConfig
-  , timeout
   , Config
   , TestEvents
   , Reporter
@@ -32,13 +29,13 @@ import Effect (Effect)
 import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
 import Effect.Aff.AVar as AV
 import Effect.Class (liftEffect)
-import Effect.Exception (Error, error)
+import Effect.Exception (error)
 import Effect.Now (now)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
 import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
-import Test.Spec.Console (logWriter, tellLn)
+import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
 import Test.Spec.Runner.Event as Event
@@ -93,7 +90,7 @@ _run
    . Functor m
   => Config
   -> SpecM m Aff Unit Unit
-  -> m (Producer Event Aff (Array (Tree Void Result)))
+  -> m TestEvents
 _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.Start (countTests tests))
   let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
@@ -101,7 +98,7 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.End r)
   pure r
   where
-    loop :: Array (TestWithPath ()) -> Producer Event Aff (Array (Tree Void Result))
+    loop :: Array (TestWithPath ()) -> TestEvents
     loop tests =
       let
         noteWithIsAllParallelizable = map \{test,path} -> { isParallelizable: isAllParallelizable test, test, path}
@@ -111,7 +108,7 @@ _run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
           then mergeProducers (runGroup <$> (NEA.toArray g))
           else for (NEA.toArray g) runGroup
 
-    runGroup :: TestWithPath (isParallelizable :: Boolean) -> Producer Event Aff (Array (Tree Void Result))
+    runGroup :: TestWithPath (isParallelizable :: Boolean) -> TestEvents
     runGroup {test, path, isParallelizable} = case test of
       (Leaf name (Just (Item item))) -> do
         yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
@@ -159,57 +156,41 @@ mergeProducers ps = do
           loop
   loop
 
-
--- | Run a spec, returning the results, without any reporting
-runSpec'
-  :: forall m
-   . Functor m
-  => Config
-  -> SpecM m Aff Unit Unit
-  -> m (Aff (Array (Tree Void Result)))
-runSpec' config spec = _run config spec <#> \runner -> P.runEffectRec $ runner //> const (pure unit)
-
--- | Run a spec with the default config, returning the results, without any
--- | reporting
-runSpec
-  :: Spec Unit
-  -> Aff (Array (Tree Void Result))
-runSpec = un Identity <<< runSpec' defaultConfig
-
 type TestEvents = Producer Event Aff (Array (Tree Void Result))
 
 type Reporter = Pipe Event Event Aff (Array (Tree Void Result))
 
--- | Run the spec with `config`, report results and (if configured as such)
--- | exit the program upon completion
-run'
+-- | Run the spec with `config`, returning the results, which
+-- | are also reported using specified Reporters, if any.
+-- | If configured as such, `exit` the program upon completion
+-- | with appropriate exit code.
+runSpecM
   :: forall m
    . Functor m
   => Config
   -> Array Reporter
   -> SpecM m Aff Unit Unit
-  -> m (Aff Unit)
-run' config reporters spec = _run config spec <#> \runner -> do
+  -> m (Aff (Array (Tree Void Result)))
+runSpecM config reporters spec = _run config spec <#> \runner -> do
   let
     drain = const (pure unit)
     events = foldl (>->) runner reporters
     reportedEvents = P.runEffectRec $ events //> drain
-  either onError onSuccess =<< try reportedEvents
-  where
-    onError :: Error -> Aff Unit
-    onError err = liftEffect do
-       logWriter $ tellLn $ styled Style.red (show err)
-       when config.exit (exit 1)
-
-    onSuccess :: Array (Tree Void Result) -> Aff Unit
-    onSuccess results = liftEffect $
-      when config.exit do
+  if config.exit
+    then try reportedEvents >>= case _ of
+      Left err -> do
+        liftEffect $ Console.write $ styled Style.red (show err <> "\n")
+        liftEffect $ exit 1
+        throwError err
+      Right results -> liftEffect do
         let code = if successful results then 0 else 1
         exit code
+        pure results
+    else reportedEvents
 
 -- | Run the spec with the default config
-run
+runSpec
   :: Array Reporter
   -> Spec Unit
   -> Aff Unit
-run reporters spec = un Identity $ run' defaultConfig reporters spec
+runSpec reporters spec = void $ un Identity $ runSpecM defaultConfig reporters spec

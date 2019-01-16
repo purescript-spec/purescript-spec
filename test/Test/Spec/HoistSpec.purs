@@ -45,28 +45,28 @@ delaySpecExample
 delaySpecExample opts = describe "delay" do
   it "proc 1" do
     opts.log "start 1"
-    opts.delay $ Milliseconds $ 500.0 + 300.0 * 1.0
+    opts.delay $ Milliseconds $ 300.0 * 1.0
     opts.log "done 1"
   describe "some" do
     it "proc 2" do
       opts.log "start 2"
-      opts.delay $ Milliseconds $ 500.0 + 300.0 * 2.0
+      opts.delay $ Milliseconds $ 300.0 * 2.0
       opts.log "done 2"
     it "proc 3" do
       opts.log "start 3"
-      opts.delay $ Milliseconds $ 500.0 + 300.0 * 3.0
+      opts.delay $ Milliseconds $ 300.0 * 3.0
       opts.log "done 3"
     describe "nesting" do
       it "proc 4" do
         opts.log "start 4"
-        opts.delay $ Milliseconds $ 500.0 + 300.0 * 4.0
+        opts.delay $ Milliseconds $ 300.0 * 4.0
         opts.log "done 4"
     describe "nesting" do
       it "proc 5" do
         opts.log "start 5"
-        opts.delay $ Milliseconds $ 500.0 + 300.0 * 5.0
+        opts.delay $ Milliseconds $ 300.0 * 5.0
         opts.log "done 5"
       it "proc 6" do
         opts.log "start 6"
-        opts.delay $ Milliseconds $ 500.0 + 300.0 * 6.0
+        opts.delay $ Milliseconds $ 300.0 * 6.0
         opts.log "done 6"
