@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
-import Test.Spec (Item(..), Spec, Tree(..), describe, it)
+import Test.Spec (Item(..), Spec, SpecT(..), Tree(..), describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Tree (discardUnfocused)
@@ -20,34 +20,34 @@ runnerSpec =
     describe "Spec" $
       describe "Runner" do
         it "collects \"it\" and \"pending\" in Describe groups" do
-          runSpecFocused successTest `shouldEqual` 
-            [ Node (Left "a") 
+          runSpecFocused successTest `shouldEqual`
+            [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just false ]
               ]
             ]
         it "collects \"it\" and \"pending\" with shared Describes" do
-          runSpecFocused sharedDescribeTest `shouldEqual` 
-            [ Node (Left "a") 
+          runSpecFocused sharedDescribeTest `shouldEqual`
+            [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just false ]
               , Node (Left "c") [ Leaf "also works" $ Just false ]
               ]
             ]
         it "filters using \"only\" modifier on \"describe\" block" do
-          runSpecFocused describeOnlyTest `shouldEqual` 
-            [ Node (Left "a") 
+          runSpecFocused describeOnlyTest `shouldEqual`
+            [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just true ]
               , Node (Left "c") [ Leaf "also works" $ Just true ]
               ]
             ]
         it "filters using \"only\" modifier on nested \"describe\" block" do
-          runSpecFocused describeOnlyNestedTest `shouldEqual` 
-            [ Node (Left "a") 
+          runSpecFocused describeOnlyNestedTest `shouldEqual`
+            [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just true ]
               ]
             ]
         it "filters using \"only\" modifier on \"it\" block" do
-          runSpecFocused itOnlyTest `shouldEqual` 
-            [ Node (Left "a") 
+          runSpecFocused itOnlyTest `shouldEqual`
+            [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just true ]
               ]
             ]
@@ -55,4 +55,4 @@ runnerSpec =
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
   where
-    runSpecFocused t = discardUnfocused (execWriter t) <#> bimap (const unit) (un Item >>> _.isFocused)
+    runSpecFocused t = discardUnfocused (execWriter $ un SpecT t) <#> bimap (const unit) (un Item >>> _.isFocused)

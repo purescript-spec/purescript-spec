@@ -1,5 +1,5 @@
 module Test.Spec.Runner
-  ( runSpecM
+  ( runSpecT
   , runSpec
   , defaultConfig
   , Config
@@ -34,7 +34,7 @@ import Effect.Now (now)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Item(..), Spec, SpecM, SpecTree, Tree(..))
+import Test.Spec (Item(..), Spec, SpecT(..), SpecTree, Tree(..))
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
@@ -89,9 +89,9 @@ _run
   :: forall m
    . Functor m
   => Config
-  -> SpecM m Aff Unit Unit
+  -> SpecT Aff Unit m Unit
   -> m TestEvents
-_run config specs = execWriterT specs <#> discardUnfocused >>> \tests -> do
+_run config (SpecT specs) = execWriterT specs <#> discardUnfocused >>> \tests -> do
   yield (Event.Start (countTests tests))
   let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
   r <- loop $ mapWithIndex indexer tests
@@ -164,14 +164,14 @@ type Reporter = Pipe Event Event Aff (Array (Tree Void Result))
 -- | are also reported using specified Reporters, if any.
 -- | If configured as such, `exit` the program upon completion
 -- | with appropriate exit code.
-runSpecM
+runSpecT
   :: forall m
    . Functor m
   => Config
   -> Array Reporter
-  -> SpecM m Aff Unit Unit
+  -> SpecT Aff Unit m Unit
   -> m (Aff (Array (Tree Void Result)))
-runSpecM config reporters spec = _run config spec <#> \runner -> do
+runSpecT config reporters spec = _run config spec <#> \runner -> do
   let
     drain = const (pure unit)
     events = foldl (>->) runner reporters
@@ -193,4 +193,4 @@ runSpec
   :: Array Reporter
   -> Spec Unit
   -> Aff Unit
-runSpec reporters spec = void $ un Identity $ runSpecM defaultConfig reporters spec
+runSpec reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec

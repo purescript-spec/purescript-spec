@@ -3,15 +3,17 @@ module Test.Spec.Fixtures where
 import Prelude
 
 import Data.Identity (Identity)
-import Test.Spec (SpecM, describe, describeOnly, it, itOnly)
+import Test.Spec (SpecT, describe, describeOnly, it, itOnly)
 
-successTest :: SpecM Identity Identity Unit Unit
+type Spec' a = SpecT Identity Unit Identity a
+
+successTest :: Spec' Unit
 successTest =
   describe "a" do
     describe "b" do
       it "works" $ pure unit
 
-sharedDescribeTest :: SpecM Identity Identity Unit Unit
+sharedDescribeTest :: Spec' Unit
 sharedDescribeTest =
   describe "a" do
     describe "b" do
@@ -19,7 +21,7 @@ sharedDescribeTest =
     describe "c" do
       it "also works" $ pure unit
 
-duplicatedDescribeTest :: SpecM Identity Identity Unit Unit
+duplicatedDescribeTest :: Spec' Unit
 duplicatedDescribeTest =
   describe "a" do
     describe "b" do
@@ -29,7 +31,7 @@ duplicatedDescribeTest =
       describe "c" do
         it "second" $ pure unit
 
-describeOnlyTest :: SpecM Identity Identity Unit Unit
+describeOnlyTest :: Spec' Unit
 describeOnlyTest =
   describeOnly "a" do
     describe "b" do
@@ -37,7 +39,7 @@ describeOnlyTest =
     describe "c" do
       it "also works" $ pure unit
 
-describeOnlyNestedTest :: SpecM Identity Identity Unit Unit
+describeOnlyNestedTest :: Spec' Unit
 describeOnlyNestedTest =
   describe "a" do
     describeOnly "b" do
@@ -45,7 +47,7 @@ describeOnlyNestedTest =
     describe "c" do
       it "also works" $ pure unit
 
-itOnlyTest :: SpecM Identity Identity Unit Unit
+itOnlyTest :: Spec' Unit
 itOnlyTest =
   describe "a" do
     describe "b" do

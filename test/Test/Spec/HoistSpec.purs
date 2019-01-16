@@ -10,9 +10,9 @@ import Data.Traversable (intercalate)
 import Effect.Aff (Aff, delay)
 import Effect.Aff.Class (liftAff)
 import Effect.Class.Console (log)
-import Test.Spec (ComputationType(..), Spec, SpecM, describe, hoistSpec, it, parallel)
+import Test.Spec (ComputationType(..), Spec, SpecT, describe, hoistSpec, it, parallel)
 
-type Spec' t a = SpecM Identity t Unit a
+type Spec' t a = SpecT t Unit Identity a
 
 hoistSpecSpec :: Spec Unit
 hoistSpecSpec = describe "hoist" do
