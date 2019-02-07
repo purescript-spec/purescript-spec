@@ -1,5 +1,6 @@
 module Test.Spec.Runner
-  ( runSpecT
+  ( run
+  , runSpecT
   , runSpec
   , defaultConfig
   , Config
@@ -9,6 +10,7 @@ module Test.Spec.Runner
 
 import Prelude
 
+import Prim.TypeError (class Warn, Text)
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Writer (execWriterT)
@@ -187,6 +189,14 @@ runSpecT config reporters spec = _run config spec <#> \runner -> do
         exit code
         pure results
     else reportedEvents
+
+-- | Run the spec with the default config
+run
+  :: Warn (Text "`Test.Spec.Runner.run` is Deprecated use runSpec instead")
+  => Array Reporter
+  -> Spec Unit
+  -> Aff Unit
+run reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec
 
 -- | Run the spec with the default config
 runSpec
