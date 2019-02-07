@@ -103,17 +103,18 @@ derive newtype instance monadStateSpecT :: MonadState s m => MonadState s (SpecT
 type SpecTree m a = Tree (ActionWith m a) (Item m a)
 
 mapSpecTree
-  :: forall m g g' i a i'
-   . Monad m
-   => (SpecTree g i -> SpecTree g' i')
+  :: forall m m' g g' i a i'
+   . Functor m'
+   => (m ~> m')
+   -> (SpecTree g i -> SpecTree g' i')
    -> SpecT g i m a
-   -> SpecT g' i' m a
-mapSpecTree f = over SpecT $ mapWriterT $ map $ map $ map f
+   -> SpecT g' i' m' a
+mapSpecTree g f = over SpecT $ mapWriterT $ g >>> map (map $ map f)
 
 data ComputationType = CleanUpWithContext (Array String) | TestWithName (NonEmptyArray String)
 
-hoistSpec :: forall m i a b. Monad m => (ComputationType -> a ~> b) -> SpecT a i m ~> SpecT b i m
-hoistSpec f = mapSpecTree $ bimapTree onCleanUp onTest
+hoistSpec :: forall m' m i a b. Monad m' => (m ~> m') -> (ComputationType -> a ~> b) -> SpecT a i m ~> SpecT b i m'
+hoistSpec onM f = mapSpecTree onM $ bimapTree onCleanUp onTest
   where
     onCleanUp :: Array String -> (ActionWith a i) -> ActionWith b i
     onCleanUp name around' = \i -> f (CleanUpWithContext name) (around' i)
@@ -188,7 +189,7 @@ parallel
    . Monad m
   => SpecT g i m a
   -> SpecT g i m a
-parallel = mapSpecTree $ bimap identity (setParallelizable true)
+parallel = mapSpecTree identity $ bimap identity (setParallelizable true)
 
 -- | marks all spec items of the given spec to be evaluated sequentially.
 sequential
@@ -196,7 +197,7 @@ sequential
    . Monad m
   => SpecT g i m a
   -> SpecT g i m a
-sequential = mapSpecTree $ bimap identity (setParallelizable false)
+sequential = mapSpecTree identity $ bimap identity (setParallelizable false)
 
 setParallelizable :: forall g a. Boolean -> Item g a -> Item g a
 setParallelizable value = over Item \i -> i{isParallelizable = i.isParallelizable <|> Just value}
@@ -260,7 +261,7 @@ aroundWith
   => (ActionWith g i -> ActionWith g i')
   -> SpecT g i m a
   -> SpecT g i' m a
-aroundWith action = mapSpecTree $ bimap action (modifyAroundAction action)
+aroundWith action = mapSpecTree identity $ bimap action (modifyAroundAction action)
 
 -- | Run a custom action before and/or after every spec item.
 around_ :: forall m g i a. Monad m => (g Unit -> g Unit) -> SpecT g i m a -> SpecT g i m a

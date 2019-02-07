@@ -28,7 +28,7 @@ hoistSpecSpecReaderT = go $ parallel do
     }
   where
     go :: Spec' (ReaderT (String -> Aff Unit) Aff) ~> Spec
-    go = hoistSpec \cType m ->
+    go = hoistSpec identity \cType m ->
       let
         prefix = case cType of
           CleanUpWithContext n -> intercalate " > " n <> " (afterAll) "
