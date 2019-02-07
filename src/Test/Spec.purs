@@ -4,6 +4,7 @@ module Test.Spec
   , module Reexport
   , SpecTree
   , mapSpecTree
+  , collect
 
   , ComputationType(..)
   , hoistSpec
@@ -50,7 +51,7 @@ import Control.Monad.Fork.Class (class MonadBracket, bracket)
 import Control.Monad.Reader (class MonadAsk, class MonadReader)
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.Monad.State (class MonadState)
-import Control.Monad.Writer (WriterT, mapWriterT, tell)
+import Control.Monad.Writer (WriterT, execWriter, execWriterT, mapWriterT, tell)
 import Control.MonadPlus (class MonadPlus)
 import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus)
@@ -71,7 +72,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (Error)
 import Prim.TypeError (class Warn, Text)
 import Test.Spec.Tree (ActionWith, Item(..), Tree(..)) as Reexport
-import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTree, modifyAroundAction)
+import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTree, discardUnfocused, modifyAroundAction)
 
 
 type Spec a = SpecT Aff Unit Identity a
@@ -124,6 +125,10 @@ hoistSpec f = mapSpecTree $ bimapTree onCleanUp onTest
       in item { example = e }
 
 
+-- | Collects all tests, if something is focused, all unfocused tests will be discarded
+collect :: forall m g i a. Functor m => SpecT g i m a -> m (Array (SpecTree g i))
+collect = un SpecT >>> execWriterT >>> map discardUnfocused
+
 class Example t arg m | t -> arg, t -> m where
   evaluateExample :: t -> (ActionWith m arg -> m Unit) -> m Unit
 
@@ -134,7 +139,6 @@ instance exampleFunc :: Example (arg -> m Unit) arg m where
 else instance exampleMUnit :: Example (m Unit) Unit m where
   evaluateExample :: (m Unit) -> (ActionWith m Unit -> m Unit) -> m Unit
   evaluateExample t around' = around' $ \_ -> t
-
 
 
 -- | Nullary class used to raise a custom warning for the focusing functions.

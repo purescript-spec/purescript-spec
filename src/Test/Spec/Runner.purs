@@ -10,10 +10,8 @@ module Test.Spec.Runner
 
 import Prelude
 
-import Prim.TypeError (class Warn, Text)
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Writer (execWriterT)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (groupBy, mapWithIndex)
 import Data.Array.NonEmpty as NEA
@@ -36,7 +34,8 @@ import Effect.Now (now)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Item(..), Spec, SpecT(..), SpecTree, Tree(..))
+import Prim.TypeError (class Warn, Text)
+import Test.Spec (Item(..), Spec, SpecT, SpecTree, Tree(..), collect)
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
@@ -45,7 +44,7 @@ import Test.Spec.Speed (speedOf)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (Path, PathItem(..), countTests, discardUnfocused, isAllParallelizable)
+import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -93,7 +92,7 @@ _run
   => Config
   -> SpecT Aff Unit m Unit
   -> m TestEvents
-_run config (SpecT specs) = execWriterT specs <#> discardUnfocused >>> \tests -> do
+_run config = collect >>> map \tests -> do
   yield (Event.Start (countTests tests))
   let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
   r <- loop $ mapWithIndex indexer tests

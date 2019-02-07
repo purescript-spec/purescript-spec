@@ -2,17 +2,16 @@ module Test.Spec.RunnerSpec where
 
 import Prelude
 
-import Control.Monad.Writer (execWriter)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
+import Data.Identity (Identity(..))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
-import Test.Spec (Item(..), Spec, SpecT(..), Tree(..), describe, it)
+import Test.Spec (Item(..), Spec, SpecT, Tree(..), collect, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
-import Test.Spec.Tree (discardUnfocused)
 
 runnerSpec :: Spec Unit
 runnerSpec =
@@ -55,4 +54,5 @@ runnerSpec =
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
   where
-    runSpecFocused t = discardUnfocused (execWriter $ un SpecT t) <#> bimap (const unit) (un Item >>> _.isFocused)
+    runSpecFocused :: SpecT Identity Unit Identity Unit -> Array (Tree Unit Boolean)
+    runSpecFocused t = un Identity (collect t) <#> (bimap (const unit) (un Item >>> _.isFocused))
