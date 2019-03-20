@@ -1,91 +1,107 @@
 module Test.Spec.Reporter.Console (consoleReporter) where
 
 import Prelude
-import Test.Spec.Color as Color
-import Test.Spec.Runner.Event as Event
-import Test.Spec.Summary as Summary
-import Effect (Effect)
-import Effect.Console (log)
-import Data.Array (init)
-import Data.Foldable (intercalate)
-import Data.Maybe (fromMaybe)
-import Test.Spec.Color (colored)
-import Test.Spec.Console (withAttrs)
-import Test.Spec.Reporter.Base (defaultReporter)
+
+import Control.Monad.State (class MonadState, get, put)
+import Control.Monad.Writer (class MonadWriter)
+import Data.Foldable (for_, intercalate)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), isNothing)
+import Effect.Exception as Error
+import Test.Spec.Console (tellLn)
+import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultUpdate)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event as Event
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
+import Test.Spec.Summary as Summary
+import Test.Spec.Tree (Path, Tree, parentSuite, parentSuiteName)
 
-type ConsoleReporterStateObj = {
-  crumbs :: Array String
-, crumbsChanged :: Boolean
-, hasEmitted :: Boolean
-}
+type State = { runningItems :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
 
-initialState :: ConsoleReporterStateObj
-initialState = {
-  crumbs: []
-, crumbsChanged: false
-, hasEmitted: false
-}
-
-pushCrumb :: String -> ConsoleReporterStateObj -> ConsoleReporterStateObj
-pushCrumb c s = s {
-  crumbs = s.crumbs <> [c]
-, crumbsChanged = true
-}
-
-popCrumb :: ConsoleReporterStateObj -> ConsoleReporterStateObj
-popCrumb s = s {
-  crumbs = fromMaybe [] $ init s.crumbs
-, crumbsChanged = true
-}
+initialState :: State
+initialState = { runningItems: Map.empty, lastPrintedSuitePath: Nothing }
 
 consoleReporter :: Reporter
-consoleReporter = defaultReporter initialState update
+consoleReporter = defaultReporter initialState $ defaultUpdate
+  { getRunningItems: _.runningItems
+  , putRunningItems: flip _{runningItems = _}
+  , printFinishedItem: \path -> case _ of
+      RunningTest name (Just res) -> print path $ PrintTest name res
+      RunningPending name -> print path $ PrintPending name
+      _ -> pure unit
+  , update: case _ of
+      Event.TestEnd path name res -> do
+        {runningItems} <- get
+        when (isNothing $ Map.lookup path runningItems) do
+          print path $ PrintTest name res
+      Event.Pending path name -> do
+        {runningItems} <- get
+        when (Map.isEmpty runningItems) do
+          print path $ PrintPending name
+      Event.End results -> printSummary results
+      _ -> pure unit
+  }
+
+printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
+printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
+  tellLn ""
+  tellLn $ styled Style.bold "Summary"
+  printPassedFailed passed failed
+  printPending pending
+  tellLn ""
   where
-  update s = case _ of
-    Event.Suite name -> pure (pushCrumb name s)
-    Event.SuiteEnd -> pure (popCrumb s)
-    Event.Pass name _ _ -> flushCrumbs do
-      log $ "  " <> (colored Color.Checkmark "✓︎" <> " " <> colored Color.Pass name)
-    Event.Pending name -> flushCrumbs do
-      log $ "  " <> (colored Color.Pending $ "~ " <> name)
-    Event.Fail name msg _ -> flushCrumbs do
-      log $ "  " <> (colored Color.Fail $ "✗ " <> name <> ":")
-      log ""
-      log $ colored Color.Fail $ "  " <> msg
-    Event.End results -> s <$ printSummary results
-    _ -> pure s
-      where
-      flushCrumbs action =
-        if not s.crumbsChanged
-           then s <$ action
-           else s { crumbsChanged = false, hasEmitted = true } <$ do
-            when s.hasEmitted $ log ""
-            withAttrs [1, 35] $ log $ intercalate " » " s.crumbs
-            action
+    printPassedFailed :: Int -> Int -> m Unit
+    printPassedFailed p f = do
+      let total = p + f
+          testStr = pluralize "test" total
+          amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
+          color = if f > 0 then Style.red else Style.dim
+      tellLn $ styled color amount
 
-      printSummary = Summary.summarize >>> \(Count passed failed pending) -> do
-        log ""
-        withAttrs [1] $ log "Summary"
-        printPassedFailed passed failed
-        printPending pending
-        log ""
+    printPending :: Int -> m Unit
+    printPending p
+      | p > 0     = tellLn $ styled Style.yellow $ show p <> " " <> pluralize "test" p <> " pending"
+      | otherwise = pure unit
 
+    pluralize :: String -> Int -> String
+    pluralize s 1 = s
+    pluralize s _ = s <> "s"
 
-pluralize :: String -> Int -> String
-pluralize s 1 = s
-pluralize s _ = s <> "s"
+data PrintAction
+  = PrintTest String Result
+  | PrintPending String
 
-printPassedFailed :: Int -> Int -> Effect Unit
-printPassedFailed p f = do
-  let total = p + f
-      testStr = pluralize "test" total
-      amount = show p <> "/" <> (show total) <> " " <> testStr <> " passed"
-      attrs = if f > 0 then [31] else [32]
-  withAttrs attrs $ log amount
+derive instance printActionGeneric :: Generic PrintAction _
+instance printActionShow :: Show PrintAction where show = genericShow
 
-printPending :: Int -> Effect Unit
-printPending p
-  | p > 0     = withAttrs [33] $ log (show p <> " " <> pluralize "test" p <> " pending")
-  | otherwise = pure unit
+print
+  :: forall s m
+   . MonadState { lastPrintedSuitePath :: Maybe Path | s} m
+  => MonadWriter String m
+  => Path
+  -> PrintAction
+  -> m Unit
+print path a = do
+  for_ (parentSuite path) \suite -> do
+    s <- get
+    case s.lastPrintedSuitePath of
+      Just p | p == suite.path -> pure unit
+      _ -> do
+        tellLn $ styled (Style.bold <> Style.magenta)
+          $ intercalate " » " (parentSuiteName suite.path <> [suite.name])
+        put s{lastPrintedSuitePath = Just suite.path}
+  case a of
+    PrintTest name (Success speed ms) -> do
+      tellLn $ "  " <> styled Style.green "✓︎ " <> styled Style.dim name
+    PrintTest name (Failure err) -> do
+      tellLn $ "  " <> styled Style.red ("✗ " <> name <> ":")
+      tellLn $ ""
+      tellLn $ "  " <> styled Style.red (Error.message err)
+    PrintPending name -> do
+      tellLn $ "  " <> styled Style.cyan ("~ " <> name)

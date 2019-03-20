@@ -2,49 +2,85 @@ module Test.Spec.Reporter.Spec (specReporter) where
 
 import Prelude
 
-import Data.Array as Array
-import Data.String.CodeUnits as CodeUnits
-import Effect.Console (log)
-import Test.Spec.Color (colored)
-import Test.Spec.Color as Color
-import Test.Spec.Reporter.Base (defaultSummary, defaultReporter)
+import Control.Monad.State (class MonadState, get, modify)
+import Control.Monad.Writer (class MonadWriter)
+import Data.Array (length)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
+import Data.Int as Int
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), isNothing)
+import Data.Time.Duration (Milliseconds(..))
+import Test.Spec.Console (tellLn)
+import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultSummary, defaultUpdate)
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
+import Test.Spec.Runner.Event (Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
+import Test.Spec.Tree (Path)
+
+type State = { runningItems :: Map Path RunningItem, numFailures :: Int }
+
+initialState :: State
+initialState = { runningItems: Map.empty, numFailures: 0}
 
 specReporter :: Reporter
-specReporter
-  = defaultReporter { indent: 0, numFailures: 0 } update
- where
-  update s = case _ of
-    Event.Start _ -> s <$ log ""
-    Event.Suite name -> modIndent (_ + 1) $ \_ -> _log name
-    Event.SuiteEnd   -> modIndent (_ - 1) $ \i -> when (i == 1) (log "")
-    Event.Pending name -> s <$ do
-      _log $ colored Color.Pending $ "- " <> name
-    Event.Pass name speed ms -> s <$ do
-      _log $ colored Color.Checkmark "✓︎"
-              <> " "
-              <> colored Color.Pass name
-              <> case speed of
-                    Speed.Fast -> ""
-                    _ ->
-                      let col = Speed.toColor speed
-                          label = " (" <> show ms <> "ms)"
-                      in colored col label
+specReporter = defaultReporter initialState $ defaultUpdate
+  { getRunningItems: _.runningItems
+  , putRunningItems: flip _{runningItems = _}
+  , printFinishedItem: \path -> case _ of
+      RunningTest name (Just res) -> print path $ PrintTest name res
+      RunningPending name -> print path $ PrintPending name
+      RunningSuite name true -> print path $ PrintSuite name
+      _ -> pure unit
+  , update: case _ of
+      Event.Suite Sequential path name -> do
+        print path $ PrintSuite name
+      Event.TestEnd path name res -> do
+        {runningItems} <- get
+        when (isNothing $ Map.lookup path runningItems) do
+          print path $ PrintTest name res
+      Event.Pending path name -> do
+        {runningItems} <- get
+        when (Map.isEmpty runningItems) do
+          print path $ PrintPending name
+      Event.End results -> defaultSummary results
+      _ -> pure unit
+  }
 
-    Event.Fail name _ _ ->
-      let s' = s { numFailures = s.numFailures + 1 }
-       in s' <$ (_log $ colored Color.Fail $ show s'.numFailures <> ") " <> name)
+data PrintAction
+  = PrintSuite String
+  | PrintTest String Result
+  | PrintPending String
 
-    Event.End results -> s <$ defaultSummary results
-    _ -> pure s
+derive instance printActionGeneric :: Generic PrintAction _
+instance printActionShow :: Show PrintAction where show = genericShow
 
-    where
-    _log msg = log $ indent s.indent <> msg
-    modIndent f fm =
-      let s' = s { indent = f s.indent }
-       in s' <$ (fm s'.indent)
+print
+  :: forall s m
+   . MonadState { numFailures :: Int | s } m
+  => MonadWriter String m
+  => Path
+  -> PrintAction
+  -> m Unit
+print path = case _ of
+  PrintSuite name -> do
+    tellLn $ indent path <> name
+  PrintTest name (Success speed (Milliseconds ms)) -> do
+    let
+      speedDetails = case speed of
+        Speed.Fast -> ""
+        _ -> styled (Speed.toStyle speed) $ " (" <> show (Int.round ms) <> "ms)"
+    tellLn $ (indent path) <> styled Style.green "✓︎ " <> styled Style.dim name <> speedDetails
+  PrintTest name (Failure err) -> do
+    {numFailures} <- modify \s -> s{numFailures = s.numFailures +1}
+    tellLn $ (indent path) <> styled Style.red (show numFailures <> ") " <> name)
+  PrintPending name -> do
+    tellLn $ (indent path) <> (styled Style.cyan $ "- " <> name)
+  where
+    indent = length >>> Style.indent
 
-    -- TODO: move this somewhere central
-    indent i = CodeUnits.fromCharArray $ Array.replicate i ' '

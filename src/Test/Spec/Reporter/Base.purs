@@ -1,72 +1,78 @@
 module Test.Spec.Reporter.Base
-       ( defaultUpdate
-       , defaultSummary
-       , defaultReporter
-       ) where
+  ( defaultSummary
+  , defaultReporter
+  , defaultUpdate
+  , RunningItem(..)
+  ) where
 
 import Prelude
 
-import Control.Monad.State (StateT, evalStateT)
+import Control.Monad.State (StateT, evalStateT, execStateT, get, gets, put)
 import Control.Monad.State as State
 import Control.Monad.Trans.Class (lift)
-import Data.Array ((:), reverse)
-import Data.Array as Array
-import Data.Foldable (intercalate)
-import Data.String.CodeUnits as CodeUnits
-import Data.Traversable (for_)
-import Effect (Effect)
+import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
+import Data.Either (Either(..))
+import Data.Foldable (all, for_, intercalate, traverse_)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
+import Data.List (List(..), (:), reverse)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), isJust)
+import Data.Tuple (Tuple(..), uncurry)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
 import Effect.Exception as Error
 import Pipes (await, yield)
 import Pipes.Core (Pipe)
-import Test.Spec (Group, Result(..))
+import Test.Spec (Tree)
 import Test.Spec as S
-import Test.Spec.Color (colored)
-import Test.Spec.Color as Color
+import Test.Spec.Console (tellLn)
+import Test.Spec.Console as Console
+import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event)
+import Test.Spec.Runner.Event as Event
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
+import Test.Spec.Tree (Path)
 
--- TODO: move this somewhere central
-indent :: Int -> String
-indent i = CodeUnits.fromCharArray $ Array.replicate i ' '
 
-defaultUpdate :: forall s. s -> Event -> Effect s
-defaultUpdate s _ = pure s
-
-defaultSummary :: Array (Group Result) -> Effect Unit
+defaultSummary :: forall m
+   . MonadWriter String m
+  => Array (Tree Void Result)
+  -> m Unit
 defaultSummary xs = do
   case Summary.summarize xs of
-    (Count passed failed pending) -> do
-      when (passed  > 0) $ log $ colored Color.Green   $ show passed  <> " passing"
-      when (pending > 0) $ log $ colored Color.Pending $ show pending <> " pending"
-      when (failed  > 0) $ log $ colored Color.Fail    $ show failed  <> " failed"
-  log ""
+    (Count {passed, failed, pending}) -> do
+      when (passed  > 0) $ tellLn $ styled Style.green $ show passed  <> " passing"
+      when (pending > 0) $ tellLn $ styled Style.cyan $ show pending <> " pending"
+      when (failed  > 0) $ tellLn $ styled Style.red $ show failed  <> " failed"
+  tellLn ""
   printFailures xs
 
-
 printFailures
-  :: Array (Group Result)
-  -> Effect Unit
-printFailures xs = void $ evalStateT (go [] xs) 0
+  :: forall m
+   . MonadWriter String m
+  => Array (Tree Void Result)
+  -> m Unit
+printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
   where
-    go
-      :: Array String
-      -> Array (Group Result)
-      -> StateT Int Effect Unit
-    go crumbs groups =
-      for_ groups case _ of
-        S.Describe _ n xs' -> go (n:crumbs) xs'
-        S.It _ n (Failure err) ->
-          let label = intercalate " " (reverse $ n:crumbs)
-            in do
-                _ <- State.modify (_ + 1)
-                i <- State.get
-                lift $ log $ show i <> ") " <> label
-                lift $ log $ colored Color.ErrorMessage $ indent 2 <> Error.message err
-        _ -> pure unit
+    go :: Array (Tree Void Result) -> StateT { i :: Int, crumbs :: List String } m Unit
+    go = traverse_ case _ of
+      S.Node (Left n) xs -> do
+        {crumbs} <- State.get
+        State.modify_ _{crumbs = n : crumbs}
+        go xs
+        State.modify_ _{crumbs = crumbs}
+      S.Node (Right v) xs -> absurd v
+      S.Leaf n (Just (Failure err)) -> do
+        {i, crumbs} <- State.modify \s -> s{i = s.i +1}
+        let label = intercalate " " (reverse $ n:crumbs)
+        tellLn $ show i <> ") " <> label
+        tellLn $ styled Style.red $ Style.indent 2 <> Error.message err
+      S.Leaf _ _ -> pure unit
 
 -- | Monadic left scan with state.
 -- | TODO: Is this already included in purescript-pipes somehow, or should be?
@@ -87,11 +93,73 @@ scanWithStateM step begin = do
 -- | A default reporter implementation that can be used as a base to build
 -- | other reporters on top of.
 defaultReporter
-  :: ∀ s.
-     s
-  -> (s -> Event -> Effect s)
+  :: forall s
+   . s
+  -> (Event -> StateT s (Writer String) Unit)
   -> Reporter
-defaultReporter initialState onEvent = do
-  scanWithStateM dispatch (pure initialState)
+defaultReporter initialState onEvent = pure initialState # scanWithStateM \s e ->
+  let Tuple res log = runWriter $ execStateT (onEvent e) s
+  in liftEffect $ Console.write log $> res
+
+
+data RunningItem
+  = RunningTest String (Maybe Result)
+  | RunningPending String
+  | RunningSuite String Boolean
+
+derive instance runningItemGeneric :: Generic RunningItem _
+instance runningItemShow :: Show RunningItem where show = genericShow
+
+defaultUpdate
+  :: forall s
+  . { getRunningItems :: s -> Map Path RunningItem
+    , putRunningItems :: Map Path RunningItem -> s -> s
+    , printFinishedItem :: Path -> RunningItem -> StateT s (Writer String) Unit
+    , update :: Event -> StateT s (Writer String) Unit
+    }
+  -> (Event -> StateT s (Writer String) Unit)
+defaultUpdate opts e = do
+  baseUpdate e
+  opts.update e
   where
-    dispatch s e = liftEffect(onEvent s e)
+    baseUpdate = case _ of
+      Event.Suite Event.Sequential _ _ ->
+        pure unit
+      Event.Suite Event.Parallel path name -> do
+        modifyRunningItems $ Map.insert path $ RunningSuite name false
+      Event.SuiteEnd path -> do
+        modifyRunningItems $ flip Map.update path case _ of
+          RunningSuite n _ -> Just $ RunningSuite n true
+          a -> Nothing
+      Event.Test Event.Sequential path name -> do
+        pure unit
+      Event.Test Event.Parallel path name -> do
+        modifyRunningItems $ Map.insert path $ RunningTest name Nothing
+      Event.TestEnd path name res -> do
+        runningItem <- gets opts.getRunningItems
+        case Map.lookup path runningItem of
+          Just (RunningTest n _) ->
+            modifyRunningItems $ Map.insert path $ RunningTest n $ Just res
+          _ ->
+            pure unit
+      Event.Pending path name -> do
+        runningItem <- gets opts.getRunningItems
+        unless (Map.isEmpty runningItem) do
+          modifyRunningItems $ Map.insert path $ RunningPending name
+      Event.End _ -> pure unit
+      Event.Start _ -> pure unit
+    modifyRunningItems f = do
+      s <- get
+      let
+        nextRunningItems = f $ opts.getRunningItems s
+        allFinished = all runningItemIsFinished nextRunningItems
+      put $ opts.putRunningItems (if allFinished then Map.empty else nextRunningItems) s
+
+      when allFinished do
+        for_ (asArray $ Map.toUnfoldable nextRunningItems) $ uncurry opts.printFinishedItem
+      where
+        asArray = identity :: Array ~> Array
+        runningItemIsFinished = case _ of
+          RunningPending _ -> true
+          RunningTest _ res -> isJust res
+          RunningSuite _ finished -> finished

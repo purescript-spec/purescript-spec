@@ -2,70 +2,55 @@ module Test.Spec.Fixtures where
 
 import Prelude
 
-import Test.Spec            (Spec, describe, describeOnly, it, itOnly, pending)
-import Test.Spec.Assertions (shouldEqual)
+import Data.Identity (Identity)
+import Test.Spec (SpecT, describe, describeOnly, it, itOnly)
 
-successTest :: Spec Unit
+type Spec' a = SpecT Identity Unit Identity a
+
+successTest :: Spec' Unit
 successTest =
   describe "a" do
     describe "b" do
-      it "works" do
-        1 `shouldEqual` 1
+      it "works" $ pure unit
 
-sharedDescribeTest :: Spec Unit
+sharedDescribeTest :: Spec' Unit
 sharedDescribeTest =
   describe "a" do
     describe "b" do
-      it "works" do
-        1 `shouldEqual` 1
+      it "works" $ pure unit
     describe "c" do
-      it "also works" do
-        1 `shouldEqual` 1
+      it "also works" $ pure unit
 
-duplicatedDescribeTest :: Spec Unit
+duplicatedDescribeTest :: Spec' Unit
 duplicatedDescribeTest =
   describe "a" do
     describe "b" do
       describe "c" do
-        it "first" do
-          1 `shouldEqual` 1
+        it "first" $ pure unit
     describe "b" do
       describe "c" do
-        it "second" do
-          1 `shouldEqual` 1
+        it "second" $ pure unit
 
-describeOnlyTest :: Spec Unit
+describeOnlyTest :: Spec' Unit
 describeOnlyTest =
   describeOnly "a" do
     describe "b" do
-      it "works" do
-        1 `shouldEqual` 1
+      it "works" $ pure unit
     describe "c" do
-      it "also works" do
-        1 `shouldEqual` 1
+      it "also works" $ pure unit
 
-describeOnlyNestedTest :: Spec Unit
+describeOnlyNestedTest :: Spec' Unit
 describeOnlyNestedTest =
   describe "a" do
     describeOnly "b" do
-      it "works" do
-        1 `shouldEqual` 1
+      it "works" $ pure unit
     describe "c" do
-      it "also works" do
-        1 `shouldEqual` 1
+      it "also works" $ pure unit
 
-itOnlyTest :: Spec Unit
+itOnlyTest :: Spec' Unit
 itOnlyTest =
   describe "a" do
     describe "b" do
-      itOnly "works" do
-        1 `shouldEqual` 1
+      itOnly "works" $ pure unit
     describe "c" do
-      it "also works" do
-        1 `shouldEqual` 1
-
-failureTest :: Spec Unit
-failureTest = it "fails" $ 1 `shouldEqual` 2
-
-pendingTest :: Spec Unit
-pendingTest = pending "is not written yet"
+      it "also works" $ pure unit

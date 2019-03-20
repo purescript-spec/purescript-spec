@@ -1,26 +1,32 @@
 module Test.Spec.Console
-  ( setAttr
-  , reset
-  , withAttrs
+  ( tellLn
+  , tellLns
   , write
+  , logWriter
   ) where
 
 import Prelude
 
-import Ansi.Codes (colorSuffix, prefix)
+import Control.Monad.Writer (class MonadWriter, WriterT, execWriterT, tell)
+import Data.Foldable (for_)
 import Effect (Effect)
-import Data.Foldable (foldr)
+import Effect.Class (class MonadEffect, liftEffect)
 
 foreign import write :: String -> Effect Unit
 
-setAttr :: Int -> Effect Unit
-setAttr code = write (prefix <> show code <> colorSuffix)
+logWriter :: forall m. MonadEffect m => WriterT String m Unit -> m Unit
+logWriter = execWriterT >=> write >>> liftEffect
 
-reset :: Effect Unit
-reset = setAttr 0
+tellLn
+  :: forall m
+   . MonadWriter String m
+  => String
+  -> m Unit
+tellLn l = tell $ l <> "\n"
 
-withAttrs :: (Array Int)
-          -> Effect Unit
-          -> Effect Unit
-withAttrs as r = foldr iter r as
-  where iter attr acc = setAttr attr *> acc *> reset
+tellLns
+  :: forall m
+   . MonadWriter String m
+  => Array String
+  -> m Unit
+tellLns l = for_ l $ (_<> "\n") >>> tell

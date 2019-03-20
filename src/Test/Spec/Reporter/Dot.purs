@@ -1,34 +1,30 @@
 module Test.Spec.Reporter.Dot (dotReporter) where
 
 import Prelude
-import Test.Spec.Color as Color
+
+import Control.Monad.State (modify)
+import Control.Monad.Writer (tell)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
+import Test.Spec.Console (tellLn)
+import Test.Spec.Reporter.Base (defaultReporter)
+import Test.Spec.Result (Result(..))
+import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
-import Test.Spec.Color (colored)
-import Test.Spec.Console (write) as Console
-import Test.Spec.Reporter.Base (defaultReporter)
-import Test.Spec.Runner (Reporter)
 
-type DotReporterState = Int
 type DotReporterConfig = { width :: Int }
 
 dotReporter :: DotReporterConfig -> Reporter
-dotReporter { width } =
-  defaultReporter (-1) update
-
+dotReporter { width } = defaultReporter (-1) case _ of
+  Event.TestEnd _ _ (Success speed _) -> wrap $ styled (Speed.toStyle speed) "."
+  Event.TestEnd _ _ (Failure _) -> wrap $ styled Style.red "!"
+  Event.Pending _ _ -> wrap $ styled Style.dim ","
+  Event.End _ -> tellLn ""
+  _ -> pure unit
   where
-    update n = case _ of
-      Event.Pass _ speed ms ->
-        let col = Speed.toColor speed
-        in wrap $ Console.write (colored col ".")
-      Event.Fail _ _ _ -> wrap $ Console.write (colored Color.Fail "!")
-      Event.Pending _  -> wrap $ Console.write (colored Color.Pass ",")
-      Event.End _      -> n <$ Console.write "\n"
-      _                -> pure n
-
-      where
-        wrap action =
-          let n' = n + 1
-          in n' <$ do
-            when (n' `mod` width == 0) (Console.write "\n")
-            action
+    wrap action = do
+      n <- modify (_ + 1)
+      when (n `mod` width == 0) do
+        tellLn ""
+      tell action

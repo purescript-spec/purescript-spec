@@ -1,90 +1,83 @@
 module Test.Spec.Runner
-       ( run
-       , run'
-       , runSpec
-       , runSpec'
-       , defaultConfig
-       , timeout
-       , Config
-       , TestEvents
-       , Reporter
-       ) where
+  ( run
+  , runSpecT
+  , runSpec
+  , defaultConfig
+  , Config
+  , TestEvents
+  , Reporter
+  ) where
 
 import Prelude
 
 import Control.Alternative ((<|>))
-import Effect (Effect)
-import Effect.Aff (Aff, attempt, delay, makeAff, throwError, try)
-import Effect.Class (liftEffect)
-import Effect.Console (logShow)
-import Effect.Exception (Error, error)
-import Effect.Exception as Error
 import Control.Monad.Trans.Class (lift)
-import Control.Parallel (sequential, parallel)
-import Data.Array (singleton)
+import Control.Parallel (parTraverse, parallel, sequential)
+import Data.Array (groupBy, mapWithIndex)
+import Data.Array.NonEmpty as NEA
+import Data.DateTime.Instant (unInstant)
 import Data.Either (Either(..), either)
 import Data.Foldable (foldl)
-import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Function (on)
+import Data.Identity (Identity(..))
+import Data.Int as Int
+import Data.Maybe (Maybe(..))
+import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
-import Data.Traversable (for)
+import Data.Traversable (class Traversable, for)
+import Effect (Effect)
+import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
+import Effect.Aff.AVar as AV
+import Effect.Class (liftEffect)
+import Effect.Exception (error)
+import Effect.Now (now)
 import Pipes ((>->), yield)
 import Pipes.Core (Pipe, Producer, (//>))
 import Pipes.Core (runEffectRec) as P
-import Test.Spec (Spec, Group(..), Result(..), collect)
-import Test.Spec as Spec
-import Test.Spec.Console (withAttrs)
-import Test.Spec.Runner.Event (Event)
+import Prim.TypeError (class Warn, Text)
+import Test.Spec (Item(..), Spec, SpecT, SpecTree, Tree(..), collect)
+import Test.Spec.Console as Console
+import Test.Spec.Result (Result(..))
+import Test.Spec.Runner.Event (Event, Execution(..))
 import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed (speedOf)
+import Test.Spec.Style (styled)
+import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
+import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
-foreign import dateNow :: Effect Int
-
-type Config = {
-  slow :: Int
-, timeout :: Maybe Int
-, exit :: Boolean
-}
+type Config =
+  { slow :: Milliseconds
+  , timeout :: Maybe Milliseconds
+  , exit :: Boolean
+  }
 
 defaultConfig :: Config
-defaultConfig = {
-  slow: 75
-, timeout: Just 2000
-, exit: true
-}
-
-trim :: ∀ r. Array (Group r) -> Array (Group r)
-trim xs = fromMaybe xs (singleton <$> findJust findOnly xs)
-  where
-  findOnly :: Group r -> Maybe (Group r)
-  findOnly g@(It true _ _) = pure g
-  findOnly g@(Describe o _ gs) = findJust findOnly gs <|> if o then pure g else Nothing
-  findOnly _ = Nothing
-
-  findJust :: forall a. (a -> Maybe a) -> Array a -> Maybe a
-  findJust f = foldl go Nothing
-    where
-    go Nothing x = f x
-    go acc _ = acc
+defaultConfig =
+  { slow: Milliseconds 75.0
+  , timeout: Just $ Milliseconds 2000.0
+  , exit: true
+  }
 
 makeTimeout
-  :: Int
+  :: Milliseconds
   -> Aff Unit
-makeTimeout time = do
-  delay (Milliseconds $ toNumber time)
+makeTimeout ms@(Milliseconds ms') = do
+  delay ms
   makeAff \cb -> mempty <$ do
-    cb <<< Left $ error $ "test timed out after " <> show time <> "ms"
+    cb <<< Left $ error $ "test timed out after " <> show (Int.round ms') <> "ms"
 
 timeout
-  :: Int
+  :: Milliseconds
   -> Aff Unit
   -> Aff Unit
 timeout time t = do
   sequential (parallel (try (makeTimeout time)) <|> parallel (try t))
     >>= either throwError pure
+
+type TestWithPath r = {test :: SpecTree Aff Unit, path :: Path | r}
 
 -- Run the given spec as `Producer` in the underlying `Aff` monad.
 -- This producer has two responsibilities:
@@ -94,88 +87,119 @@ timeout time t = do
 -- prodocer has completed and still benefit from the array of results the way
 -- the runner sees it.
 _run
-  :: Config
-  -> Spec Unit
-  -> Producer Event Aff (Array (Group Result))
-_run config spec = do
-  yield (Event.Start (Spec.countTests spec))
-  r <- for (trim $ collect spec) runGroup
+  :: forall m
+   . Functor m
+  => Config
+  -> SpecT Aff Unit m Unit
+  -> m TestEvents
+_run config = collect >>> map \tests -> do
+  yield (Event.Start (countTests tests))
+  let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
+  r <- loop $ mapWithIndex indexer tests
   yield (Event.End r)
   pure r
-
   where
-  runGroup (It only name test) = do
-    yield Event.Test
-    start    <- lift $ liftEffect dateNow
-    e        <- lift $ attempt case config.timeout of
-                                      Just t -> timeout t test
-                                      _      -> test
-    duration <- lift $ (_ - start) <$> liftEffect dateNow
-    yield $ either
-      (\err ->
-        let msg = Error.message err
-            stack = Error.stack err
-         in Event.Fail name msg stack)
-      (const $ Event.Pass name (speedOf config.slow duration) duration)
-      e
-    yield Event.TestEnd
-    pure $ It only name $ either Failure (const Success) e
+    loop :: Array (TestWithPath ()) -> TestEvents
+    loop tests =
+      let
+        noteWithIsAllParallelizable = map \{test,path} -> { isParallelizable: isAllParallelizable test, test, path}
+        groupByIsParallelizable = groupBy (\a b -> a.isParallelizable && b.isParallelizable)
+      in join <$> for (groupByIsParallelizable $ noteWithIsAllParallelizable tests) \g ->
+        join <$> if (NEA.head g).isParallelizable
+          then mergeProducers (runGroup <$> (NEA.toArray g))
+          else for (NEA.toArray g) runGroup
 
-  runGroup (Pending name) = do
-    yield $ Event.Pending name
-    pure $ Pending name
+    runGroup :: TestWithPath (isParallelizable :: Boolean) -> TestEvents
+    runGroup {test, path, isParallelizable} = case test of
+      (Leaf name (Just (Item item))) -> do
+        yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
+        let example = item.example \a -> a unit
+        start <- lift $ liftEffect now
+        e <- lift $ attempt case config.timeout of
+          Just t -> timeout t example
+          _      -> example
+        end <- liftEffect now
+        let duration = Milliseconds $ on (-) (unInstant >>> un Milliseconds) end start
+        let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
+        yield $ Event.TestEnd path name res
+        pure [ Leaf name $ Just res ]
+      (Leaf name Nothing) -> do
+        yield $ Event.Pending path name
+        pure [ Leaf name Nothing ]
+      (Node (Right cleanup) xs) -> do
+        let indexer index x = {test:x, path: path <> [PathItem {name: Nothing, index}]}
+        loop (mapWithIndex indexer xs) <* lift (cleanup unit)
+      (Node (Left name) xs) -> do
+        yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
+        let indexer index x = {test:x, path: path <> [PathItem {name: Just name, index}]}
+        res <- loop (mapWithIndex indexer xs)
+        yield $ Event.SuiteEnd path
+        pure [ Node (Left name) res ]
 
-  runGroup (Describe only name xs) = do
-    yield $ Event.Suite name
-    Describe only name <$> (for xs runGroup)
-    <* yield Event.SuiteEnd
+-- https://github.com/felixSchl/purescript-pipes/issues/16
+mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
+mergeProducers ps = do
+  var <- lift AV.empty
 
--- | Run a spec, returning the results, without any reporting
-runSpec'
-  :: Config
-  -> Spec Unit
-  -> Aff (Array (Group Result))
-runSpec' config spec = P.runEffectRec $ _run config spec //> const (pure unit)
+  fib <- lift $ forkAff do
+    let consumer i = lift (AV.put i var) *> pure unit
+    x <- parTraverse (\p -> P.runEffectRec $ p //> consumer) ps
+    AV.kill (error "finished") var
+    pure x
 
--- | Run a spec with the default config, returning the results, without any
--- | reporting
-runSpec
-  :: Spec Unit
-  -> Aff (Array (Group Result))
-runSpec spec = P.runEffectRec $ _run defaultConfig spec //> const (pure unit)
+  let
+    loop = do
+      res <- lift $ try (AV.take var)
+      case res of
+        Left err -> lift $ joinFiber fib
+        Right e -> do
+          yield e
+          loop
+  loop
 
-type TestEvents = Producer Event Aff (Array (Group Result))
+type TestEvents = Producer Event Aff (Array (Tree Void Result))
 
-type Reporter = Pipe Event Event Aff (Array (Group Result))
+type Reporter = Pipe Event Event Aff (Array (Tree Void Result))
 
--- | Run the spec with `config`, report results and (if configured as such)
--- | exit the program upon completion
-run'
-  :: Config
+-- | Run the spec with `config`, returning the results, which
+-- | are also reported using specified Reporters, if any.
+-- | If configured as such, `exit` the program upon completion
+-- | with appropriate exit code.
+runSpecT
+  :: forall m
+   . Functor m
+  => Config
   -> Array Reporter
-  -> Spec Unit
-  -> Aff Unit
-run' config reporters spec = do
-  let reportedEvents = P.runEffectRec $ events //> drain
-  either onError onSuccess =<< try reportedEvents
-  where
+  -> SpecT Aff Unit m Unit
+  -> m (Aff (Array (Tree Void Result)))
+runSpecT config reporters spec = _run config spec <#> \runner -> do
+  let
     drain = const (pure unit)
-    events = foldl (>->) (_run config spec) reporters
-
-    onError :: Error -> Aff Unit
-    onError err = liftEffect do
-       withAttrs [31] $ logShow err
-       when config.exit (exit 1)
-
-    onSuccess :: Array (Group Result) -> Aff Unit
-    onSuccess results = liftEffect $
-      when config.exit do
+    events = foldl (>->) runner reporters
+    reportedEvents = P.runEffectRec $ events //> drain
+  if config.exit
+    then try reportedEvents >>= case _ of
+      Left err -> do
+        liftEffect $ Console.write $ styled Style.red (show err <> "\n")
+        liftEffect $ exit 1
+        throwError err
+      Right results -> liftEffect do
         let code = if successful results then 0 else 1
         exit code
+        pure results
+    else reportedEvents
 
 -- | Run the spec with the default config
 run
+  :: Warn (Text "`Test.Spec.Runner.run` is Deprecated use runSpec instead")
+  => Array Reporter
+  -> Spec Unit
+  -> Aff Unit
+run reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec
+
+-- | Run the spec with the default config
+runSpec
   :: Array Reporter
   -> Spec Unit
   -> Aff Unit
-run = run' defaultConfig
+runSpec reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec
