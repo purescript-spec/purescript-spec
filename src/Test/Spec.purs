@@ -22,6 +22,7 @@ module Test.Spec
 
   , describe
   , it
+  , lit
   , pending
   , pending'
 
@@ -231,6 +232,21 @@ it
   -> SpecT g arg m Unit
 it name test = SpecT $ tell
   [ Leaf name $ Just $ Item
+      { isParallelizable: Nothing
+      , isFocused: false
+      , example: evaluateExample test
+      }
+  ]
+
+-- | Create a spec without a description
+lit
+  :: forall m t arg g
+   . Monad m
+  => Example t arg g
+  => t
+  -> SpecT g arg m Unit
+lit test = SpecT $ tell
+  [ Leaf "" $ Just $ Item
       { isParallelizable: Nothing
       , isFocused: false
       , example: evaluateExample test

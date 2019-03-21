@@ -3,7 +3,7 @@ module Test.Spec.AssertionSpec where
 import Prelude
 import Effect.Exception (error)
 import Control.Monad.Error.Class (throwError)
-import Test.Spec (Spec, describe, it)
+import Test.Spec (Spec, describe, it, lit)
 import Test.Spec.Assertions as A
 import Test.Spec.Assertions.String as AS
 
@@ -16,6 +16,8 @@ assertionSpec =
         describe "String" do
           describe "shouldContain" do
             it "accepts strings that contains substrings" $
+              "foobar" `AS.shouldContain` "foo"
+            lit $
               "foobar" `AS.shouldContain` "foo"
             it "rejects strings that does not contain substrings" $
               A.expectError $ "baz" `AS.shouldContain` "foo"
