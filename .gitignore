@@ -8,3 +8,4 @@ tmp/
 /*.log
 tags
 /.psc-ide-port
+package-lock.json
