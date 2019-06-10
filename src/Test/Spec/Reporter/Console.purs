@@ -56,7 +56,7 @@ consoleReporter = defaultReporter initialState update
       log $ colored Color.Fail $ "  " <> msg
     Event.End results -> s <$ printSummary results
     _ -> pure s
-      where
+    where
       flushCrumbs action =
         if not s.crumbsChanged
            then s <$ action
