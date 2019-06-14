@@ -16,6 +16,17 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **4.0.0**
+  * Rename `run` and `run'` to `runSpec` and `runSpecM`.
+  * Run tests in `Aff` instead of `Effect`.
+  * New assertions:
+    - Aff: `expectError`, `shouldReturn`, `shouldNotReturn`
+    - String: `shouldContain`, `shouldNotContain`, `shouldStartWith`,
+      `shouldEndWith`
+  * Parallel test execution / `parallel` and `sequential` combinators
+  * Hooks: `aroundWith`, `around`, `around_`, `before`, `before_`, `beforeWith`,
+    `beforeAll`, `beforeAll_`, `after`, `after_`, `afterAll`, `afterAll_`
+  * Upgrade to PureScript 0.13.x.
 * **3.1.0**
   * Add `shouldSatisfy` assertion and complement, add exit flag to runner config
 * **3.0.0**
