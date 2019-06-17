@@ -49,9 +49,8 @@ docs/index.html: $(MD_SOURCES) docs/template.html docs/docs.css
 	pandoc $(SHARED_PANDOC_OPTIONS) \
 		-t html5 \
 		--standalone \
-		-S \
 		--toc \
-		--chapters \
+		--top-level-division=chapter \
 		"--metadata=subtitle:$(VERSION)" \
 		--no-highlight \
 		-c docs.css \
