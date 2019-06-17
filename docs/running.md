@@ -52,15 +52,6 @@ main = launchAff_ $ un Identity $ runSpecT testConfig [consoleReporter] mySpec
     testConfig = { slow: 5000, timeout: Just 10000, exit: false }
 ```
 
-The `Test.Spec.Runner` module provides a `defaultConfig` value which you
-can use to override only specific values.
-
-```purescript
-main = launchAff_ $ run' testConfig [consoleReporter] mySpec
-  where
-    testConfig = defaultConfig { slow = 100 }
-```
-
 ## Automatically Discovering Specs
 
 If you are running your specs in an NodeJS environment, e.g. with `pulp test`,
@@ -68,7 +59,7 @@ you can automatically scan for spec modules using [purescript-spec-discovery](ht
 Then your `main` function can be as simple as:
 
 ```purescript
-main = discover "My\\.Package\\..*Spec" >>= run [consoleReporter]
+main = discover "My\\.Package\\..*Spec" >>= runSpec [consoleReporter] >>> launchAff_
 ```
 
 All modules matching the pattern, that has a `spec :: Spec r ()` definition
