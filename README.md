@@ -3,7 +3,7 @@
 PureScript Spec is a testing framework for Purescript, inspired by
 [hspec](http://hspec.github.io/).
 
-<img src="https://raw.githubusercontent.com/purescript-spec/purescript-spec/master/example.png" width="400" />
+<img src="example.svg" />
 
 ## Documentation
 

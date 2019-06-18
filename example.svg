@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="350" height="300">
+  <style>
+    
+    text {
+      font-family: "Lucida Console", Monaco, monospace;
+      alignment-baseline: text-before-edge;
+    }
+    
+    .describe {
+      fill: #7379d1;
+    }
+    
+    .ok, .summary-ok {
+      fill: #7c8f01;
+    }
+    
+    .pending, .pending-it {
+      fill: #35a49b;
+    }
+    
+    .summary-pending {
+      fill: #ae7f01;
+    }
+  
+  </style>
+  <text class="describe">
+    purescript-spec » Attributes
+  </text>
+  <text class="ok" x="20" y="20">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="20">
+    awesome
+  </text>
+  <text class="pending" x="20" y="40">
+    ~
+  </text>
+  <text class="pending-it" x="40" y="40">
+    feature-complete
+  </text>
+  <text class="describe" y="80">
+    purescript-spec » Features
+  </text>
+  <text class="ok" x="20" y="100">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="100">
+    runs in NodeJS
+  </text>
+  <text class="ok" x="20" y="120">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="120">
+    runs in the browser
+  </text>
+  <text class="ok" x="20" y="140">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="140">
+    supports streaming reporters
+  </text>
+  <text class="ok" x="20" y="160">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="160">
+    supports async specs
+  </text>
+  <text class="ok" x="20" y="180">
+    ✓
+  </text>
+  <text class="ok-it" x="40" y="180">
+    is PureScript 0.13.x compatible
+  </text>
+  <text class="summary-heading" y="220">
+    Summary
+  </text>
+  <text class="summary-ok" y="240">
+    6/6 tests passed
+  </text>
+  <text class="summary-pending" y="260">
+    1 test pending
+  </text>
+</svg>
