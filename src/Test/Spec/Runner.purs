@@ -195,11 +195,18 @@ run
   => Array Reporter
   -> Spec Unit
   -> Aff Unit
-run reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec
+run = runSpec' defaultConfig
 
 -- | Run the spec with the default config
 runSpec
   :: Array Reporter
   -> Spec Unit
   -> Aff Unit
-runSpec reporters spec = void $ un Identity $ runSpecT defaultConfig reporters spec
+runSpec = runSpec' defaultConfig
+
+runSpec'
+  :: Config
+  -> Array Reporter
+  -> Spec Unit
+  -> Aff Unit
+runSpec' config reporters spec = void $ un Identity $ runSpecT config reporters spec
