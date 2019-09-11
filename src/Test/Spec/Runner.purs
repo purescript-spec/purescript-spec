@@ -2,6 +2,7 @@ module Test.Spec.Runner
   ( run
   , runSpecT
   , runSpec
+  , runSpec'
   , defaultConfig
   , Config
   , TestEvents
