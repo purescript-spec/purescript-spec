@@ -49,7 +49,7 @@ then code will look like this:
 ```purescript
 main = launchAff_ $ un Identity $ runSpecT testConfig [consoleReporter] mySpec
   where
-    testConfig = { slow: 5000, timeout: Just 10000, exit: false }
+    testConfig = { slow: Milliseconds 5000.0, timeout: Just $ Milliseconds 10000.0, exit: false }
 ```
 
 ## Automatically Discovering Specs
