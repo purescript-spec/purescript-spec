@@ -5,7 +5,6 @@ import Prelude
 import Control.Monad.State (get, modify_)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(Pattern), joinWith, split)
-import Data.String.Regex (regex)
 import Data.String.Regex as Regex
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect.Exception as Error
