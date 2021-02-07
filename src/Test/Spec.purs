@@ -55,7 +55,8 @@ import Control.Monad.Writer (WriterT, execWriterT, mapWriterT, tell)
 import Control.MonadPlus (class MonadPlus)
 import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus)
-import Data.Array (any)
+import Data.Array as Array
+import Data.Foldable as Foldable
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..), either)
@@ -156,7 +157,7 @@ instance warn :: Warn (Text "Test.Spec.focus usage") => FocusWarning
 -- | Applying `focus` to a spec with focused spec items has no effect.
 focus :: forall m g i a. FocusWarning => Monad m => SpecT g i m a -> SpecT g i m a
 focus = over SpecT $ mapWriterT $ map $ map \xs ->
-  if any (any $ un Item >>> _.isFocused) xs
+  if Array.any (Foldable.any $ un Item >>> _.isFocused) xs
     then xs
     else map (bimap identity (\(Item r) -> Item r {isFocused = true})) xs
 
