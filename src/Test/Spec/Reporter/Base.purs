@@ -14,7 +14,7 @@ import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
 import Data.Either (Either(..))
 import Data.Foldable (all, for_, intercalate, traverse_)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.List (List(..), (:), reverse)
 import Data.Map (Map)
 import Data.Map as Map

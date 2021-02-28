@@ -1,5 +1,6 @@
 .psci
 .psci_modules/
+.spago/
 bower_components/
 generated-docs/
 node_modules/
