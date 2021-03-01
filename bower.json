@@ -23,7 +23,7 @@
     "purescript-prelude": "^5.0.0",
     "purescript-transformers": "^5.0.0",
     "purescript-foldable-traversable": "^5.0.0",
-    "purescript-pipes": "git://github.com/fsoikin/purescript-pipes#purescript-0.14",
+    "purescript-pipes": "^7.0.0",
     "purescript-ansi": "^6.0.0",
     "purescript-fork": "^5.0.0",
     "purescript-now": "^5.0.0"
