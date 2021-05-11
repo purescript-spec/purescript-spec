@@ -97,7 +97,7 @@ print path a = do
           $ intercalate " » " (parentSuiteName suite.path <> [suite.name])
         put s{lastPrintedSuitePath = Just suite.path}
   case a of
-    PrintTest name (Success speed ms) -> do
+    PrintTest name (Success _ _) -> do
       tellLn $ "  " <> styled Style.green "✓︎ " <> styled Style.dim name
     PrintTest name (Failure err) -> do
       tellLn $ "  " <> styled Style.red ("✗ " <> name <> ":")

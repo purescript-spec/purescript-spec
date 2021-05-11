@@ -76,7 +76,7 @@ print path = case _ of
         Speed.Fast -> ""
         _ -> styled (Speed.toStyle speed) $ " (" <> show (Int.round ms) <> "ms)"
     tellLn $ (indent path) <> styled Style.green "✓︎ " <> styled Style.dim name <> speedDetails
-  PrintTest name (Failure err) -> do
+  PrintTest name (Failure _) -> do
     {numFailures} <- modify \s -> s{numFailures = s.numFailures +1}
     tellLn $ (indent path) <> styled Style.red (show numFailures <> ") " <> name)
   PrintPending name -> do
