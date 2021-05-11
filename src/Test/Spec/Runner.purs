@@ -152,7 +152,7 @@ mergeProducers ps = do
     loop = do
       res <- lift $ try (AV.take var)
       case res of
-        Left err -> lift $ joinFiber fib
+        Left _ -> lift $ joinFiber fib
         Right e -> do
           yield e
           loop

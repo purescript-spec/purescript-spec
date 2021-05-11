@@ -66,7 +66,7 @@ printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
         State.modify_ _{crumbs = n : crumbs}
         go xs
         State.modify_ _{crumbs = crumbs}
-      S.Node (Right v) xs -> absurd v
+      S.Node (Right v) _ -> absurd v
       S.Leaf n (Just (Failure err)) -> do
         {i, crumbs} <- State.modify \s -> s{i = s.i +1}
         let label = intercalate " " (reverse $ n:crumbs)
@@ -130,12 +130,12 @@ defaultUpdate opts e = do
       Event.SuiteEnd path -> do
         modifyRunningItems $ flip Map.update path case _ of
           RunningSuite n _ -> Just $ RunningSuite n true
-          a -> Nothing
-      Event.Test Event.Sequential path name -> do
+          _ -> Nothing
+      Event.Test Event.Sequential _ _ -> do
         pure unit
       Event.Test Event.Parallel path name -> do
         modifyRunningItems $ Map.insert path $ RunningTest name Nothing
-      Event.TestEnd path name res -> do
+      Event.TestEnd path _ res -> do
         runningItem <- gets opts.getRunningItems
         case Map.lookup path runningItem of
           Just (RunningTest n _) ->

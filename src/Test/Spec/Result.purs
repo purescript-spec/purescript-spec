@@ -8,7 +8,6 @@ import Effect.Exception (Error)
 import Effect.Exception as Error
 import Test.Spec.Speed (Speed)
 
-
 data Result
   = Success Speed Milliseconds
   | Failure Error
