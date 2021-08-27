@@ -314,7 +314,7 @@ data Memoized a
 memoize :: forall a m. MonadAff m => MonadError Error m => AVar (Memoized a) -> m a -> m a
 memoize var action = do
   liftAff (AVar.take var) >>= case _ of
-    MFailed x -> throwError $ error "exception in beforeAll-hook (see previous failure)"
+    MFailed _ -> throwError $ error "exception in beforeAll-hook (see previous failure)"
     MMemoized x -> pure x <* (liftAff $ AVar.put (MMemoized x) var)
     MEmpty -> do
       res <- try action
