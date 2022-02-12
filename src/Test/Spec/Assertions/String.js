@@ -1,12 +1,12 @@
 "use strict";
 
-exports._startsWith = function (subs) {
+export function _startsWith(subs) {
   return function (str) {
     return str.startsWith(subs)
   }
 }
 
-exports._endsWith = function (subs) {
+export function _endsWith(subs) {
   return function (str) {
     return str.endsWith(subs)
   }

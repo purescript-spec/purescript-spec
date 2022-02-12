@@ -3,7 +3,7 @@
 
 // module Test.Spec.Runner
 
-exports.exit = function(code) {
+export function exit(code) {
   return function() {
     try {
       if (process && typeof process.exit === 'function') {
