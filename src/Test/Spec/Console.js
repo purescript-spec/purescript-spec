@@ -3,11 +3,11 @@
 
 // module Test.Spec.Console
 
-exports.write = function(s) {
+export function write(s) {
   return function () {
     try {
       process.stdout.write(s);
     }
     catch (e) {}
   };
-};
+}
