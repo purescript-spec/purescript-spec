@@ -4,10 +4,13 @@ node_js: 14
 env:
   - PATH=$HOME/purescript:$PATH
 install:
-  - npm install -g spago purescript@0.15.0-0 esbuild
+  - npm install -g bower spago purescript@0.15.0-0 esbuild
+  - npx bower i
 script:
   - travis_wait npx spago build
+  - travis_wait npx pulp build
   - travis_wait make run-example
+  - travis_wait npx pulp test
   - travis_wait npx spago -x test.dhall test
 
 cache:
