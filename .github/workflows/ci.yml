@@ -14,7 +14,6 @@ jobs:
       - uses: purescript-contrib/setup-purescript@main
         with:
           purescript: "unstable"
-          pulp: "unstable"
           spago: "unstable"
 
       - name: Cache PureScript dependencies
@@ -27,13 +26,14 @@ jobs:
 
       - name: Install NPM and Bower dependencies
         run: |
-          npm install --global bower esbuild
+          npm install --global bower esbuild pulp@16.0.0-0
           npx bower install
 
       - name: Build project
         run: |
           spago build
-          npx pulp build
+          rm -rf output
+          pulp build
 
       - name: Build example
         run: make run-example
@@ -41,4 +41,4 @@ jobs:
       - name: Run tests
         run: |
           spago -x test.dhall test
-          npx pulp test
+          pulp test
