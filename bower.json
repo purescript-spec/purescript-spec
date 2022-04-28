@@ -24,7 +24,7 @@
     "purescript-transformers": "^6.0.0",
     "purescript-foldable-traversable": "^6.0.0",
     "purescript-pipes": "^8.0.0",
-    "purescript-ansi": "^7.0.0",
+    "purescript-ansi": "https://github.com/thomashoneyman/purescript-ansi.git#trh/purs-0.15",
     "purescript-fork": "^6.0.0",
     "purescript-now": "^6.0.0"
   }
