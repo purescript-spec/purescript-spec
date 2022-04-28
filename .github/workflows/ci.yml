@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: purescript-contrib/setup-purescript@main
+        with:
+          purescript: "unstable"
+          pulp: "unstable"
+          spago: "unstable"
+
+      - name: Cache PureScript dependencies
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-spago-${{ hashFiles('**/*.dhall') }}
+          path: |
+            .spago
+            output
+
+      - name: Install NPM and Bower dependencies
+        run: |
+          npm install --global bower esbuild
+          npx bower install
+
+      - name: Build project
+        run: |
+          spago build
+          npx pulp build
+
+      - name: Build example
+        run: make run-example
+
+      - name: Run tests
+        run: |
+          spago -x test.dhall test
+          npx pulp test
