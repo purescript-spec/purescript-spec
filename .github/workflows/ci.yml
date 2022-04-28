@@ -32,7 +32,6 @@ jobs:
       - name: Build project
         run: |
           spago build
-          rm -rf output
           pulp build
 
       - name: Build example
