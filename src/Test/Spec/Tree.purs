@@ -27,7 +27,6 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Traversable (for, for_)
 
-
 data Tree c a
   = Node (Either String c) (Array (Tree c a))
   | Leaf String (Maybe a)
@@ -39,17 +38,19 @@ instance showGroup :: (Show c, Show a) => Show (Tree c a) where
 instance eqGroup :: (Eq c, Eq a) => Eq (Tree c a) where
   eq (Node nc1 xs1) (Node nc2 xs2) = nc1 == nc2 && xs1 == xs2
   eq (Leaf n1 t1) (Leaf n2 t2) = n1 == n2 && t1 == t2
-  eq _                    _                    = false
+  eq _ _ = false
 
-bimapTree :: forall a b c d. (Array String -> a -> b) -> (NonEmptyArray String ->c -> d) -> Tree a c -> Tree b d
+bimapTree :: forall a b c d. (Array String -> a -> b) -> (NonEmptyArray String -> c -> d) -> Tree a c -> Tree b d
 bimapTree g f = go []
   where
-    go :: Array String -> Tree a c -> Tree b d
-    go namePath spec = case spec of
-      Node d xs ->
-        let namePath' = either (snoc namePath) (const namePath) d
-        in Node (map (g namePath') d) (map (go namePath') xs)
-      Leaf n item -> Leaf n (map (f $ NEA.snoc' namePath n) item)
+  go :: Array String -> Tree a c -> Tree b d
+  go namePath spec = case spec of
+    Node d xs ->
+      let
+        namePath' = either (snoc namePath) (const namePath) d
+      in
+        Node (map (g namePath') d) (map (go namePath') xs)
+    Leaf n item -> Leaf n (map (f $ NEA.snoc' namePath n) item)
 
 instance treeBifunctor :: Bifunctor Tree where
   bimap g f = bimapTree (const g) (const f)
@@ -72,8 +73,8 @@ newtype Item m a = Item
 derive instance itemNewtype :: Newtype (Item m a) _
 
 instance itemShow :: Show (Item m a) where
-  show (Item {isFocused, isParallelizable}) =
-    "Item (" <> show {isFocused, isParallelizable, example: "Function"} <> ")"
+  show (Item { isFocused, isParallelizable }) =
+    "Item (" <> show { isFocused, isParallelizable, example: "Function" } <> ")"
 
 instance itemEq :: Eq (Item m a) where
   eq (Item a) (Item b) =
@@ -86,13 +87,11 @@ countTests g = execState (for g go) 0
   go (Node _ xs) = for_ xs go
   go (Leaf _ _) = State.modify_ (_ + 1)
 
-
 -- | Return true if all items in the tree are parallelizable
 isAllParallelizable :: forall c m a. Tree c (Item m a) -> Boolean
 isAllParallelizable = case _ of
   Node _ xs -> all isAllParallelizable xs
   Leaf _ x -> x == Nothing || (x >>= un Item >>> _.isParallelizable) == Just true
-
 
 -- | If there is at least one focused element, all paths which don't
 -- | lead to a focused element will be remove. otherwise input will
@@ -106,8 +105,8 @@ discardUnfocused ts = case mapMaybe findFocus ts of
   findFocus (Node n ts') = case mapMaybe findFocus ts' of
     [] -> Nothing
     r -> Just $ Node n r
-  findFocus t@(Leaf n (Just (Item { isFocused }))) = if isFocused then Just t else Nothing
-  findFocus (Leaf n Nothing) = Nothing
+  findFocus t@(Leaf _ (Just (Item { isFocused }))) = if isFocused then Just t else Nothing
+  findFocus (Leaf _ Nothing) = Nothing
 
 -- | Modify around action of an Item
 modifyAroundAction :: forall g a b. (ActionWith g a -> ActionWith g b) -> Item g a -> Item g b
@@ -129,6 +128,6 @@ parentSuiteName = mapMaybe (un PathItem >>> _.name)
 
 parentSuite :: Path -> Maybe { path :: Path, name :: String }
 parentSuite = flip foldr Nothing case _, _ of
-  PathItem {name: Just name}, Nothing -> Just {path: [], name}
-  PathItem {name: Nothing}, Nothing -> Nothing
-  p, Just acc -> Just acc{path = [p] <> acc.path}
+  PathItem { name: Just name }, Nothing -> Just { path: [], name }
+  PathItem { name: Nothing }, Nothing -> Nothing
+  p, Just acc -> Just acc { path = [ p ] <> acc.path }

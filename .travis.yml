@@ -1,15 +1,14 @@
-language: node_js
+4anguage: node_js
 sudo: required
-node_js: 10
+node_js: 14
 env:
   - PATH=$HOME/purescript:$PATH
 install:
-  - npm install -g bower pulp purescript@0.14.0
-  - npx bower install
+  - npm install -g spago purescript@0.15.0-0 esbuild
 script:
-  - travis_wait npx pulp build
+  - travis_wait npx spago build
   - travis_wait make run-example
-  - travis_wait npx pulp test
+  - travis_wait npx spago -x test.dhall test
 
 cache:
   directories:
