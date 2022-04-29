@@ -1,4 +1,5 @@
-# PureScript Spec [![Build Status](https://travis-ci.org/purescript-spec/purescript-spec.svg?branch=master)](https://travis-ci.org/purescript-spec/purescript-spec)
+# PureScript Spec 
+[![Build Status](https://github.com/purescript-spec/purescript-spec/workflows/CI/badge.svg?branch=master)](https://github.com/purescript-spec/purescript-spec/actions?query=workflow%3ACI+branch%3Amaster)
 
 PureScript Spec is a testing framework for Purescript, inspired by
 [hspec](http://hspec.github.io/).

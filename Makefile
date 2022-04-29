@@ -21,16 +21,16 @@ ctags:
 		> tags
 
 build-example: $(OUTPUT)
-	pulp build -I example --to $(OUTPUT)/example.js
+	npx spago bundle-app --path $(example) --to $(OUTPUT)/example.js --minify
 
 run-example: build-example
-	@NODE_PATH=$(OUTPUT) node -e "require('Main').main();"
+	npx spago run --path $(example)
 
 $(EXAMPLE_CSS): example/styles.css
 	cp example/styles.css $(EXAMPLE_CSS)
 
 example.png: build-example $(EXAMPLE_CSS)
-	@NODE_PATH=$(OUTPUT) node -e "require('Main').main();" > $(EXAMPLE_OUT)
+	npx spago run --path $(example) > $(EXAMPLE_OUT)
 
 	aha -s -f $(EXAMPLE_OUT) | awk '/head/{print "<link rel=\"stylesheet\" href=\"$(EXAMPLE_CSS)\" \>"}1' > $(EXAMPLE_HTML)
 	phantomjs example/rasterize.js $(EXAMPLE_HTML) example.png 200 4
