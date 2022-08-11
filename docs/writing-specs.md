@@ -18,7 +18,7 @@ works!
 
 ```purescript
 it "adds 1 and 1" do
-  1 + 1 `shouldEqual` 2
+  (1 + 1) `shouldEqual` 2
 ```
 
 The `shouldEqual` function, here used as an infix operator, takes two values
