@@ -1,11 +1,15 @@
 module Test.Spec.AssertionSpec where
 
 import Prelude
-import Effect.Exception (error)
+
 import Control.Monad.Error.Class (throwError)
+import Effect.Exception (error)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions as A
 import Test.Spec.Assertions.String as AS
+
+newtype MyInt = MyInt Int
+derive newtype instance Eq MyInt
 
 assertionSpec :: Spec Unit
 assertionSpec =
@@ -19,6 +23,10 @@ assertionSpec =
               "foobar" `AS.shouldContain` "foo"
             it "rejects strings that does not contain substrings" $
               A.expectError $ "baz" `AS.shouldContain` "foo"
+
+          describe "shouldEqualAny" do
+            it "any type with an Eq instance" $
+              MyInt 3 `A.shouldEqualAny` MyInt 3
 
           describe "shouldNotContain" do
             it "accepts strings that does not contain substrings" $

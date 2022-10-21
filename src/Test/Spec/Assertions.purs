@@ -1,6 +1,7 @@
 module Test.Spec.Assertions
   ( fail
   , shouldEqual
+  , shouldEqualAny
   , shouldNotEqual
   , shouldContain
   , shouldNotContain
@@ -32,6 +33,18 @@ shouldEqual
 shouldEqual v1 v2 =
   when (v1 /= v2) $
     fail $ show v1 <> " ≠ " <> show v2
+
+foreign import unsafeStringify :: forall a. a -> String
+shouldEqualAny
+  :: forall m t
+   . MonadThrow Error m
+  => Eq t
+  => t
+  -> t
+  -> m Unit
+shouldEqualAny v1 v2 =
+  when (v1 /= v2) $
+    fail $ unsafeStringify v1 <> " ≠ " <>  unsafeStringify v2
 
 shouldNotEqual
   :: forall m t
