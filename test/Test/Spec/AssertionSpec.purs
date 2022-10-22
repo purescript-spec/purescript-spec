@@ -1,11 +1,16 @@
 module Test.Spec.AssertionSpec where
 
 import Prelude
-import Effect.Exception (error)
+
 import Control.Monad.Error.Class (throwError)
+import Effect.Exception (error)
 import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (AnyShow(..))
 import Test.Spec.Assertions as A
 import Test.Spec.Assertions.String as AS
+
+newtype MyInt = MyInt Int
+derive newtype instance Eq MyInt
 
 assertionSpec :: Spec Unit
 assertionSpec =
@@ -90,3 +95,8 @@ assertionSpec =
                 f `A.shouldNotContain` notcontained
               it "rejects f that contains a" $
                 A.expectError $ f `A.shouldNotContain` contained
+
+          describe "AnyShow" do
+            describe "for a type with Eq but not Show instance" do
+              it "can wrap that type to use in assertions" $
+                (AnyShow $ MyInt 3) `A.shouldEqual` (AnyShow $ MyInt 3)
