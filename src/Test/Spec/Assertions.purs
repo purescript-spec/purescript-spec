@@ -1,25 +1,41 @@
 module Test.Spec.Assertions
-  ( fail
-  , shouldEqual
-  , shouldNotEqual
-  , shouldContain
-  , shouldNotContain
-  , shouldNotSatisfy
-  , shouldSatisfy
+  ( AnyShow(..)
   , expectError
-  , shouldReturn
+  , fail
+  , shouldContain
+  , shouldEqual
+  , shouldNotContain
+  , shouldNotEqual
   , shouldNotReturn
-  ) where
+  , shouldNotSatisfy
+  , shouldReturn
+  , shouldSatisfy
+  )
+  where
 
 import Prelude
 
 import Control.Monad.Error.Class (class MonadError, class MonadThrow, throwError, try)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, notElem, elem)
+import Data.Newtype (class Newtype)
 import Effect.Exception (Error, error)
 
 fail :: forall m. MonadThrow Error m => String -> m Unit
 fail = throwError <<< error
+
+foreign import unsafeStringify :: forall a. a -> String
+
+-- | A newtype with an unsafe `Show` instance for any type.
+-- | Useful if you want to test a type for which you cannot provide a `Show` instance.
+-- | Usage:
+-- | ```purescript
+-- | (AnyShow $ MyInt 3) `A.shouldEqual` (AnyShow $ MyInt 3)
+newtype AnyShow a = AnyShow a
+instance Newtype (AnyShow a) a
+derive newtype instance (Eq a) => Eq (AnyShow a)
+instance Show (AnyShow a) where
+  show = unsafeStringify
 
 shouldEqual
   :: forall m t
