@@ -31,6 +31,7 @@ foreign import unsafeStringify :: forall a. a -> String
 -- | Usage:
 -- | ```purescript
 -- | (AnyShow $ MyInt 3) `A.shouldEqual` (AnyShow $ MyInt 3)
+-- | ```
 newtype AnyShow a = AnyShow a
 instance Newtype (AnyShow a) a
 derive newtype instance (Eq a) => Eq (AnyShow a)
