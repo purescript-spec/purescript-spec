@@ -95,5 +95,5 @@ tcReporter = defaultReporter "" case _ of
       , "message" /\ show error
       ]
     tellLn $ testFinished ["name" /\ name]
-  Event.End _ -> tellLn ""
+  Event.End _ -> pure unit
   Event.Start _ -> pure unit
