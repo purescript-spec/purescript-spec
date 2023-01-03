@@ -1,5 +1,5 @@
 -- | Team City reporter, also the one used for intellij
-module Test.Spec.Reporter.TeamCity (tcReporter, teamcity) where
+module Test.Spec.Reporter.TeamCity (teamcityReporter, teamcity) where
 
 import Prelude
 
@@ -62,8 +62,8 @@ testFinished = teamcity "testFinished"
 testFailed :: Array (Tuple String String) -> String
 testFailed = teamcity "testFailed"
 
-tcReporter :: Reporter
-tcReporter = defaultReporter "" case _ of
+teamcityReporter :: Reporter
+teamcityReporter = defaultReporter "" case _ of
   Event.Suite _ _ name -> do
     put name
     tellLn $ testSuiteStarted [ "name" /\ name ]
