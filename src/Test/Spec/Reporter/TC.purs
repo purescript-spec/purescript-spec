@@ -8,7 +8,9 @@ import Data.Array ((:))
 import Data.Array (intercalate, last) as Array
 import Data.Int (trunc)
 import Data.Maybe (fromMaybe) as Maybe
-import Data.String as String
+import Data.String.Regex (replace') as Regex
+import Data.String.Regex.Flags (global) as Regex
+import Data.String.Regex.Unsafe (unsafeRegex) as Regex
 import Data.Time.Duration (Milliseconds(..))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -25,25 +27,16 @@ nameFromPath path = Tree.parentSuiteName path
     # Maybe.fromMaybe ""
 
 escape :: String -> String
-escape = 
-  String.replaceAll
-    (String.Pattern "|")
-    (String.Replacement "||")
-  >>> String.replaceAll
-    (String.Pattern "\n")
-    (String.Replacement "|n")
-  >>> String.replaceAll
-    (String.Pattern "'")
-    (String.Replacement "|'")
-  >>> String.replaceAll
-    (String.Pattern "\r")
-    (String.Replacement "|r")
-  >>> String.replaceAll
-    (String.Pattern "[")
-    (String.Replacement "|[")
-  >>> String.replaceAll
-    (String.Pattern "]")
-    (String.Replacement "|]")
+escape = Regex.replace'
+  (Regex.unsafeRegex "(?:[|\n\r'\\[\\]])" $ Regex.global)
+  \ match _ -> case match of
+    "|" -> "||"
+    "\n" -> "|n"
+    "\r" -> "|r"
+    "[" -> "|["
+    "]" -> "|]"
+    "'" -> "|'"
+    _ -> ""
 
 teamcity :: String -> Array (Tuple String String) -> String
 teamcity name properties = "##teamcity[" <> body <> "]"
