@@ -1,14 +1,14 @@
-module Test.Spec.Reporter.TCSpec (tcSpec) where
+module Test.Spec.Reporter.TeamCitySpec (teamcitySpec) where
 
 import Prelude
 
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Data.Tuple.Nested ((/\))
-import Test.Spec.Reporter.TC as TC
+import Test.Spec.Reporter.TeamCity as TC
 
-tcSpec :: Spec Unit
-tcSpec = describe "Team City Preorter" do
+teamcitySpec :: Spec Unit
+teamcitySpec = describe "Team City Reporter" do
   it "can print Team City Service Messages" do
     TC.teamcity "testStarted" ["name" /\ "test.name"]
       # shouldEqual "##teamcity[testStarted name='test.name']"

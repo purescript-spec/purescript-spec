@@ -1,5 +1,5 @@
 -- | Team City reporter, also the one used for intellij
-module Test.Spec.Reporter.TC (tcReporter, teamcity) where
+module Test.Spec.Reporter.TeamCity (tcReporter, teamcity) where
 
 import Prelude
 

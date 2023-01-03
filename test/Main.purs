@@ -11,7 +11,7 @@ import Test.Spec.ParallelSpec (parallelSpec)
 import Test.Spec.Reporter (specReporter)
 import Test.Spec.Runner (runSpec)
 import Test.Spec.RunnerSpec (runnerSpec)
-import Test.Spec.Reporter.TCSpec (tcSpec)
+import Test.Spec.Reporter.TeamCitySpec (teamcitySpec)
 
 main :: Effect Unit
 main = launchAff_ $ runSpec [ specReporter] do
@@ -20,4 +20,4 @@ main = launchAff_ $ runSpec [ specReporter] do
   hookSpec
   hoistSpecSpec
   parallelSpec
-  tcSpec
+  teamcitySpec
