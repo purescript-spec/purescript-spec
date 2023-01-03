@@ -10,9 +10,9 @@ import Test.Spec.Reporter.TeamCity as TC
 teamcitySpec :: Spec Unit
 teamcitySpec = describe "Team City Reporter" do
   it "can print Team City Service Messages" do
-    TC.teamcity "testStarted" ["name" /\ "test.name"]
+    TC.teamcity "testStarted" [ "name" /\ "test.name" ]
       # shouldEqual "##teamcity[testStarted name='test.name']"
   it "escapes property values" do
-    TC.teamcity "testStarted" ["name" /\ "|test\n\r[nam'e]"]
-        # shouldEqual "##teamcity[testStarted name='||test|n|r|[nam|'e|]']"
+    TC.teamcity "testStarted" [ "name" /\ "|test\n\r[nam'e]" ]
+      # shouldEqual "##teamcity[testStarted name='||test|n|r|[nam|'e|]']"
 
