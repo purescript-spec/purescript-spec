@@ -25,12 +25,13 @@ nameFromPath path = Tree.parentSuiteName path
     # Maybe.fromMaybe ""
 
 escape :: String -> String
-escape = String.replaceAll
-  (String.Pattern "|")
-  (String.Replacement "||")
+escape = 
+  String.replaceAll
+    (String.Pattern "|")
+    (String.Replacement "||")
   >>> String.replaceAll
-  (String.Pattern "\n")
-  (String.Replacement "|n")
+    (String.Pattern "\n")
+    (String.Replacement "|n")
   >>> String.replaceAll
     (String.Pattern "'")
     (String.Replacement "|'")
