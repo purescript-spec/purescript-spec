@@ -1,4 +1,6 @@
 { name = "spec"
+, repository = "https://github.com/purescript-spec/purescript-spec.git"
+, license = "MIT"
 , dependencies =
   [ "aff"
   , "ansi"
@@ -20,7 +22,6 @@
   , "now"
   , "ordered-collections"
   , "parallel"
-  , "partial"
   , "pipes"
   , "prelude"
   , "strings"
