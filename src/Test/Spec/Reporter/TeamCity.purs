@@ -52,11 +52,20 @@ message event { name, nodeId, parentNodeId } = teamcity event
 testCount :: Int -> String
 testCount count = teamcity "testCount" [ "count" /\ show count ]
 
-testSuiteStarted :: ServiceMessage () -> String
+testSuiteStarted :: forall a. ServiceMessage a -> String
 testSuiteStarted = message "testSuiteStarted"
 
-testSuiteFinished :: ServiceMessage () -> String
+testSuiteFinished :: forall a. ServiceMessage a -> String
 testSuiteFinished = message "testSuiteFinished"
+
+testStarted :: forall a. ServiceMessage a -> String
+testStarted = message "testStarted"
+
+testIgnored :: forall a. ServiceMessage a -> String
+testIgnored = message "testIgnored"
+
+testFinished :: forall a. ServiceMessage a -> String
+testFinished = message "testFinished"
 
 testFinishedIn :: WithDuration -> String
 testFinishedIn { name, nodeId, parentNodeId, duration } =
@@ -94,8 +103,17 @@ serviceMessage name' path =
   in
     { name, nodeId, parentNodeId }
 
+withDuration :: Number ->  ServiceMessage () ->WithDuration
+withDuration duration { name, nodeId, parentNodeId } =
+   { name, nodeId, parentNodeId, duration }
+
+withMessage :: String ->  ServiceMessage () -> WithMessage
+withMessage message { name, nodeId, parentNodeId } =
+   { name, nodeId, parentNodeId, message }
+
 type WithMessage = ServiceMessage (message :: String)
 type WithDuration = ServiceMessage (duration :: Number)
+
 
 idFromPath :: Path -> String
 idFromPath path = path
@@ -115,19 +133,15 @@ teamcityReporter = defaultReporter Map.empty case _ of
     tellLn $ message "testStarted" $ serviceMessage name path
   Event.Pending path name -> do
     let attributes = serviceMessage name path
-    tellLn $ message "testStarted" attributes
-    tellLn $ message "testIgnored" attributes
-    tellLn $ message "testFinished" attributes
-  Event.TestEnd path name' (Success _ (Milliseconds millies)) -> do
-    let
-      { name, nodeId, parentNodeId } = serviceMessage name' path
-      attributes = { name, nodeId, parentNodeId, duration: millies }
-    tellLn $ testFinishedIn attributes
+    tellLn $ testStarted attributes
+    tellLn $ testIgnored attributes
+    tellLn $ testFinished attributes
+  Event.TestEnd path name' (Success _ (Milliseconds millies)) ->
+    tellLn $ testFinishedIn (serviceMessage name' path
+        # withDuration millies)
   Event.TestEnd path name' (Failure error) -> do
-    let
-      { name, nodeId, parentNodeId } = serviceMessage name' path
-      attributes = { name, nodeId, parentNodeId, message: show error }
+    let attributes = serviceMessage name' path # withMessage (show error)
     tellLn $ testFailed attributes
-    tellLn $ message "testFinished" attributes
+    tellLn $ testFinished attributes
   Event.End _ -> pure unit
   Event.Start count -> tellLn $ testCount count
