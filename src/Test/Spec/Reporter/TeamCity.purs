@@ -92,6 +92,9 @@ type ServiceMessage x =
   | x
   }
 
+type WithMessage = ServiceMessage (message :: String)
+type WithDuration = ServiceMessage (duration :: Number)
+
 serviceMessage :: String -> Path -> ServiceMessage ()
 serviceMessage name' path =
   let
@@ -103,17 +106,13 @@ serviceMessage name' path =
   in
     { name, nodeId, parentNodeId }
 
-withDuration :: Number ->  ServiceMessage () ->WithDuration
+withDuration :: Number -> ServiceMessage () -> WithDuration
 withDuration duration { name, nodeId, parentNodeId } =
-   { name, nodeId, parentNodeId, duration }
+  { name, nodeId, parentNodeId, duration }
 
-withMessage :: String ->  ServiceMessage () -> WithMessage
+withMessage :: String -> ServiceMessage () -> WithMessage
 withMessage message { name, nodeId, parentNodeId } =
-   { name, nodeId, parentNodeId, message }
-
-type WithMessage = ServiceMessage (message :: String)
-type WithDuration = ServiceMessage (duration :: Number)
-
+  { name, nodeId, parentNodeId, message }
 
 idFromPath :: Path -> String
 idFromPath path = path
@@ -137,8 +136,10 @@ teamcityReporter = defaultReporter Map.empty case _ of
     tellLn $ testIgnored attributes
     tellLn $ testFinished attributes
   Event.TestEnd path name' (Success _ (Milliseconds millies)) ->
-    tellLn $ testFinishedIn (serviceMessage name' path
-        # withDuration millies)
+    tellLn $ testFinishedIn
+      ( serviceMessage name' path
+          # withDuration millies
+      )
   Event.TestEnd path name' (Failure error) -> do
     let attributes = serviceMessage name' path # withMessage (show error)
     tellLn $ testFailed attributes
