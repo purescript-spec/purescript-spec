@@ -96,9 +96,8 @@ type WithMessage = ServiceMessage (message :: String)
 type WithDuration = ServiceMessage (duration :: Number)
 
 serviceMessage :: String -> Path -> ServiceMessage ()
-serviceMessage name' path =
+serviceMessage name path =
   let
-    name = name'
     nodeId = idFromPath path
     parentNodeId = parentSuite path
       <#> _.path
