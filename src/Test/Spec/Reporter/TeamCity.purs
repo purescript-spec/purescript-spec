@@ -42,8 +42,8 @@ teamcity name properties = "##teamcity[" <> body <> "]"
   body = name : (properties <#> renderProperty) # Array.intercalate " "
   renderProperty (key /\ value) = key <> "='" <> escape value <> "'"
 
-message :: forall a. String -> ServiceMessage a -> String
-message event { name, nodeId, parentNodeId } = teamcity event
+teamcity' :: forall a. String -> ServiceMessage a -> String
+teamcity' event { name, nodeId, parentNodeId } = teamcity event
   [ "name" /\ name
   , "nodeId" /\ nodeId
   , "parentNodeId" /\ (fromMaybe "0" parentNodeId)
@@ -53,19 +53,19 @@ testCount :: Int -> String
 testCount count = teamcity "testCount" [ "count" /\ show count ]
 
 testSuiteStarted :: forall a. ServiceMessage a -> String
-testSuiteStarted = message "testSuiteStarted"
+testSuiteStarted = teamcity' "testSuiteStarted"
 
 testSuiteFinished :: forall a. ServiceMessage a -> String
-testSuiteFinished = message "testSuiteFinished"
+testSuiteFinished = teamcity' "testSuiteFinished"
 
 testStarted :: forall a. ServiceMessage a -> String
-testStarted = message "testStarted"
+testStarted = teamcity' "testStarted"
 
 testIgnored :: forall a. ServiceMessage a -> String
-testIgnored = message "testIgnored"
+testIgnored = teamcity' "testIgnored"
 
 testFinished :: forall a. ServiceMessage a -> String
-testFinished = message "testFinished"
+testFinished = teamcity' "testFinished"
 
 testFinishedIn :: WithDuration -> String
 testFinishedIn { name, nodeId, parentNodeId, duration } =
@@ -130,7 +130,7 @@ teamcityReporter = defaultReporter Map.empty case _ of
     name <- get <#> Map.lookup path <#> Maybe.fromMaybe ""
     tellLn $ testSuiteFinished $ serviceMessage name path
   Event.Test _ path name -> do
-    tellLn $ message "testStarted" $ serviceMessage name path
+    tellLn $ teamcity' "testStarted" $ serviceMessage name path
   Event.Pending path name -> do
     let attributes = serviceMessage name path
     tellLn $ testStarted attributes
