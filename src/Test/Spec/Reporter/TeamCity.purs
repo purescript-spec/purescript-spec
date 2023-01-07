@@ -72,7 +72,7 @@ teamcityReporter = defaultReporter "" case _ of
     put $ nameFromPath path
     tellLn $ testSuiteFinished [ "name" /\ name ]
   Event.Test _ _ name ->
-    tellLn $ testSuiteStarted [ "name" /\ name ]
+    tellLn $ testStarted [ "name" /\ name ]
   Event.Pending _ name -> do
     tellLn $ testStarted [ "name" /\ name ]
     tellLn $ testIgnored [ "name" /\ name ]
