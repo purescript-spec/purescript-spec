@@ -4,7 +4,6 @@ module Test.Spec.Reporter.TeamCity (teamcityReporter, teamcity) where
 import Prelude
 
 import Control.Monad.State (get, modify)
-import Data.Array ((:))
 import Data.Array (intercalate) as Array
 import Data.Int (trunc)
 import Data.Map.Internal as Map
@@ -15,8 +14,6 @@ import Data.String.Regex (replace') as Regex
 import Data.String.Regex.Flags (global) as Regex
 import Data.String.Regex.Unsafe (unsafeRegex) as Regex
 import Data.Time.Duration (Milliseconds(..))
-import Data.Tuple (Tuple)
-import Data.Tuple.Nested ((/\))
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
@@ -36,54 +33,46 @@ escape = Regex.replace'
     "'" -> "|'"
     _ -> ""
 
-teamcity :: String -> Array (Tuple String String) -> String
-teamcity name properties = "##teamcity[" <> body <> "]"
-  where
-  body = name : (properties <#> renderProperty) # Array.intercalate " "
-  renderProperty (key /\ value) = key <> "='" <> escape value <> "'"
+teamcity :: forall a. String -> ServiceMessage a -> String
+teamcity = teamcity' ""
 
-teamcity' :: forall a. String -> ServiceMessage a -> String
-teamcity' event { name, nodeId, parentNodeId } = teamcity event
-  [ "name" /\ name
-  , "nodeId" /\ nodeId
-  , "parentNodeId" /\ (fromMaybe "0" parentNodeId)
-  ]
+teamcity' :: forall a. String -> String -> ServiceMessage a -> String
+teamcity' rest event { name, nodeId, parentNodeId } = "##teamcity["
+  <> event
+  <> "name" := name
+  <> "nodeId" := nodeId
+  <> "parentNodeId" := fromMaybe "0" parentNodeId
+  <> rest
+  <> "]"
+
+property :: String -> String -> String
+property key value = " " <> key <> "='" <> escape value <> "'"
+
+infix 7 property as :=
 
 testCount :: Int -> String
-testCount count = teamcity "testCount" [ "count" /\ show count ]
+testCount count = "##teamcity[testCount count='" <> show count <> "']"
 
 testSuiteStarted :: forall a. ServiceMessage a -> String
-testSuiteStarted = teamcity' "testSuiteStarted"
+testSuiteStarted = teamcity' "" "testSuiteStarted"
 
 testSuiteFinished :: forall a. ServiceMessage a -> String
-testSuiteFinished = teamcity' "testSuiteFinished"
+testSuiteFinished = teamcity' "" "testSuiteFinished"
 
 testStarted :: forall a. ServiceMessage a -> String
-testStarted = teamcity' "testStarted"
+testStarted = teamcity' "" "testStarted"
 
 testIgnored :: forall a. ServiceMessage a -> String
-testIgnored = teamcity' "testIgnored"
+testIgnored = teamcity' "" "testIgnored"
 
 testFinished :: forall a. ServiceMessage a -> String
-testFinished = teamcity' "testFinished"
+testFinished = teamcity' "" "testFinished"
 
 testFinishedIn :: WithDuration -> String
-testFinishedIn { name, nodeId, parentNodeId, duration } =
-  teamcity "testFinished"
-    [ "name" /\ name
-    , "nodeId" /\ nodeId
-    , "duration" /\ show (trunc duration)
-    , "parentNodeId" /\ (fromMaybe "0" parentNodeId)
-    ]
+testFinishedIn d = teamcity' ("duration" := (show $ trunc d.duration)) "testFinished" d
 
 testFailed :: WithMessage -> String
-testFailed { name, nodeId, parentNodeId, message } =
-  teamcity "testFailed"
-    [ "name" /\ name
-    , "nodeId" /\ nodeId
-    , "message" /\ message
-    , "parentNodeId" /\ (fromMaybe "0" parentNodeId)
-    ]
+testFailed d = teamcity' ("message" := d.message) "testFailed" d
 
 type ServiceMessage x =
   { name :: String
@@ -128,19 +117,19 @@ teamcityReporter = defaultReporter Map.empty case _ of
     name <- get <#> Map.lookup path <#> Maybe.fromMaybe ""
     tellLn $ testSuiteFinished $ serviceMessage name path
   Event.Test _ path name -> do
-    tellLn $ teamcity' "testStarted" $ serviceMessage name path
+    tellLn $ testStarted $ serviceMessage name path
   Event.Pending path name -> do
     let attributes = serviceMessage name path
     tellLn $ testStarted attributes
     tellLn $ testIgnored attributes
     tellLn $ testFinished attributes
-  Event.TestEnd path name' (Success _ (Milliseconds millies)) ->
+  Event.TestEnd path name (Success _ (Milliseconds millies)) ->
     tellLn $ testFinishedIn
-      ( serviceMessage name' path
+      ( serviceMessage name path
           # withDuration millies
       )
-  Event.TestEnd path name' (Failure error) -> do
-    let attributes = serviceMessage name' path # withMessage (show error)
+  Event.TestEnd path name (Failure error) -> do
+    let attributes = serviceMessage name path # withMessage (show error)
     tellLn $ testFailed attributes
     tellLn $ testFinished attributes
   Event.End _ -> pure unit
