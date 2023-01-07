@@ -3,10 +3,11 @@ module Test.Spec.Reporter.TeamCity (teamcityReporter, teamcity) where
 
 import Prelude
 
-import Control.Monad.State (get, put)
+import Control.Monad.State (get, modify)
 import Data.Array ((:))
-import Data.Array (intercalate, last) as Array
+import Data.Array (intercalate) as Array
 import Data.Int (trunc)
+import Data.Map.Internal as Map
 import Data.Maybe (fromMaybe) as Maybe
 import Data.String.Regex (replace') as Regex
 import Data.String.Regex.Flags (global) as Regex
@@ -19,12 +20,6 @@ import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
 import Test.Spec.Runner.Event (Event(..)) as Event
-import Test.Spec.Tree as Tree
-
-nameFromPath :: Tree.Path -> String
-nameFromPath path = Tree.parentSuiteName path
-  # Array.last
-  # Maybe.fromMaybe ""
 
 escape :: String -> String
 escape = Regex.replace'
@@ -43,6 +38,9 @@ teamcity name properties = "##teamcity[" <> body <> "]"
   where
   body = name : (properties <#> renderProperty) # Array.intercalate " "
   renderProperty (key /\ value) = key <> "='" <> escape value <> "'"
+
+testCount :: Int -> String
+testCount count = teamcity "testCount" [ "count" /\ show count ]
 
 testSuiteStarted :: Array (Tuple String String) -> String
 testSuiteStarted = teamcity "testSuiteStarted"
@@ -63,13 +61,12 @@ testFailed :: Array (Tuple String String) -> String
 testFailed = teamcity "testFailed"
 
 teamcityReporter :: Reporter
-teamcityReporter = defaultReporter "" case _ of
-  Event.Suite _ _ name -> do
-    put name
+teamcityReporter = defaultReporter Map.empty case _ of
+  Event.Suite _ path name -> do
+    void $ modify $ Map.insert path name
     tellLn $ testSuiteStarted [ "name" /\ name ]
   Event.SuiteEnd path -> do
-    name <- get
-    put $ nameFromPath path
+    name <- get <#> Map.lookup path <#> Maybe.fromMaybe ""
     tellLn $ testSuiteFinished [ "name" /\ name ]
   Event.Test _ _ name ->
     tellLn $ testStarted [ "name" /\ name ]
@@ -89,4 +86,4 @@ teamcityReporter = defaultReporter "" case _ of
       ]
     tellLn $ testFinished [ "name" /\ name ]
   Event.End _ -> pure unit
-  Event.Start _ -> pure unit
+  Event.Start count -> tellLn $ testCount count
