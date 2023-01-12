@@ -5,10 +5,10 @@ import Prelude
 
 import Control.Monad.State (get, modify)
 import Data.Array (intercalate) as Array
+import Data.Foldable (for_)
 import Data.Int (trunc)
 import Data.Map.Internal as Map
 import Data.Maybe (Maybe, fromMaybe)
-import Data.Maybe (fromMaybe) as Maybe
 import Data.Newtype (unwrap)
 import Data.String.Regex (replace') as Regex
 import Data.String.Regex.Flags (global) as Regex
@@ -114,8 +114,9 @@ teamcityReporter = defaultReporter Map.empty case _ of
     void $ modify $ Map.insert path name
     tellLn $ testSuiteStarted $ serviceMessage name path
   Event.SuiteEnd path -> do
-    name <- get <#> Map.lookup path <#> Maybe.fromMaybe ""
-    tellLn $ testSuiteFinished $ serviceMessage name path
+    maybeName <- get <#> Map.lookup path
+    for_ maybeName \name -> do
+      tellLn $ testSuiteFinished $ serviceMessage name path
   Event.Test _ path name -> do
     tellLn $ testStarted $ serviceMessage name path
   Event.Pending path name -> do
