@@ -4,22 +4,27 @@ module Test.Spec.Reporter.TeamCity (teamcityReporter, teamcity) where
 import Prelude
 
 import Control.Monad.State (get, modify)
-import Data.Array (intercalate) as Array
 import Data.Foldable (for_)
 import Data.Int (trunc)
-import Data.Map.Internal as Map
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (unwrap)
-import Data.String.Regex (replace') as Regex
-import Data.String.Regex.Flags (global) as Regex
-import Data.String.Regex.Unsafe (unsafeRegex) as Regex
+import Data.String.Pattern (Pattern(Pattern), Replacement(Replacement))
 import Data.Time.Duration (Milliseconds(..))
+import Effect.Exception (Error)
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
-import Test.Spec.Runner.Event (Event(..)) as Event
 import Test.Spec.Tree (Path, parentSuite)
+import Data.Array (intercalate) as Array
+import Effect.Exception (message, stack) as Error
+import Test.Spec.Runner.Event (Event(..)) as Event
+import Data.Map.Internal as Map
+import Data.String.Regex (replace') as Regex
+import Data.String.Regex.Flags (global) as Regex
+import Data.String.Regex.Unsafe (unsafeRegex) as Regex
+import Data.String.CodeUnits (contains, drop, dropRight, dropWhile, take, takeWhile) as String
+import Data.String.Common (replaceAll) as String
 
 escape :: String -> String
 escape = Regex.replace'
@@ -71,8 +76,43 @@ testFinished = teamcity' "" "testFinished"
 testFinishedIn :: WithDuration -> String
 testFinishedIn d = teamcity' ("duration" := (show $ trunc d.duration)) "testFinished" d
 
-testFailed :: WithMessage -> String
-testFailed d = teamcity' ("message" := d.message) "testFailed" d
+testFailed :: WithMessage -> Error -> String
+testFailed d e =
+  let
+    message = Error.message e
+    isEquals = String.contains (Pattern "≠") message
+  in
+    if isEquals then
+      let
+        readString string = string
+          # String.replaceAll (Pattern "\\n") (Replacement "\n")
+          # String.drop 1
+          # String.dropRight 1
+        read s =
+          if String.take 1 s == "\"" then readString s
+          else s
+
+        expected = message
+          # String.takeWhile (_ /= '≠')
+          # String.dropRight 1
+          # read
+
+        actual = message
+          # String.dropWhile (_ /= '≠')
+          # String.drop 2
+          # String.replaceAll (Pattern "\\n") (Replacement "\n")
+          # read
+      in
+        teamcity'
+          ( "type" := "comparisonFailure"
+              <> "details" := (Error.stack e # fromMaybe "")
+              <> "message" := message
+              <> "expected" := expected
+              <> "actual" := actual
+          )
+          "testFailed"
+          d
+    else teamcity' ("message" := d.message) "testFailed" d
 
 type ServiceMessage x =
   { name :: String
@@ -131,7 +171,7 @@ teamcityReporter = defaultReporter Map.empty case _ of
       )
   Event.TestEnd path name (Failure error) -> do
     let attributes = serviceMessage name path # withMessage (show error)
-    tellLn $ testFailed attributes
+    tellLn $ testFailed attributes error
     tellLn $ testFinished attributes
   Event.End _ -> pure unit
   Event.Start count -> tellLn $ testCount count
