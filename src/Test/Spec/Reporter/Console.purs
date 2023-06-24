@@ -6,10 +6,10 @@ import Control.Monad.State (class MonadState, get, put)
 import Control.Monad.Writer (class MonadWriter)
 import Data.Foldable (for_, intercalate)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing)
+import Data.Show.Generic (genericShow)
 import Effect.Exception as Error
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultUpdate)

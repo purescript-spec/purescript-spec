@@ -14,11 +14,11 @@ import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
 import Data.Either (Either(..))
 import Data.Foldable (all, for_, intercalate, traverse_)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.List (List(..), (:), reverse)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..), uncurry)
 import Effect.Class (liftEffect)
 import Effect.Exception as Error

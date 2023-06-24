@@ -6,11 +6,11 @@ import Control.Monad.State (class MonadState, get, modify)
 import Control.Monad.Writer (class MonadWriter)
 import Data.Array (length)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing)
+import Data.Show.Generic (genericShow)
 import Data.Time.Duration (Milliseconds(..))
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultSummary, defaultUpdate)

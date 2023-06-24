@@ -10,8 +10,10 @@ import Data.Newtype (un)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
 import Test.Spec (Item(..), Spec, SpecT, Tree(..), collect, describe, it)
-import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Assertions (fail, shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
+import Test.Spec.Result (Result(..))
+import Test.Spec.Runner (defaultConfig, runSpecT)
 
 runnerSpec :: Spec Unit
 runnerSpec =
@@ -53,6 +55,21 @@ runnerSpec =
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
+        it "supports fail-fast" do
+          let config = defaultConfig { exit = false, failFast = true }
+          res <- un Identity $ runSpecT config [] $
+            describe "A test" do
+              it "fails" $ 1 `shouldEqual` 2
+              it "also fails" $ 1 `shouldEqual` 2
+              it "succeeds" $ 1 `shouldEqual` 1
+              it "fails again" $ 1 `shouldEqual` 2
+
+          case res of
+            [Leaf "A test fails" (Just (Failure _))] ->
+              pure unit
+            unexpectedResult ->
+              fail $ "Got unexpected result: " <> show unexpectedResult
+
   where
     runSpecFocused :: SpecT Identity Unit Identity Unit -> Array (Tree Unit Boolean)
     runSpecFocused t = un Identity (collect t) <#> (bimap (const unit) (un Item >>> _.isFocused))

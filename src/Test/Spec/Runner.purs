@@ -16,14 +16,14 @@ import Control.Monad.Trans.Class (lift)
 import Control.Parallel (parTraverse, parallel, sequential)
 import Data.Array (groupBy, mapWithIndex)
 import Data.Array.NonEmpty as NEA
-import Data.DateTime.Instant (unInstant)
+import Data.DateTime.Instant (diff)
 import Data.Either (Either(..), either)
-import Data.Foldable (foldl)
-import Data.Function (on)
+import Data.Foldable (foldl, for_)
 import Data.Identity (Identity(..))
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
+import Data.String (joinWith)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (class Traversable, for)
 import Effect (Effect)
@@ -32,9 +32,9 @@ import Effect.Aff.AVar as AV
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Now (now)
-import Pipes ((>->), yield)
-import Pipes.Core (Pipe, Producer, (//>))
-import Pipes.Core (runEffectRec) as P
+import Pipes (await, yield, (>->))
+import Pipes.Core (Producer, Pipe, (//>))
+import Pipes.Core (runEffect, runEffectRec) as P
 import Prim.TypeError (class Warn, Text)
 import Test.Spec (Item(..), Spec, SpecT, SpecTree, Tree(..), collect)
 import Test.Spec.Console as Console
@@ -45,14 +45,24 @@ import Test.Spec.Speed (speedOf)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable)
+import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable, parentSuite, parentSuiteName)
 
 foreign import exit :: Int -> Effect Unit
 
 type Config =
   { slow :: Milliseconds
+  -- ^ Threshold of time beyond which a test is considered "slow".
+
   , timeout :: Maybe Milliseconds
+  -- ^ An optional timeout, applied to each individual test. When omitted, tests
+  -- are allowed to run forever.
+
   , exit :: Boolean
+  -- ^ When `true`, the runner will exit the Node process after running tests.
+  -- If `false`, the runner will merely return test results.
+
+  , failFast :: Boolean
+  -- ^ When `true`, first failed test stops the whole run.
   }
 
 defaultConfig :: Config
@@ -60,6 +70,7 @@ defaultConfig =
   { slow: Milliseconds 75.0
   , timeout: Just $ Milliseconds 2000.0
   , exit: true
+  , failFast: false
   }
 
 makeTimeout
@@ -120,7 +131,7 @@ _run config = collect >>> map \tests -> do
           Just t -> timeout t example
           _      -> example
         end <- liftEffect now
-        let duration = Milliseconds $ on (-) (unInstant >>> un Milliseconds) end start
+        let duration = end `diff` start
         let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
         yield $ Event.TestEnd path name res
         pure [ Leaf name $ Just res ]
@@ -175,9 +186,8 @@ runSpecT
   -> m (Aff (Array (Tree Void Result)))
 runSpecT config reporters spec = _run config spec <#> \runner -> do
   let
-    drain = const (pure unit)
-    events = foldl (>->) runner reporters
-    reportedEvents = P.runEffectRec $ events //> drain
+    events = foldl (>->) runner $ [failFast] <> reporters
+    reportedEvents = P.runEffect $ events //> \_ -> pure unit
   if config.exit
     then try reportedEvents >>= case _ of
       Left err -> do
@@ -189,6 +199,24 @@ runSpecT config reporters spec = _run config spec <#> \runner -> do
         exit code
         pure results
     else reportedEvents
+
+  where
+    failFast = do
+      event <- await
+      yield event
+      case event of
+        Event.TestEnd path name res@(Failure _) | config.failFast -> do
+          let tree = [ Leaf (joinWith " " $ parentSuiteName path <> [name]) (Just res) ]
+          endAllParentSuites path
+          yield $ Event.End tree
+          pure tree
+        _ ->
+          failFast
+
+    endAllParentSuites path =
+      for_ (parentSuite path) \s -> do
+        yield $ Event.SuiteEnd s.path
+        endAllParentSuites s.path
 
 -- | Run the spec with the default config
 run
