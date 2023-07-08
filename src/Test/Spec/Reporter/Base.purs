@@ -85,7 +85,7 @@ scanWithStateM step begin = do
   go x
   where
     go x = do
-        a  <- await
+        a <- await
         yield a
         x' <- lift (step x a)
         go $ x'
