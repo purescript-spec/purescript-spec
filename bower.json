@@ -19,6 +19,7 @@
         "purescript-arrays": "^v7.1.0",
         "purescript-avar": "^v5.0.0",
         "purescript-bifunctors": "^v6.0.0",
+        "purescript-console": "^v6.0.0",
         "purescript-control": "^v6.0.0",
         "purescript-datetime": "^v6.1.0",
         "purescript-debug": "^v6.0.2",
