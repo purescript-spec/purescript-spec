@@ -23,14 +23,14 @@ import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
 import Node.Process (cwd)
 import Node.Stream as Stream
-import Test.Spec (SpecT, afterAll, describe, focus, it)
+import Test.Spec (SpecT, afterAll, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 -- | Reads the contents of `/integration-tests/cases` and turns each
 -- | subdirectory into a test case. See `/integration-tests/cases/README` for
 -- | more details.
 integrationSpecs :: SpecT Aff Unit Aff Unit
-integrationSpecs = focus do
+integrationSpecs = do
   { runFile, cleanupEnvironment } <- liftEffect $ prepareEnvironment { debug: false }
 
   afterAll (\_ -> cleanupEnvironment) $

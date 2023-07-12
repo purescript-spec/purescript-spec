@@ -22,7 +22,7 @@ data Event
   | Test Execution Path Name
   | TestEnd Path Name Result
   | Pending Path Name
-  | End (Array (Tree Void Result))
+  | End (Array (Tree String Void Result))
 
 instance showEvent :: Show Event where
   show = case _ of

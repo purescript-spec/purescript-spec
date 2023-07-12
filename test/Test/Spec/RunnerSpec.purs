@@ -7,13 +7,17 @@ import Data.Either (Either(..))
 import Data.Identity (Identity(..))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (un)
+import Data.String as Str
 import Data.Time.Duration (Milliseconds(..))
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (delay)
 import Test.Spec (Item(..), Spec, SpecT, Tree(..), collect, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Result (Result(..))
-import Test.Spec.Runner (defaultConfig, runSpecT)
+import Test.Spec.Runner (TreeFilter(..), defaultConfig, runSpecT)
+import Test.Spec.Tree (annotateWithPaths, filterTrees, mapTreeAnnotations, parentSuiteName)
 
 runnerSpec :: Spec Unit
 runnerSpec =
@@ -69,7 +73,53 @@ runnerSpec =
               pure unit
             unexpectedResult ->
               fail $ "Got unexpected result: " <> show unexpectedResult
+        it "supports tree filtering" do
+          let config = defaultConfig
+                { exit = false
+                , filterTree = TreeFilter \trees -> trees
+                    # annotateWithPaths                     -- Give every node a path
+                    # filterTrees (\(name /\ path) _ ->     -- Use the path for filtering nodes
+                        parentSuiteName path <> [name]
+                        # Str.joinWith " "
+                        # Str.contains (Str.Pattern "a b")  -- Leave only nodes that have "a b" in their path somewhere
+                      )
+                    <#> mapTreeAnnotations fst              -- Drop the paths from the tree
+                }
+
+          res <- un Identity $ runSpecT config [] do
+            describe "aaa" do
+              it "bbb" $ pure unit
+              it "ccc" $ fail "boom"
+            describe "foo" do
+              it "bbb" $ fail "boom"
+              it "ccc" $ fail "boom"
+              it "cccb aaa" $ pure unit
+              describe "bara" do
+                it "ccc" $ fail "boom"
+                it "bob" $ pure unit
+            describe "baa" $
+              describe "baa" $
+                it "foo" $ pure unit
+
+          (map mapSuccess <$> res) `shouldEqual`
+            [ Node (Left "aaa")
+              [ Leaf "bbb" (Just true)
+              ]
+            , Node (Left "foo")
+              [ Node (Left "bara")
+                [ Leaf "bob" (Just true)
+                ]
+              ]
+            , Node (Left "baa")
+              [ Node (Left "baa")
+                [ Leaf "foo" (Just true)
+                ]
+              ]
+            ]
 
   where
-    runSpecFocused :: SpecT Identity Unit Identity Unit -> Array (Tree Unit Boolean)
+    runSpecFocused :: SpecT Identity Unit Identity Unit -> Array (Tree String Unit Boolean)
     runSpecFocused t = un Identity (collect t) <#> (bimap (const unit) (un Item >>> _.isFocused))
+
+    mapSuccess (Success _ _) = true
+    mapSuccess (Failure _) = false

@@ -21,12 +21,12 @@ instance semigroupCount :: Semigroup Summary where
 instance monoidCount :: Monoid Summary where
   mempty = Count zero
 
-summarize :: forall a. Array (Tree a Result) -> Summary
+summarize :: ∀ n a. Array (Tree n a Result) -> Summary
 summarize = foldMap case _ of
   (Leaf _ (Just (Success _ _))) -> Count { passed: 1, failed: 0, pending: 0 }
   (Leaf _ (Just (Failure _))) -> Count { passed: 0, failed: 1, pending: 0 }
   (Leaf _ Nothing) -> Count { passed: 0, failed: 0, pending: 1 }
   (Node _ dgs) -> summarize dgs
 
-successful :: forall a. Array (Tree a Result) -> Boolean
+successful :: ∀ n a. Array (Tree n a Result) -> Boolean
 successful groups = (un Count $ summarize groups).failed == 0

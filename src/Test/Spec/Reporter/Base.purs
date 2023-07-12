@@ -14,12 +14,12 @@ import Control.Monad.Writer (class MonadWriter, Writer, runWriter)
 import Data.Either (Either(..))
 import Data.Foldable (all, for_, intercalate, traverse_)
 import Data.Generic.Rep (class Generic)
-import Data.List (List(..), (:), reverse)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..), uncurry)
+import Data.Tuple.Nested (type (/\), (/\))
 import Effect.Class (liftEffect)
 import Effect.Exception as Error
 import Pipes (await, yield)
@@ -36,12 +36,12 @@ import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
-import Test.Spec.Tree (Path)
+import Test.Spec.Tree (Path, annotateWithPaths, parentSuiteName)
 
 
 defaultSummary :: forall m
    . MonadWriter String m
-  => Array (Tree Void Result)
+  => Array (Tree String Void Result)
   -> m Unit
 defaultSummary xs = do
   case Summary.summarize xs of
@@ -55,21 +55,17 @@ defaultSummary xs = do
 printFailures
   :: forall m
    . MonadWriter String m
-  => Array (Tree Void Result)
+  => Array (Tree String Void Result)
   -> m Unit
-printFailures xs' = evalStateT (go xs') {i: 0, crumbs: Nil}
+printFailures xs' = evalStateT (go $ annotateWithPaths xs') 0
   where
-    go :: Array (Tree Void Result) -> StateT { i :: Int, crumbs :: List String } m Unit
+    go :: Array (Tree (String /\ Path) Void Result) -> StateT Int m Unit
     go = traverse_ case _ of
-      S.Node (Left n) xs -> do
-        {crumbs} <- State.get
-        State.modify_ _{crumbs = n : crumbs}
-        go xs
-        State.modify_ _{crumbs = crumbs}
+      S.Node (Left _) xs -> go xs
       S.Node (Right v) _ -> absurd v
-      S.Leaf n (Just (Failure err)) -> do
-        {i, crumbs} <- State.modify \s -> s{i = s.i +1}
-        let label = intercalate " " (reverse $ n:crumbs)
+      S.Leaf (n /\ path) (Just (Failure err)) -> do
+        i <- State.modify $ add 1
+        let label = intercalate " " (parentSuiteName path <> [n])
         tellLn $ show i <> ") " <> label
         tellLn $ styled Style.red $ Style.indent 2 <> Error.message err
       S.Leaf _ _ -> pure unit

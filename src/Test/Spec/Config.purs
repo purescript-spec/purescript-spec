@@ -1,5 +1,6 @@
 module Test.Spec.Config
   ( Config
+  , TreeFilter(..)
   , defaultConfig
   )
   where
@@ -8,6 +9,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Milliseconds(..))
+import Test.Spec (SpecTree)
 
 type Config =
   { slow :: Milliseconds
@@ -23,7 +25,13 @@ type Config =
 
   , failFast :: Boolean
   -- ^ When `true`, first failed test stops the whole run.
+
+  , filterTree :: TreeFilter
+  -- ^ The spec tree goes through this function before execution. Can be used to
+  -- filter out test cases, rearrange, annotate, etc.
   }
+
+newtype TreeFilter = TreeFilter (∀ g i. Array (SpecTree g i) -> Array (SpecTree g i))
 
 defaultConfig :: Config
 defaultConfig =
@@ -31,4 +39,5 @@ defaultConfig =
   , timeout: Just $ Milliseconds 2000.0
   , exit: true
   , failFast: false
+  , filterTree: TreeFilter identity
   }

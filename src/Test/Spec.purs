@@ -71,7 +71,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (Error)
 import Prim.TypeError (class Warn, Text)
 import Test.Spec.Tree (ActionWith, Item(..), Tree(..)) as Reexport
-import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTree, discardUnfocused, modifyAroundAction)
+import Test.Spec.Tree (ActionWith, Item(..), Tree(..), bimapTreeWithPaths, discardUnfocused, modifyAroundAction)
 
 
 type Spec a = SpecT Aff Unit Identity a
@@ -98,7 +98,10 @@ derive newtype instance monadAskSpecT :: MonadAsk r m => MonadAsk r (SpecT g i m
 derive newtype instance monadReaderSpecT :: MonadReader r m => MonadReader r (SpecT g i m)
 derive newtype instance monadStateSpecT :: MonadState s m => MonadState s (SpecT g i m)
 
-type SpecTree m a = Tree (ActionWith m a) (Item m a)
+-- | A specialization of `Tree` for the tree of actual tests. While `Tree` is a
+-- | tree of abstract things, `SpecTree` is a tree of tests, each represented by
+-- | `Item`.
+type SpecTree m a = Tree String (ActionWith m a) (Item m a)
 
 mapSpecTree
   :: forall m m' g g' i a i'
@@ -112,7 +115,7 @@ mapSpecTree g f = over SpecT $ mapWriterT $ g >>> map (map $ map f)
 data ComputationType = CleanUpWithContext (Array String) | TestWithName (NonEmptyArray String)
 
 hoistSpec :: forall m' m i a b. Monad m' => (m ~> m') -> (ComputationType -> a ~> b) -> SpecT a i m ~> SpecT b i m'
-hoistSpec onM f = mapSpecTree onM $ bimapTree onCleanUp onTest
+hoistSpec onM f = mapSpecTree onM $ bimapTreeWithPaths onCleanUp onTest
   where
     onCleanUp :: Array String -> (ActionWith a i) -> ActionWith b i
     onCleanUp name around' = \i -> f (CleanUpWithContext name) (around' i)

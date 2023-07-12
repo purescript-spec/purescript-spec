@@ -1,13 +1,13 @@
- [31m1) one[0m
- two
-  [32m✓︎ [0m[2mfirst[0m
-  [31m2) second[0m
- three
-  1
-   [31m3) uno[0m
-   [32m✓︎ [0m[2mdos[0m
-  2
-   [32m✓︎ [0m[2mein[0m
+[31m1) one[0m
+two
+ [32m✓︎ [0m[2mfirst[0m
+ [31m2) second[0m
+three
+ 1
+  [31m3) uno[0m
+  [32m✓︎ [0m[2mdos[0m
+ 2
+  [32m✓︎ [0m[2mein[0m
 [32m3 passing[0m
 [31m3 failed[0m
 
