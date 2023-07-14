@@ -1,0 +1,6 @@
+ [32m✓︎ [0m[2mpasses quickly[0m
+ [31m1) times out[0m
+[31m1 failed[0m
+
+1) times out
+[31m  test timed out after 10ms[0m

@@ -21,7 +21,7 @@ ctags:
 		> tags
 
 build-example: $(OUTPUT)
-	npx spago bundle-app --path $(example) --to $(OUTPUT)/example.js --minify
+	npx spago bundle-app --path $(example) --to $(OUTPUT)/example.js --minify --platform=node
 
 run-example: build-example
 	npx spago run --path $(example)

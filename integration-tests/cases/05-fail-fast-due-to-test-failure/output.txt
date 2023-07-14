@@ -1,0 +1,6 @@
+ [32m✓︎ [0m[2mpasses[0m
+ [31m1) fails[0m
+[31m1 failed[0m
+
+1) fails
+[31m  This is a failing test[0m

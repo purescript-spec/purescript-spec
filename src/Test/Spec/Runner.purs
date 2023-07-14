@@ -3,10 +3,9 @@ module Test.Spec.Runner
   , runSpecT
   , runSpec
   , runSpec'
-  , defaultConfig
-  , Config
   , TestEvents
   , Reporter
+  , module Test.Spec.Config
   ) where
 
 import Prelude
@@ -37,6 +36,7 @@ import Pipes.Core (Producer, Pipe, (//>))
 import Pipes.Core (runEffect, runEffectRec) as P
 import Prim.TypeError (class Warn, Text)
 import Test.Spec (Item(..), Spec, SpecT, SpecTree, Tree(..), collect)
+import Test.Spec.Config (Config, defaultConfig)
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
@@ -48,30 +48,6 @@ import Test.Spec.Summary (successful)
 import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable, parentSuite, parentSuiteName)
 
 foreign import exit :: Int -> Effect Unit
-
-type Config =
-  { slow :: Milliseconds
-  -- ^ Threshold of time beyond which a test is considered "slow".
-
-  , timeout :: Maybe Milliseconds
-  -- ^ An optional timeout, applied to each individual test. When omitted, tests
-  -- are allowed to run forever.
-
-  , exit :: Boolean
-  -- ^ When `true`, the runner will exit the Node process after running tests.
-  -- If `false`, the runner will merely return test results.
-
-  , failFast :: Boolean
-  -- ^ When `true`, first failed test stops the whole run.
-  }
-
-defaultConfig :: Config
-defaultConfig =
-  { slow: Milliseconds 75.0
-  , timeout: Just $ Milliseconds 2000.0
-  , exit: true
-  , failFast: false
-  }
 
 makeTimeout
   :: Milliseconds
@@ -231,7 +207,7 @@ runSpec
   :: Array Reporter
   -> Spec Unit
   -> Aff Unit
-runSpec = runSpec' defaultConfig
+runSpec reporters spec = runSpec' defaultConfig reporters spec
 
 runSpec'
   :: Config
