@@ -1,19 +1,20 @@
 module Test.Spec.Runner
-  ( run
-  , runSpecT
+  ( Reporter
+  , TestEvents
+  , module Test.Spec.Config
+  , run
   , runSpec
   , runSpec'
-  , TestEvents
-  , Reporter
-  , module Test.Spec.Config
-  ) where
+  , runSpecT
+  )
+  where
 
 import Prelude
 
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Parallel (parTraverse, parallel, sequential)
-import Data.Array (groupBy, mapWithIndex)
+import Data.Array (concat, groupBy)
 import Data.Array.NonEmpty as NEA
 import Data.DateTime.Instant (diff)
 import Data.Either (Either(..), either)
@@ -25,6 +26,7 @@ import Data.Newtype (un)
 import Data.String (joinWith)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (class Traversable, for)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, attempt, delay, forkAff, joinFiber, makeAff, throwError, try)
 import Effect.Aff.AVar as AV
@@ -36,7 +38,7 @@ import Pipes.Core (Producer, Pipe, (//>))
 import Pipes.Core (runEffect, runEffectRec) as P
 import Prim.TypeError (class Warn, Text)
 import Test.Spec (Item(..), Spec, SpecT, SpecTree, Tree(..), collect)
-import Test.Spec.Config (Config, defaultConfig)
+import Test.Spec.Config (Config, TreeFilter(..), defaultConfig)
 import Test.Spec.Console as Console
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner.Event (Event, Execution(..))
@@ -45,7 +47,7 @@ import Test.Spec.Speed (speedOf)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (Path, PathItem(..), countTests, isAllParallelizable, parentSuite, parentSuiteName)
+import Test.Spec.Tree (Path, annotateWithPaths, countTests, isAllParallelizable, parentSuite, parentSuiteName)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -82,24 +84,29 @@ _run
   -> m TestEvents
 _run config = collect >>> map \tests -> do
   yield (Event.Start (countTests tests))
-  let indexer index test = {test, path: [PathItem {name: Nothing, index}]}
-  r <- loop $ mapWithIndex indexer tests
+  r <- loop $ annotateWithPaths $ filteredTests tests
   yield (Event.End r)
   pure r
   where
-    loop :: Array (TestWithPath ()) -> TestEvents
-    loop tests =
-      let
-        noteWithIsAllParallelizable = map \{test,path} -> { isParallelizable: isAllParallelizable test, test, path}
-        groupByIsParallelizable = groupBy (\a b -> a.isParallelizable && b.isParallelizable)
-      in join <$> for (groupByIsParallelizable $ noteWithIsAllParallelizable tests) \g ->
-        join <$> if (NEA.head g).isParallelizable
-          then mergeProducers (runGroup <$> (NEA.toArray g))
-          else for (NEA.toArray g) runGroup
+    filteredTests tests = case config.filterTree of
+      TreeFilter f -> f tests
 
-    runGroup :: TestWithPath (isParallelizable :: Boolean) -> TestEvents
-    runGroup {test, path, isParallelizable} = case test of
-      (Leaf name (Just (Item item))) -> do
+    loop :: Array _ -> TestEvents
+    loop tests = do
+      let groups =
+            tests
+            <#> (\test -> { isParallelizable: isAllParallelizable test, test })
+            # groupBy \a b -> a.isParallelizable == b.isParallelizable
+
+      concat <$>
+        for groups \g ->
+          if (NEA.head g).isParallelizable
+            then concat <$> mergeProducers (runGroup <$> NEA.toArray g)
+            else concat <$> for (NEA.toArray g) runGroup
+
+    runGroup :: { isParallelizable :: Boolean, test :: _ } -> TestEvents
+    runGroup { test, isParallelizable } = case test of
+      Leaf (name /\ path) (Just (Item item)) -> do
         yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
         let example = item.example \a -> a unit
         start <- lift $ liftEffect now
@@ -111,16 +118,14 @@ _run config = collect >>> map \tests -> do
         let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
         yield $ Event.TestEnd path name res
         pure [ Leaf name $ Just res ]
-      (Leaf name Nothing) -> do
+      (Leaf (name /\ path) Nothing) -> do
         yield $ Event.Pending path name
         pure [ Leaf name Nothing ]
       (Node (Right cleanup) xs) -> do
-        let indexer index x = {test:x, path: path <> [PathItem {name: Nothing, index}]}
-        loop (mapWithIndex indexer xs) <* lift (cleanup unit)
-      (Node (Left name) xs) -> do
+        loop xs <* lift (cleanup unit)
+      (Node (Left (name /\ path)) xs) -> do
         yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
-        let indexer index x = {test:x, path: path <> [PathItem {name: Just name, index}]}
-        res <- loop (mapWithIndex indexer xs)
+        res <- loop xs
         yield $ Event.SuiteEnd path
         pure [ Node (Left name) res ]
 
@@ -145,9 +150,9 @@ mergeProducers ps = do
           loop
   loop
 
-type TestEvents = Producer Event Aff (Array (Tree Void Result))
+type TestEvents = Producer Event Aff (Array (Tree String Void Result))
 
-type Reporter = Pipe Event Event Aff (Array (Tree Void Result))
+type Reporter = Pipe Event Event Aff (Array (Tree String Void Result))
 
 -- | Run the spec with `config`, returning the results, which
 -- | are also reported using specified Reporters, if any.
@@ -159,7 +164,7 @@ runSpecT
   => Config
   -> Array Reporter
   -> SpecT Aff Unit m Unit
-  -> m (Aff (Array (Tree Void Result)))
+  -> m (Aff (Array (Tree String Void Result)))
 runSpecT config reporters spec = _run config spec <#> \runner -> do
   let
     events = foldl (>->) runner $ [failFast] <> reporters

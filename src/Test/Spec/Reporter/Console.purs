@@ -48,7 +48,7 @@ consoleReporter = defaultReporter initialState $ defaultUpdate
       _ -> pure unit
   }
 
-printSummary :: forall m. MonadWriter String m => Array (Tree Void Result) -> m Unit
+printSummary :: ∀ n m. MonadWriter String m => Array (Tree n Void Result) -> m Unit
 printSummary = Summary.summarize >>> \(Count {passed, failed, pending}) -> do
   tellLn ""
   tellLn $ styled Style.bold "Summary"

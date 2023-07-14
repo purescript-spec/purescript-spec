@@ -1,13 +1,13 @@
- [31m1) one[0m
- two
-  [31m2) first[0m
-  [31m3) second[0m
- three
-  1
-   [31m4) uno[0m
-   [31m5) dos[0m
-  2
-   [31m6) ein[0m
+[31m1) one[0m
+two
+ [31m2) first[0m
+ [31m3) second[0m
+three
+ 1
+  [31m4) uno[0m
+  [31m5) dos[0m
+ 2
+  [31m6) ein[0m
 [31m6 failed[0m
 
 1) one
