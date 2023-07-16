@@ -30,6 +30,7 @@ runnerSpec =
               [ Node (Left "b") [ Leaf "works" $ Just false ]
               ]
             ]
+
         it "collects \"it\" and \"pending\" with shared Describes" do
           runSpecFocused sharedDescribeTest `shouldEqual`
             [ Node (Left "a")
@@ -37,6 +38,7 @@ runnerSpec =
               , Node (Left "c") [ Leaf "also works" $ Just false ]
               ]
             ]
+
         it "filters using \"only\" modifier on \"describe\" block" do
           runSpecFocused describeOnlyTest `shouldEqual`
             [ Node (Left "a")
@@ -44,21 +46,25 @@ runnerSpec =
               , Node (Left "c") [ Leaf "also works" $ Just true ]
               ]
             ]
+
         it "filters using \"only\" modifier on nested \"describe\" block" do
           runSpecFocused describeOnlyNestedTest `shouldEqual`
             [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just true ]
               ]
             ]
+
         it "filters using \"only\" modifier on \"it\" block" do
           runSpecFocused itOnlyTest `shouldEqual`
             [ Node (Left "a")
               [ Node (Left "b") [ Leaf "works" $ Just true ]
               ]
             ]
+
         it "supports async" do
           res <- delay (Milliseconds 10.0) *> pure 1
           res `shouldEqual` 1
+
         it "supports fail-fast" do
           let config = defaultConfig { exit = false, failFast = true }
           res <- un Identity $ runSpecT config [] $
@@ -68,11 +74,15 @@ runnerSpec =
               it "succeeds" $ 1 `shouldEqual` 1
               it "fails again" $ 1 `shouldEqual` 2
 
-          case res of
-            [Leaf "A test fails" (Just (Failure _))] ->
-              pure unit
-            unexpectedResult ->
-              fail $ "Got unexpected result: " <> show unexpectedResult
+          (map mapSuccess <$> res) `shouldEqual`
+            [ Node (Left "A test")
+              [ Leaf "fails" (Just false)
+              , Leaf "also fails" Nothing
+              , Leaf "succeeds" Nothing
+              , Leaf "fails again" Nothing
+              ]
+            ]
+
         it "supports tree filtering" do
           let config = defaultConfig
                 { exit = false

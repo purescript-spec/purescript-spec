@@ -1,5 +1,7 @@
 [32m✓︎ [0m[2mpasses quickly[0m
 [31m1) times out[0m
+[32m1 passing[0m
+[36m1 pending[0m
 [31m1 failed[0m
 
 1) times out

@@ -18,12 +18,11 @@ import Data.Array (concat, groupBy)
 import Data.Array.NonEmpty as NEA
 import Data.DateTime.Instant (diff)
 import Data.Either (Either(..), either)
-import Data.Foldable (foldl, for_)
+import Data.Foldable (foldl)
 import Data.Identity (Identity(..))
 import Data.Int as Int
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (un)
-import Data.String (joinWith)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (class Traversable, for)
 import Data.Tuple.Nested ((/\))
@@ -33,7 +32,8 @@ import Effect.Aff.AVar as AV
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Now (now)
-import Pipes (await, yield, (>->))
+import Effect.Ref as Ref
+import Pipes (yield, (>->))
 import Pipes.Core (Producer, Pipe, (//>))
 import Pipes.Core (runEffect, runEffectRec) as P
 import Prim.TypeError (class Warn, Text)
@@ -47,7 +47,7 @@ import Test.Spec.Speed (speedOf)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (Path, annotateWithPaths, countTests, isAllParallelizable, parentSuite, parentSuiteName)
+import Test.Spec.Tree (Path, annotateWithPaths, countTests, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -84,15 +84,16 @@ _run
   -> m TestEvents
 _run config = collect >>> map \tests -> do
   yield (Event.Start (countTests tests))
-  r <- loop $ annotateWithPaths $ filteredTests tests
+  keepRunningVar <- liftEffect $ Ref.new true
+  r <- loop keepRunningVar $ annotateWithPaths $ filteredTests tests
   yield (Event.End r)
   pure r
   where
     filteredTests tests = case config.filterTree of
       TreeFilter f -> f tests
 
-    loop :: Array _ -> TestEvents
-    loop tests = do
+    loop :: _ -> Array _ -> TestEvents
+    loop keepRunningVar tests = do
       let groups =
             tests
             <#> (\test -> { isParallelizable: isAllParallelizable test, test })
@@ -101,33 +102,50 @@ _run config = collect >>> map \tests -> do
       concat <$>
         for groups \g ->
           if (NEA.head g).isParallelizable
-            then concat <$> mergeProducers (runGroup <$> NEA.toArray g)
-            else concat <$> for (NEA.toArray g) runGroup
+            then concat <$> mergeProducers (runItem keepRunningVar <$> NEA.toArray g)
+            else concat <$> for (NEA.toArray g) (runItem keepRunningVar)
 
-    runGroup :: { isParallelizable :: Boolean, test :: _ } -> TestEvents
-    runGroup { test, isParallelizable } = case test of
-      Leaf (name /\ path) (Just (Item item)) -> do
-        yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
-        let example = item.example \a -> a unit
-        start <- lift $ liftEffect now
-        e <- lift $ attempt case config.timeout of
-          Just t -> timeout t example
-          _      -> example
-        end <- liftEffect now
-        let duration = end `diff` start
-        let res = either Failure (const $ Success (speedOf config.slow duration) duration) e
-        yield $ Event.TestEnd path name res
-        pure [ Leaf name $ Just res ]
-      (Leaf (name /\ path) Nothing) -> do
-        yield $ Event.Pending path name
-        pure [ Leaf name Nothing ]
-      (Node (Right cleanup) xs) -> do
-        loop xs <* lift (cleanup unit)
-      (Node (Left (name /\ path)) xs) -> do
-        yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
-        res <- loop xs
-        yield $ Event.SuiteEnd path
-        pure [ Node (Left name) res ]
+    runItem :: _ -> { isParallelizable :: Boolean, test :: _ } -> TestEvents
+    runItem keepRunningVar { test, isParallelizable } = do
+      keepRunning <- liftEffect $ Ref.read keepRunningVar
+
+      case test of
+        Leaf (name /\ path) (Just (Item item)) -> do
+          if keepRunning then do
+            yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
+            res <- executeExample item.example
+            case res of
+              Failure _ | config.failFast -> liftEffect $ Ref.write false keepRunningVar
+              _ -> pure unit
+            yield $ Event.TestEnd path name res
+            pure [ Leaf name $ Just res ]
+          else
+            pure [ Leaf name Nothing ]
+
+        Leaf (name /\ path) Nothing -> do
+          when keepRunning $
+            yield $ Event.Pending path name
+          pure [ Leaf name Nothing ]
+
+        Node (Right cleanup) xs ->
+          loop keepRunningVar xs <* lift (cleanup unit)
+
+        Node (Left (name /\ path)) xs -> do
+          when keepRunning $
+            yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
+          res <- loop keepRunningVar xs
+          when keepRunning $
+            yield $ Event.SuiteEnd path
+          pure [ Node (Left name) res ]
+
+    executeExample f = lift do
+      start <- liftEffect now
+      let wrap = maybe identity timeout config.timeout
+      e <- attempt $ wrap $ f \a -> a unit
+      end <- liftEffect now
+      let duration = end `diff` start
+      pure $ either Failure (const $ Success (speedOf config.slow duration) duration) e
+
 
 -- https://github.com/felixSchl/purescript-pipes/issues/16
 mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
@@ -167,7 +185,7 @@ runSpecT
   -> m (Aff (Array (Tree String Void Result)))
 runSpecT config reporters spec = _run config spec <#> \runner -> do
   let
-    events = foldl (>->) runner $ [failFast] <> reporters
+    events = foldl (>->) runner reporters
     reportedEvents = P.runEffect $ events //> \_ -> pure unit
   if config.exit
     then try reportedEvents >>= case _ of
@@ -180,24 +198,6 @@ runSpecT config reporters spec = _run config spec <#> \runner -> do
         exit code
         pure results
     else reportedEvents
-
-  where
-    failFast = do
-      event <- await
-      yield event
-      case event of
-        Event.TestEnd path name res@(Failure _) | config.failFast -> do
-          let tree = [ Leaf (joinWith " " $ parentSuiteName path <> [name]) (Just res) ]
-          endAllParentSuites path
-          yield $ Event.End tree
-          pure tree
-        _ ->
-          failFast
-
-    endAllParentSuites path =
-      for_ (parentSuite path) \s -> do
-        yield $ Event.SuiteEnd s.path
-        endAllParentSuites s.path
 
 -- | Run the spec with the default config
 run

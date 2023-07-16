@@ -25,6 +25,7 @@
   , "parallel"
   , "pipes"
   , "prelude"
+  , "refs"
   , "strings"
   , "tailrec"
   , "transformers"
