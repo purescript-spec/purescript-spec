@@ -1,4 +1,5 @@
-# PureScript Spec 
+# PureScript Spec
+
 [![Build Status](https://github.com/purescript-spec/purescript-spec/workflows/CI/badge.svg?branch=master)](https://github.com/purescript-spec/purescript-spec/actions?query=workflow%3ACI+branch%3Amaster)
 
 PureScript Spec is a testing framework for Purescript, inspired by
@@ -16,6 +17,26 @@ in detail how to use purescript-spec. **You should probably start here.**
   likely not interesting unless your hacking on PureScript Spec itself.
 
 ## Changelog
+
+* **7.5.1**
+  * Support for filtering the test tree [#139](https://github.com/purescript-spec/purescript-spec/pull/139)
+  * Integration tests [#138](https://github.com/purescript-spec/purescript-spec/pull/138)
+  * Better, more honest support for `failFast` [#140](https://github.com/purescript-spec/purescript-spec/pull/140)
+
+* **7.4.1**
+  * Diff support for TeamCity reporter by @Neppord [#136](https://github.com/purescript-spec/purescript-spec/pull/136)
+  * `failFast` config option to stop on first failure by @fsoikin [#137](https://github.com/purescript-spec/purescript-spec/pull/137)
+
+* **7.3.0**
+  * TeamCity reporter now supports parallel execution. [#132 by @Neppord](https://github.com/purescript-spec/purescript-spec/pull/132)
+
+* **7.2.0**
+  * Added a reporter for [TeamCity](https://www.jetbrains.com/teamcity/) by @Neppord
+  * Use `unsafeRegex` instead of methods from `purescript-partial` to create a regex by @toastal
+
+* **7.1.0**
+  * Added the `AnyShow` newtype wrapper for asserting on values that don't have a Show instance.
+    By @sigma-andex and @i-am-the-slime in [#125](https://github.com/purescript-spec/purescript-spec/pull/125)
 
 * **4.0.0**
   * Rename `run` and `run'` to `runSpec` and `runSpecM`.
