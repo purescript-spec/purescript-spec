@@ -19,7 +19,6 @@
         "purescript-arrays": "^v7.2.1",
         "purescript-avar": "^v5.0.0",
         "purescript-bifunctors": "^v6.0.0",
-        "purescript-console": "^v6.0.0",
         "purescript-control": "^v6.0.0",
         "purescript-datetime": "^v6.1.0",
         "purescript-debug": "^v6.0.2",
@@ -33,13 +32,6 @@
         "purescript-lists": "^v7.0.0",
         "purescript-maybe": "^v6.0.0",
         "purescript-newtype": "^v5.0.0",
-        "purescript-node-buffer": "^v8.0.0",
-        "purescript-node-child-process": "^v9.0.0",
-        "purescript-node-fs": "^v8.2.0",
-        "purescript-node-fs-aff": "^v9.2.0",
-        "purescript-node-os": "^v4.0.0",
-        "purescript-node-process": "^v10.0.0",
-        "purescript-node-streams": "^v7.0.0",
         "purescript-now": "^v6.0.0",
         "purescript-ordered-collections": "^v3.0.0",
         "purescript-parallel": "^v6.0.0",
@@ -50,5 +42,15 @@
         "purescript-tailrec": "^v6.1.0",
         "purescript-transformers": "^v6.0.0",
         "purescript-tuples": "^v7.0.0"
+    },
+    "devDependencies": {
+        "purescript-console": "^v6.0.0",
+        "purescript-node-buffer": "^v8.0.0",
+        "purescript-node-child-process": "^v9.0.0",
+        "purescript-node-fs": "^v8.2.0",
+        "purescript-node-fs-aff": "^v9.2.0",
+        "purescript-node-os": "^v4.0.0",
+        "purescript-node-process": "^v10.0.0",
+        "purescript-node-streams": "^v7.0.0"
     }
 }
