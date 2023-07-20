@@ -20,6 +20,9 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 * **7.5.1**
   * Support for filtering the test tree [#139](https://github.com/purescript-spec/purescript-spec/pull/139)
+    * **Breaking**: the `Tree` type got a new type parameter, representing node
+      annotations. Previously nodes were always annotated with `String` (meaning
+      test/group name), now it's a parameter.
   * Integration tests [#138](https://github.com/purescript-spec/purescript-spec/pull/138)
   * Better, more honest support for `failFast` [#140](https://github.com/purescript-spec/purescript-spec/pull/140)
 
