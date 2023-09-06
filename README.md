@@ -18,6 +18,9 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **7.5.5**
+  * Fixed a minor reporting issue in `consoleReporter`, [#144](https://github.com/purescript-spec/purescript-spec/issues/144)
+
 * **7.5.1**
   * Support for filtering the test tree [#139](https://github.com/purescript-spec/purescript-spec/pull/139)
     * **Breaking**: the `Tree` type got a new type parameter, representing node
