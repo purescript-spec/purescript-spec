@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.State (class MonadState, get, put)
 import Control.Monad.Writer (class MonadWriter)
-import Data.Foldable (for_, intercalate)
+import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Map as Map
@@ -20,7 +20,7 @@ import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
-import Test.Spec.Tree (Path, Tree, parentSuite, parentSuiteName)
+import Test.Spec.Tree (Path, Tree, parentSuiteName)
 
 type State = { runningItems :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
 
@@ -88,14 +88,13 @@ print
   -> PrintAction
   -> m Unit
 print path a = do
-  for_ (parentSuite path) \suite -> do
-    s <- get
-    case s.lastPrintedSuitePath of
-      Just p | p == suite.path -> pure unit
-      _ -> do
-        tellLn $ styled (Style.bold <> Style.magenta)
-          $ intercalate " » " (parentSuiteName suite.path <> [suite.name])
-        put s{lastPrintedSuitePath = Just suite.path}
+  s <- get
+  case s.lastPrintedSuitePath of
+    Just p | p == path -> pure unit
+    _ -> do
+      tellLn $ styled (Style.bold <> Style.magenta)
+        $ intercalate " » " (parentSuiteName path)
+      put s { lastPrintedSuitePath = Just path }
   case a of
     PrintTest name (Success _ _) -> do
       tellLn $ "  " <> styled Style.green "✓︎ " <> styled Style.dim name

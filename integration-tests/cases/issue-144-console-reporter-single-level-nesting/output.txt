@@ -1,0 +1,9 @@
+[1;35mA[0m
+  [32m✓︎ [0m[2mshould be under A[0m
+[1;35mB[0m
+  [32m✓︎ [0m[2mshould be under B[0m
+[1;35mC[0m
+  [32m✓︎ [0m[2mshould be under C[0m
+
+[1mSummary[0m
+[2m3/3 tests passed[0m
