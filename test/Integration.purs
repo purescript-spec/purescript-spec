@@ -14,10 +14,10 @@ import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Ref as Ref
 import Node.Buffer as Buffer
-import Node.ChildProcess (defaultSpawnOptions)
-import Node.ChildProcess as IO
 import Node.ChildProcess as Proc
+import Node.ChildProcess.Types as IO
 import Node.Encoding (Encoding(..))
+import Node.EventEmitter (on)
 import Node.FS.Aff as FS
 import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
@@ -110,17 +110,17 @@ prepareEnvironment { debug } =
         output <- Ref.new ""
         let return = cb <<< Right =<< Ref.read output
 
-        proc <- Proc.spawn cmd args defaultSpawnOptions { cwd = Just cwd, stdio = [Just IO.Ignore, Just IO.Pipe, Just IO.Pipe] }
+        proc <- Proc.spawn' cmd args _ { cwd = Just cwd, appendStdio = Just [IO.ignore, IO.pipe, IO.pipe] }
 
         for_ [Proc.stdout, Proc.stderr] \pipe ->
-          Stream.onData (pipe proc) \buf -> do
+          pipe proc # on Stream.dataH \buf -> do
             str <- Buffer.toString UTF8 buf
             void $ output # Ref.modify (_ <> str)
 
-        Proc.onExit proc \_ -> return
-        Proc.onError proc \_ -> return
-        Proc.onDisconnect proc return
-        Proc.onClose proc \_ -> return
+        void $ proc # on Proc.exitH \_ -> return
+        void $ proc # on Proc.errorH \_ -> return
+        void $ proc # on Proc.disconnectH return
+        void $ proc # on Proc.closeH \_ -> return
 
         pure nonCanceler
 
