@@ -42,15 +42,5 @@
         "purescript-tailrec": "^v6.1.0",
         "purescript-transformers": "^v6.0.0",
         "purescript-tuples": "^v7.0.0"
-    },
-    "devDependencies": {
-        "purescript-console": "^v6.0.0",
-        "purescript-node-buffer": "^v8.0.0",
-        "purescript-node-child-process": "^v9.0.0",
-        "purescript-node-fs": "^v8.2.0",
-        "purescript-node-fs-aff": "^v9.2.0",
-        "purescript-node-os": "^v4.0.0",
-        "purescript-node-process": "^v10.0.0",
-        "purescript-node-streams": "^v7.0.0"
     }
 }

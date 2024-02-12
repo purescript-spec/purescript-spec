@@ -40,4 +40,3 @@ jobs:
       - name: Run tests
         run: |
           spago -x test.dhall test
-          pulp test
