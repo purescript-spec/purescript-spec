@@ -17,7 +17,7 @@ import Node.Buffer as Buffer
 import Node.ChildProcess as Proc
 import Node.ChildProcess.Types as IO
 import Node.Encoding (Encoding(..))
-import Node.EventEmitter (on)
+import Node.EventEmitter (on_)
 import Node.FS.Aff as FS
 import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
@@ -113,14 +113,14 @@ prepareEnvironment { debug } =
         proc <- Proc.spawn' cmd args _ { cwd = Just cwd, appendStdio = Just [IO.ignore, IO.pipe, IO.pipe] }
 
         for_ [Proc.stdout, Proc.stderr] \pipe ->
-          pipe proc # on Stream.dataH \buf -> do
+          pipe proc # on_ Stream.dataH \buf -> do
             str <- Buffer.toString UTF8 buf
             void $ output # Ref.modify (_ <> str)
 
-        void $ proc # on Proc.exitH \_ -> return
-        void $ proc # on Proc.errorH \_ -> return
-        void $ proc # on Proc.disconnectH return
-        void $ proc # on Proc.closeH \_ -> return
+        proc # on_ Proc.exitH \_ -> return
+        proc # on_ Proc.errorH \_ -> return
+        proc # on_ Proc.disconnectH return
+        proc # on_ Proc.closeH \_ -> return
 
         pure nonCanceler
 
