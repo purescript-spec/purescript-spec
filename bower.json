@@ -44,13 +44,13 @@
         "purescript-tuples": "^v7.0.0"
     },
     "devDependencies": {
-        "purescript-console": "^v6.0.0",
-        "purescript-node-buffer": "^v8.0.0",
-        "purescript-node-child-process": "^v9.0.0",
-        "purescript-node-fs": "^v8.2.0",
-        "purescript-node-fs-aff": "^v9.2.0",
+        "purescript-console": "^v6.1.0",
+        "purescript-node-buffer": "^v9.0.0",
+        "purescript-node-child-process": "^v11.1.0",
+        "purescript-node-fs": "^v9.1.0",
+        "purescript-node-event-emitter": "^v3.0.0",
         "purescript-node-os": "^v4.0.0",
-        "purescript-node-process": "^v10.0.0",
-        "purescript-node-streams": "^v7.0.0"
+        "purescript-node-process": "^v11.2.0",
+        "purescript-node-streams": "^v9.0.0"
     }
 }
