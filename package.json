@@ -1,4 +1,8 @@
 {
+  "engines": {
+    "node": "22.5.1",
+    "npm": "10.8.2"
+  },
   "dependencies": {
     "purescript": "^0.15.15",
     "spago": "^0.93.37"

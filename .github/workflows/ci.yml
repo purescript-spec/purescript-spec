@@ -11,10 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: purescript-contrib/setup-purescript@main
+      - uses: actions/setup-node@v4
         with:
-          purescript: "unstable"
-          spago: "unstable"
+          node-version: "22"
 
       - name: Cache PureScript dependencies
         uses: actions/cache@v2
