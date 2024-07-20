@@ -15,21 +15,14 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Cache PureScript dependencies
-        uses: actions/cache@v2
-        with:
-          key: ${{ runner.os }}-spago-${{ hashFiles('**/*.dhall') }}
-          path: |
-            .spago
-            output
+      - name: Install dependencies
+        run: npm install && spago install
 
       - name: Build project
-        run: |
-          spago build
+        run: spago build
 
       - name: Build example
         run: make run-example
 
       - name: Run tests
-        run: |
-          spago -x test.dhall test
+        run: spago test
