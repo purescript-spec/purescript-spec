@@ -9,5 +9,3 @@ tmp/
 tags
 /.psc-ide-port
 .spago
-package.json
-package-lock.json

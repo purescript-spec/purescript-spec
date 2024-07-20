@@ -1,0 +1,54 @@
+workspace:
+  extraPackages: {}
+  packageSet:
+    registry: 55.1.0
+
+package:
+  name: spec
+  publish:
+    license: MIT
+    version: 7.5.4
+    location:
+      githubOwner: purescript-spec
+      githubRepo: purescript-spec
+  dependencies:
+  - aff
+  - ansi
+  - arrays
+  - avar
+  - bifunctors
+  - control
+  - datetime
+  - debug
+  - effect
+  - either
+  - exceptions
+  - foldable-traversable
+  - fork
+  - identity
+  - integers
+  - lists
+  - maybe
+  - newtype
+  - now
+  - ordered-collections
+  - parallel
+  - pipes
+  - prelude
+  - refs
+  - strings
+  - tailrec
+  - transformers
+  - tuples
+  test:
+    main: Test.Main
+    dependencies:
+      - console
+      - node-buffer
+      - node-child-process
+      - node-event-emitter
+      - node-fs
+      - node-os
+      - node-process
+      - node-streams
+      - refs

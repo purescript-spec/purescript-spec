@@ -3,6 +3,7 @@ module Test.Integration where
 import Prelude
 
 import Control.Monad.Trans.Class (lift)
+import Data.Array (take)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String as S
@@ -23,7 +24,7 @@ import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
 import Node.Process (cwd)
 import Node.Stream as Stream
-import Test.Spec (SpecT, afterAll, describe, it)
+import Test.Spec (SpecT, afterAll, describe, focus, it)
 import Test.Spec.Assertions (shouldEqual)
 
 -- | Reads the contents of `/integration-tests/cases` and turns each
@@ -53,11 +54,16 @@ prepareEnvironment { debug } =
         ensureDirExists $ dir // "test"
         FS.writeTextFile UTF8 (dir // "test/Main.purs") program
         run' dir "npx" ["spago", "build"]
-        res <- run dir "npx" $ ["spago", "--quiet", "--no-psa", "test"]
+        res <- run dir "npx" $ ["spago", "test", "-q"]
         pure $
+          res
           -- Removing ESC characters (which are used for colors), because
           -- they're very inconvenient to include in the golden output files.
-          S.replaceAll (S.Pattern "\x1B") (S.Replacement "") res
+          # S.replaceAll (S.Pattern "\x1B") (S.Replacement "")
+          -- Removing Spago's header text that is currently unremovable via
+          -- `--quiet`, which is a known issue:
+          -- https://github.com/purescript/spago/issues/1249
+          # S.replaceAll (S.Pattern spagoTestHeader) (S.Replacement "")
 
     , cleanupEnvironment:
         liftEffect (Ref.read envDirVar) >>= case _ of
@@ -83,8 +89,8 @@ prepareEnvironment { debug } =
           liftEffect $ Ref.write (Just dir) envDirVar
           traceLog $ "Preparing environment in: " <> dir
           copyAllFiles { from: "integration-tests/env-template", to: dir }
-          patchRepoPath $ dir // "packages.dhall"
-          run' dir "npm" ["install", "purescript@0.15", "spago@0.21"]
+          patchRepoPath $ dir // "spago.yaml"
+          run' dir "npm" ["install", "purescript@0.15", "spago@0.93"]
           pure dir
 
     patchRepoPath file = do
@@ -136,6 +142,9 @@ prepareEnvironment { debug } =
         FS.rmdir dir
       else
         FS.unlink dir
+
+    spagoTestHeader =
+      "purs compile: No files found using pattern: src/**/*.purs\n           Src   Lib   All\nWarnings     0     0     0\nErrors       0     0     0\n"
 
 pathConcat :: String -> String -> String
 pathConcat a b = a <> "/" <> b

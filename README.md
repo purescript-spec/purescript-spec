@@ -18,6 +18,10 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **7.5.4**
+  * Upgraded to Spago Next
+  * Dropped support for Pulp and Bower
+
 * **7.5.1**
   * Support for filtering the test tree [#139](https://github.com/purescript-spec/purescript-spec/pull/139)
     * **Breaking**: the `Tree` type got a new type parameter, representing node

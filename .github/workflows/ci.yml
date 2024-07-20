@@ -24,15 +24,9 @@ jobs:
             .spago
             output
 
-      - name: Install NPM and Bower dependencies
-        run: |
-          npm install --global bower esbuild pulp@16.0.0-0
-          npx bower install
-
       - name: Build project
         run: |
           spago build
-          pulp build
 
       - name: Build example
         run: make run-example

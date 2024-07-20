@@ -1,0 +1,13 @@
+workspace:
+  extraPackages:
+    spec:
+      path: SPEC_REPO_PATH
+  packageSet:
+    registry: 55.1.0
+
+package:
+  name: integration-test
+  dependencies: []
+  test:
+    main: Test.Main
+    dependencies: ["aff", "effect", "maybe", "prelude", "spec"]
