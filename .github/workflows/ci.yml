@@ -22,7 +22,7 @@ jobs:
         run: npx spago build
 
       - name: Run example
-        run: npx spago test -p example
+        run: npx spago run -p example
 
       - name: Run tests
         run: npx spago test
