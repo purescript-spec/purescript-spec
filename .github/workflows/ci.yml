@@ -16,13 +16,13 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install && spago install
+        run: npm install && npx spago install
 
       - name: Build project
-        run: spago build
+        run: npx spago build
 
       - name: Run example
         run: npx spago test -p example
 
       - name: Run tests
-        run: spago test
+        run: npx spago test
