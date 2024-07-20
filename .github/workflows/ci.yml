@@ -21,8 +21,8 @@ jobs:
       - name: Build project
         run: spago build
 
-      - name: Build example
-        run: make run-example
+      - name: Run example
+        run: npx spago test -p example
 
       - name: Run tests
         run: spago test

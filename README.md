@@ -13,8 +13,6 @@ PureScript Spec is a testing framework for Purescript, inspired by
 in detail how to use purescript-spec. **You should probably start here.**
 * [purescript-spec on Pursuit](https://pursuit.purescript.org/packages/purescript-spec)
   features version information and API documentation.
-* [BUILD.md](BUILD.md) lists build instructions for this project. Most
-  likely not interesting unless your hacking on PureScript Spec itself.
 
 ## Changelog
 

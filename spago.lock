@@ -1,5 +1,79 @@
 workspace:
   packages:
+    example:
+      path: example
+      dependencies:
+        - spec
+      test_dependencies: []
+      build_plan:
+        - aff
+        - ansi
+        - arraybuffer-types
+        - arrays
+        - avar
+        - bifunctors
+        - catenable-lists
+        - console
+        - const
+        - contravariant
+        - control
+        - datetime
+        - debug
+        - distributive
+        - effect
+        - either
+        - enums
+        - exceptions
+        - exists
+        - foldable-traversable
+        - foreign
+        - foreign-object
+        - fork
+        - free
+        - functions
+        - functors
+        - gen
+        - identity
+        - integers
+        - invariant
+        - js-date
+        - lazy
+        - lists
+        - maybe
+        - mmorph
+        - newtype
+        - node-buffer
+        - node-child-process
+        - node-event-emitter
+        - node-fs
+        - node-os
+        - node-path
+        - node-process
+        - node-streams
+        - nonempty
+        - now
+        - nullable
+        - numbers
+        - ordered-collections
+        - orders
+        - parallel
+        - partial
+        - pipes
+        - posix-types
+        - prelude
+        - profunctor
+        - refs
+        - safe-coerce
+        - spec
+        - st
+        - strings
+        - tailrec
+        - transformers
+        - tuples
+        - type-equality
+        - typelevel-prelude
+        - unfoldable
+        - unsafe-coerce
     spec:
       path: ./
       dependencies:
