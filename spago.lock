@@ -1,110 +1,35 @@
 workspace:
   packages:
-    example:
-      path: example
-      dependencies:
-        - spec
-      test_dependencies: []
-      build_plan:
-        - aff
-        - ansi
-        - arraybuffer-types
-        - arrays
-        - avar
-        - bifunctors
-        - catenable-lists
-        - console
-        - const
-        - contravariant
-        - control
-        - datetime
-        - debug
-        - distributive
-        - effect
-        - either
-        - enums
-        - exceptions
-        - exists
-        - foldable-traversable
-        - foreign
-        - foreign-object
-        - fork
-        - free
-        - functions
-        - functors
-        - gen
-        - identity
-        - integers
-        - invariant
-        - js-date
-        - lazy
-        - lists
-        - maybe
-        - mmorph
-        - newtype
-        - node-buffer
-        - node-child-process
-        - node-event-emitter
-        - node-fs
-        - node-os
-        - node-path
-        - node-process
-        - node-streams
-        - nonempty
-        - now
-        - nullable
-        - numbers
-        - ordered-collections
-        - orders
-        - parallel
-        - partial
-        - pipes
-        - posix-types
-        - prelude
-        - profunctor
-        - refs
-        - safe-coerce
-        - spec
-        - st
-        - strings
-        - tailrec
-        - transformers
-        - tuples
-        - type-equality
-        - typelevel-prelude
-        - unfoldable
-        - unsafe-coerce
     spec:
       path: ./
       dependencies:
-        - aff
-        - ansi
-        - arrays
-        - avar
-        - bifunctors
-        - control
-        - datetime
-        - debug
-        - effect
-        - either
-        - exceptions
-        - foldable-traversable
-        - fork
-        - identity
-        - integers
-        - lists
-        - maybe
-        - newtype
-        - now
-        - ordered-collections
-        - parallel
-        - pipes
-        - prelude
-        - refs
-        - strings
-        - tailrec
-        - transformers
-        - tuples
+        - aff: ">=7.1.0 <8.0.0"
+        - ansi: ">=7.0.0 <8.0.0"
+        - arrays: ">=7.3.0 <8.0.0"
+        - avar: ">=5.0.0 <6.0.0"
+        - bifunctors: ">=6.0.0 <7.0.0"
+        - control: ">=6.0.0 <7.0.0"
+        - datetime: ">=6.1.0 <7.0.0"
+        - effect: ">=4.0.0 <5.0.0"
+        - either: ">=6.1.0 <7.0.0"
+        - exceptions: ">=6.1.0 <7.0.0"
+        - foldable-traversable: ">=6.0.0 <7.0.0"
+        - fork: ">=6.0.0 <7.0.0"
+        - identity: ">=6.0.0 <7.0.0"
+        - integers: ">=6.0.0 <7.0.0"
+        - lists: ">=7.0.0 <8.0.0"
+        - maybe: ">=6.0.0 <7.0.0"
+        - newtype: ">=5.0.0 <6.0.0"
+        - now: ">=6.0.0 <7.0.0"
+        - ordered-collections: ">=3.2.0 <4.0.0"
+        - parallel: ">=6.0.0 <8.0.0"
+        - pipes: ">=8.0.0 <9.0.0"
+        - prelude: ">=6.0.1 <7.0.0"
+        - refs: ">=6.0.0 <7.0.0"
+        - strings: ">=6.0.1 <7.0.0"
+        - tailrec: ">=6.1.0 <7.0.0"
+        - transformers: ">=6.1.0 <7.0.0"
+        - tuples: ">=7.0.0 <8.0.0"
       test_dependencies:
         - console
         - node-buffer
@@ -128,7 +53,6 @@ workspace:
         - contravariant
         - control
         - datetime
-        - debug
         - distributive
         - effect
         - either
@@ -684,7 +608,8 @@ workspace:
       yoga-tree: 1.0.0
       z3: 0.0.2
       zipperarray: 2.0.0
-  extra_packages: {}
+  extra_packages:
+    parallel: 6.0.0
 packages:
   aff:
     type: registry
@@ -826,13 +751,6 @@ packages:
       - partial
       - prelude
       - tuples
-  debug:
-    type: registry
-    version: 6.0.2
-    integrity: sha256-vmkYFuXYuELBzeauvgHG6E6Kf/Hp1dAnxwE9ByHfwSg=
-    dependencies:
-      - functions
-      - prelude
   distributive:
     type: registry
     version: 6.0.0
@@ -1260,8 +1178,8 @@ packages:
       - prelude
   parallel:
     type: registry
-    version: 7.0.0
-    integrity: sha256-gUC9i4Txnx9K9RcMLsjujbwZz6BB1bnE2MLvw4GIw5o=
+    version: 6.0.0
+    integrity: sha256-VJbkGD0rAKX+NUEeBJbYJ78bEKaZbgow+QwQEfPB6ko=
     dependencies:
       - control
       - effect

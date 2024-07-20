@@ -16,7 +16,7 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
-* **7.5.4**
+* **7.6.1**
   * Upgraded to Spago Next
   * Dropped support for Pulp and Bower
 
