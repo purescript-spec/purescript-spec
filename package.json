@@ -1,7 +1,7 @@
 {
   "engines": {
-    "node": "22.5.1",
-    "npm": "10.8.2"
+    "node": "22.5",
+    "npm": "10.8"
   },
   "dependencies": {
     "purescript": "^0.15.15",
