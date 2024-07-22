@@ -1,0 +1,51 @@
+name: documentation
+
+on:
+  push:
+    branches: [ master ]
+    paths: [ ".github/workflows/docs.yml", "docs/**" ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1.100.0
+      with:
+        ruby-version: 2.6
+        bundler-cache: true
+        working-directory: docs
+
+    - name: Jekyll build
+      run: bundler exec jekyll build
+
+    - name: Upload GH Pages artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: docs/_site
+      if: github.event_name != 'pull_request'
+
+  deploy-docs:
+    if: github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-docs
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

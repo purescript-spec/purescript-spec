@@ -1,0 +1,25 @@
+title: PureScript Spec - The Guide
+description: >-
+  PureScript Spec is a simple testing framework for Purescript, inspired by
+  hspec. Use PureScript Spec to write synchronous and asynchronous tests using a
+  simple DSL, combine with other testing tools, and generate test output in
+  various formats.
+baseurl: "/purescript-spec"
+github_username:  purescript-spec
+
+theme: just-the-docs
+plugins_dir: ./_plugins
+permalink: pretty
+
+footer_content: "PureScript Spec is licensed under the MIT license."
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
