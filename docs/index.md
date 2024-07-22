@@ -439,7 +439,3 @@ The source code is available [on GitHub](https://github.com/purescript-spec/pure
 If you have any issues or possible improvements please file them as
 [GitHub Issues](https://github.com/purescript-spec/purescript-spec/issues). Pull
 requests are encouraged.
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.7.0/highlight.min.js"></script>
-<script src="highlight.js"></script>
