@@ -1,6 +1,5 @@
 .psci
 .psci_modules/
-bower_components/
 generated-docs/
 node_modules/
 output/

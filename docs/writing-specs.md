@@ -1,4 +1,12 @@
-# Writing Specs
+---
+title: Writing Specs
+nav_order: 1
+---
+
+1. TOC
+{: toc }
+
+## The basics
 
 The basic building block of spec writing is `it`, which creates a spec with a
 *spec body*. Spec bodies have the type `Aff Unit`, which is similar to the
@@ -9,14 +17,14 @@ in an error. For more information, see [purescript-aff](https://github.com/slamd
 In the following example we use `pure unit` as a body, which does nothing. It
 will not throw an error, and the spec will always pass.
 
-```purescript
+```haskell
 it "does nothing" $ pure unit
 ```
 
 A more interesting test would assert something. Let's check that addition
 works!
 
-```purescript
+```haskell
 it "adds 1 and 1" do
   (1 + 1) `shouldEqual` 2
 ```
@@ -28,7 +36,7 @@ causing the spec to fail.
 Specs can also be *pending*, which means that they are not testing anything
 yet - they are like placeholders. We use `pending` to write a pending spec.
 
-```purescript
+```haskell
 pending "calculates the answer to Life, the Universe and Everything"
 ```
 
@@ -37,7 +45,7 @@ is that the body will be ignored. Pending spec bodies are used to give a hint
 what the spec should assert in the future. Use `pending'` (note the `'` at the
 end) to create a pending spec with a body.
 
-```purescript
+```haskell
 pending' "calculates the answer to Life, the Universe and Everything" do
   answerTo theUltimateQuestion `shouldBe` 42
 ```
@@ -45,7 +53,7 @@ pending' "calculates the answer to Life, the Universe and Everything" do
 To group multiple specs in a logically related group of specs, we use
 `describe`. This creates a new spec which represents the named group.
 
-```purescript
+```haskell
 describe "MyModule" do
   it "..." do
     ...
@@ -58,7 +66,7 @@ describe "MyModule" do
 Spec groups can be nested in multiple levels, creating a hierarchy of named
 groups.
 
-```purescript
+```haskell
 describe "MyModule" $
   describe "SubModule" $
     describe "Database" do
@@ -76,7 +84,7 @@ Let's look at an example of a complete spec program, with the needed imports
 and a proper `main` function. The specs shown in the [header
 image](#header-image) looks like this:
 
-```purescript
+```haskell
 module Main where
 
 import Prelude
@@ -112,7 +120,7 @@ main = launchAff_ $ runSpec [consoleReporter] do
 You can split specs into multiple files and combine them using regular monadic
 bind, e.g. with `do` expressions.
 
-```purescript
+```haskell
 baseSpecs = do
   mathSpec
   stringsSpec
@@ -131,7 +139,7 @@ It can also be that some spec takes a lot of time, and you wish to exclude it
 temporarily. By using `itOnly` instead of the regular `it`, the test runner
 includes only that spec.
 
-```purescript
+```haskell
 describe "My API" do
   itOnly "does feature X" ... -- only this spec will run
   it "does things that takes a lot of time"
@@ -139,7 +147,7 @@ describe "My API" do
 
 Similar to `itOnly`, `describeOnly` makes the runner include only that group.
 
-```purescript
+```haskell
 describe "Module" do
   describeOnly "Sub Module A" -- only this group will run
     it "does feature X" ...
@@ -149,7 +157,7 @@ describe "Module" do
 
 There is also `focus` which can be used to select some specific group for execution
 
-```purescript
+```haskell
 describe "Module" do
   describe "Sub Module A"
     it "does feature X" ...
@@ -160,14 +168,11 @@ describe "Module" do
       it "does feature P" ...
 ```
 
-
-
 ## QuickCheck
 
 You can use [QuickCheck](https://github.com/purescript/purescript-quickcheck)
 together with the [purescript-spec-quickcheck](https://github.com/purescript-spec/purescript-spec-quickcheck)
 adapter to get nice output formatting for QuickCheck tests.
-
 
 ## Parallel spec execution
 
@@ -175,7 +180,7 @@ You can use `parallel` to mark specs for parallel execution. This is useful
 if you want to speed up your tests by not waiting for some async action
 to resolve. so if you have:
 
-```purescript
+```haskell
 describe "delay" do
   it "proc 1" do
     delay $ Milliseconds 500.0
@@ -195,7 +200,7 @@ It would take `2000 ms` to finish. But, by sticking in `parallel`, it would take
 **NOTE** that if you are logging things to console, by using `parallel`
 order of log messages is less deterministic. For example if you had:
 
-```purescript
+```haskell
 describe "delay" do
   it "proc 1" do
     log $ "start 1"
@@ -243,7 +248,7 @@ for some inspiration.
 have an action `flushDb` which flushes your database, you can run it before
 every spec item with:
 
-```purescript
+```haskell
 main :: Spec Unit
 main = before_ flushDb do
   describe "/api/users/count" do
@@ -258,7 +263,7 @@ main = before_ flushDb do
 
 Similarly, `after_` runs a custom action after every spec item:
 
-```purescript
+```haskell
 main :: Spec Unit
 main = after_ truncateDatabase do
   describe "createUser" do
@@ -275,7 +280,7 @@ main = after_ truncateDatabase do
 `around_` is passed an action for each spec item so that it can perform
 whatever setup and teardown is necessary.
 
-```purescript
+```haskell
 serveStubbedApi :: String -> Int -> Aff Server
 stopServer :: Server -> Aff Unit
 
@@ -302,7 +307,7 @@ to open a database connection before each item and pass the connection in).
 This can be done with `before`, `around` and `after`. Here's an example
 for how to use `around`:
 
-```purescript
+```haskell
 openConnection :: Aff Connection
 openConnection = ...
 
@@ -324,7 +329,7 @@ spec = do
 
 Hooks support nesting too:
 
-```purescript
+```haskell
 spec :: Spec Unit
 spec = do
   before (pure 1) $ after (\a -> a `shouldEqual` 1) do

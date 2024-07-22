@@ -1,27 +1,20 @@
-# Running
+---
+title: Running
+nav_order: 2
+---
+
+1. TOC
+{: toc }
+
+## Running specs
 
 When you have a spec, you need a runner to actually run it and get the results.
 PureScript Spec comes with a NodeJS runner, `runSpec`, which takes an array of
 *reporters* and a spec to run. What you get back is a test-running program of
-type `Aff Unit`. The program can be run using
-[Pulp](https://github.com/bodil/pulp).
+type `Aff Unit`. The program can be run using Spago:
 
 ```bash
-pulp test
-```
-
-If you're not using pulp, you can compile the test program using `psc`. The
-following command compiles all PureScript modules in `test` and `src`.
-
-
-```bash
-psc -o output 'test/**/*.purs' 'src/**/*.purs'
-```
-
-After that has finished, you can run the test program using NodeJS.
-
-```
-NODE_PATH=output node -e "require('Test.Main').main();"
+npx spago test
 ```
 
 **NOTE:** A test program using `Test.Spec.Runner.runSpec` cannot be browserified
@@ -46,7 +39,7 @@ takes `Config` record. also instead of `Spec Unit` it takes `SpecT Aff Unit m Un
 and returns `m (Aff (Array (Tree Void Result)))`. if we specialize the `m` to `Identity`
 then code will look like this:
 
-```purescript
+```haskell
 main = launchAff_ $ un Identity $ runSpecT testConfig [consoleReporter] mySpec
   where
     testConfig = { slow: Milliseconds 5000.0, timeout: Just $ Milliseconds 10000.0, exit: false }
@@ -54,11 +47,11 @@ main = launchAff_ $ un Identity $ runSpecT testConfig [consoleReporter] mySpec
 
 ## Automatically Discovering Specs
 
-If you are running your specs in an NodeJS environment, e.g. with `pulp test`,
+If you are running your specs in an NodeJS environment, e.g. with `spago test`,
 you can automatically scan for spec modules using [purescript-spec-discovery](https://github.com/owickstrom/purescript-spec-discovery).
 Then your `main` function can be as simple as:
 
-```purescript
+```haskell
 main = discover "My\\.Package\\..*Spec" >>= runSpec [consoleReporter] >>> launchAff_
 ```
 
