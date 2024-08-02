@@ -2,6 +2,10 @@ workspace:
   extraPackages:
     spec:
       path: SPEC_REPO_PATH
+    spec-node:
+      repo: https://github.com/purescript-spec/purescript-spec-node.git
+      version: v0.0.1
+      dependencies: ['argonaut-core', 'argonaut-codecs', 'optparse', 'node-fs']
   packageSet:
     registry: 55.1.0
 
@@ -10,4 +14,4 @@ package:
   dependencies: []
   test:
     main: Test.Main
-    dependencies: ["aff", "effect", "maybe", "prelude", "spec"]
+    dependencies: ["aff", "effect", "maybe", "prelude", "spec", "spec-node"]

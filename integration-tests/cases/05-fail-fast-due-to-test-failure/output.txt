@@ -1,8 +1,8 @@
-[32m✓︎ [0m[2mpasses[0m
-[31m1) fails[0m
-[32m1 passing[0m
-[36m1 pending[0m
-[31m1 failed[0m
+✓︎ passes
+1) fails
+1 passing
+1 pending
+1 failed
 
 1) fails
-[31m  This is a failing test[0m
+  This is a failing test

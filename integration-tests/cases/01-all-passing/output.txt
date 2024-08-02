@@ -1,12 +1,12 @@
-[32m✓︎ [0m[2mone[0m
+✓︎ one
 two
- [32m✓︎ [0m[2mfirst[0m
- [32m✓︎ [0m[2msecond[0m
- [32m✓︎ [0m[2mthird[0m
+ ✓︎ first
+ ✓︎ second
+ ✓︎ third
 three
  1
-  [32m✓︎ [0m[2muno[0m
-  [32m✓︎ [0m[2mdos[0m
+  ✓︎ uno
+  ✓︎ dos
  2
-  [32m✓︎ [0m[2mein[0m
-[32m7 passing[0m
+  ✓︎ ein
+7 passing

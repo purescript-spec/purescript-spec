@@ -16,6 +16,13 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **8.0.0**
+  * `runSpec` renamed to `runSpecPure`.
+  * `runSpecT` renamed to `evalSpecT`.
+  * Old versions of `runSpec` and `runSpecT` are left in, but deprecated, with
+    the warning pointing to `runSpecAndExitProcess` from `spec-node`.
+  * Added `spec-node` docs.
+
 * **7.6.1**
   * Upgraded to Spago Next
   * Dropped support for Pulp and Bower

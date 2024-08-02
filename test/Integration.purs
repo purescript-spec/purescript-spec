@@ -2,12 +2,13 @@ module Test.Integration where
 
 import Prelude
 
-import Control.Monad.Trans.Class (lift)
-import Data.Array (take)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String as S
 import Data.String as Str
+import Data.String.Regex (replace) as Regex
+import Data.String.Regex.Flags (global) as Regex
+import Data.String.Regex.Unsafe (unsafeRegex) as Regex
 import Data.Traversable (for_, traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
@@ -24,20 +25,19 @@ import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
 import Node.Process (cwd)
 import Node.Stream as Stream
-import Test.Spec (SpecT, afterAll, describe, focus, it)
+import Test.Spec (Spec, afterAll, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 -- | Reads the contents of `/integration-tests/cases` and turns each
 -- | subdirectory into a test case. See `/integration-tests/cases/README` for
 -- | more details.
-integrationSpecs :: SpecT Aff Unit Aff Unit
-integrationSpecs = do
-  { runFile, cleanupEnvironment } <- liftEffect $ prepareEnvironment { debug: false }
+integrationSpecs :: { debug :: Boolean } -> Aff (Spec Unit)
+integrationSpecs { debug } = do
+  { runFile, cleanupEnvironment } <- liftEffect $ prepareEnvironment { debug }
+  cases <- FS.readdir "integration-tests/cases"
 
-  afterAll (\_ -> cleanupEnvironment) $
+  pure $ afterAll (\_ -> cleanupEnvironment) $
     describe "Integration tests" do
-      cases <- lift $ FS.readdir "integration-tests/cases"
-
       for_ cases \testName -> do
         let testDir = "integration-tests/cases/" <> testName
         it testName do
@@ -59,7 +59,7 @@ prepareEnvironment { debug } =
           res
           -- Removing ESC characters (which are used for colors), because
           -- they're very inconvenient to include in the golden output files.
-          # S.replaceAll (S.Pattern "\x1B") (S.Replacement "")
+          # Regex.replace colorsRegex ""
           -- Removing Spago's header text that is currently unremovable via
           -- `--quiet`, which is a known issue:
           -- https://github.com/purescript/spago/issues/1249
@@ -76,6 +76,8 @@ prepareEnvironment { debug } =
             pure unit
     }
   where
+    colorsRegex = Regex.unsafeRegex "\x1B\\[[0-9;]+m" Regex.global
+
     traceLog
       | debug = log
       | otherwise = const $ pure unit
