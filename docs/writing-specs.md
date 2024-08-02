@@ -112,7 +112,7 @@ main = launchAff_ $ runSpec [consoleReporter] do
       it "supports async specs" do
         res <- delay (Milliseconds 100.0) $> "Alligator"
         res `shouldEqual` "Alligator"
-      it "is PureScript 0.12.x compatible" $ pure unit
+      it "is PureScript 0.15.x compatible" $ pure unit
 ```
 
 ## Combining Specs

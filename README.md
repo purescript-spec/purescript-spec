@@ -106,7 +106,7 @@ in detail how to use purescript-spec. **You should probably start here.**
   * Fix case statements to remove warnings.
 * **0.7.1**
   * Workaround for escape sequence bug in `psc-bundle`, see:
-    * https://github.com/owickstrom/purescript-spec/issues/12
+    * https://github.com/purescript-spec/purescript-spec/issues/12
     * https://github.com/purescript/purescript/issues/1265
 * **0.7.0**
   * Rename `runNode` to `run` and place it in `Test.Spec.Runner`.

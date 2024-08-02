@@ -12,7 +12,6 @@ plugins_dir: ./_plugins
 permalink: pretty
 
 search_enabled: false
-nav_enabled: false
 footer_content: "PureScript Spec is licensed under the MIT license."
 
 defaults:
@@ -20,7 +19,6 @@ defaults:
       path: ""
     values:
       layout: default
-      nav_enabled: false
 
 kramdown:
   syntax_highlighter_opts:

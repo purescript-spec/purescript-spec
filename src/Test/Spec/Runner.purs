@@ -1,10 +1,13 @@
 module Test.Spec.Runner
   ( Reporter
   , TestEvents
+  , evalSpecT
   , module Test.Spec.Config
   , run
   , runSpec
   , runSpec'
+  , runSpecPure
+  , runSpecPure'
   , runSpecT
   )
   where
@@ -14,7 +17,7 @@ import Prelude
 import Control.Alternative ((<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Parallel (parTraverse, parallel, sequential)
-import Data.Array (concat, groupBy)
+import Data.Array (concat, fold, groupBy)
 import Data.Array.NonEmpty as NEA
 import Data.DateTime.Instant (diff)
 import Data.Either (Either(..), either)
@@ -172,51 +175,75 @@ type TestEvents = Producer Event Aff (Array (Tree String Void Result))
 
 type Reporter = Pipe Event Event Aff (Array (Tree String Void Result))
 
--- | Run the spec with `config`, returning the results, which
--- | are also reported using specified Reporters, if any.
--- | If configured as such, `exit` the program upon completion
--- | with appropriate exit code.
-runSpecT
+-- | Evaluates the spec tree and returns an action, which, when executed, will
+-- | run the tests and return the results, which are also reported using
+-- | specified Reporters, if any.
+evalSpecT
   :: forall m
    . Functor m
   => Config
   -> Array Reporter
   -> SpecT Aff Unit m Unit
   -> m (Aff (Array (Tree String Void Result)))
-runSpecT config reporters spec = _run config spec <#> \runner -> do
+evalSpecT config reporters spec = _run config spec <#> \runner -> do
   let
     events = foldl (>->) runner reporters
     reportedEvents = P.runEffect $ events //> \_ -> pure unit
   if config.exit
-    then try reportedEvents >>= case _ of
-      Left err -> do
-        liftEffect $ Console.write $ styled Style.red (show err <> "\n")
-        liftEffect $ exit 1
-        throwError err
-      Right results -> liftEffect do
-        let code = if successful results then 0 else 1
-        exit code
-        pure results
-    else reportedEvents
+    then do
+      liftEffect $ Console.write $ styled Style.yellow $ fold
+        [ "WARNING: The use of `runSpec` or `runSpecT` under NodeJS is deprecated "
+        , "and will be removed in the next major release. "
+        , "Please migrate to `runSpecAndExitProcess` from the 'spec-node' package."
+        ]
+      try reportedEvents >>= case _ of
+        Left err -> do
+          liftEffect $ Console.write $ styled Style.red (show err <> "\n")
+          liftEffect $ exit 1
+          throwError err
+        Right results -> liftEffect do
+          let code = if successful results then 0 else 1
+          exit code
+          pure results
+    else
+      reportedEvents
+
+runSpecPure :: Array Reporter -> Spec Unit -> Aff Unit
+runSpecPure reporters spec = runSpecPure' defaultConfig reporters spec
+
+runSpecPure' :: Config -> Array Reporter -> Spec Unit -> Aff Unit
+runSpecPure' config reporters spec = void $ un Identity $ evalSpecT config reporters spec
+
+runSpecT
+  :: forall m
+   . Functor m
+  => Warn (Text "`runSpecT` is deprecated. Use `runSpecAndExitProcess` from the 'spec-node' package instead.")
+  => Config
+  -> Array Reporter
+  -> SpecT Aff Unit m Unit
+  -> m (Aff (Array (Tree String Void Result)))
+runSpecT = evalSpecT
 
 -- | Run the spec with the default config
 run
-  :: Warn (Text "`Test.Spec.Runner.run` is Deprecated use runSpec instead")
+  :: Warn (Text "`run` is deprecated. Use runSpecAndExitProcess from the 'spec-node' package instead.")
   => Array Reporter
   -> Spec Unit
   -> Aff Unit
-run = runSpec' defaultConfig
+run = runSpecPure' defaultConfig
 
 -- | Run the spec with the default config
 runSpec
-  :: Array Reporter
+  :: Warn (Text "`runSpec` is deprecated. Use runSpecAndExitProcess from the 'spec-node' package instead.")
+  => Array Reporter
   -> Spec Unit
   -> Aff Unit
-runSpec reporters spec = runSpec' defaultConfig reporters spec
+runSpec = runSpecPure
 
 runSpec'
-  :: Config
+  :: Warn (Text "`runSpec'` is deprecated. Use runSpecAndExitProcess from the 'spec-node' package instead.")
+  => Config
   -> Array Reporter
   -> Spec Unit
   -> Aff Unit
-runSpec' config reporters spec = void $ un Identity $ runSpecT config reporters spec
+runSpec' = runSpecPure'
