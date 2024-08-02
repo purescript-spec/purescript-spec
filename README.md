@@ -16,6 +16,13 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **8.0.0**
+  * `runSpec` renamed to `runSpecPure`.
+  * `runSpecT` renamed to `evalSpecT`.
+  * Old versions of `runSpec` and `runSpecT` are left in, but deprecated, with
+    the warning pointing to `runSpecAndExitProcess` from `spec-node`.
+  * Added `spec-node` docs.
+
 * **7.6.1**
   * Upgraded to Spago Next
   * Dropped support for Pulp and Bower
@@ -106,7 +113,7 @@ in detail how to use purescript-spec. **You should probably start here.**
   * Fix case statements to remove warnings.
 * **0.7.1**
   * Workaround for escape sequence bug in `psc-bundle`, see:
-    * https://github.com/owickstrom/purescript-spec/issues/12
+    * https://github.com/purescript-spec/purescript-spec/issues/12
     * https://github.com/purescript/purescript/issues/1265
 * **0.7.0**
   * Rename `runNode` to `run` and place it in `Test.Spec.Runner`.

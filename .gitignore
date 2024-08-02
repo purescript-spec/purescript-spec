@@ -8,3 +8,4 @@ tmp/
 tags
 /.psc-ide-port
 .spago
+.spec-results

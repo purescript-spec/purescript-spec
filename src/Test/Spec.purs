@@ -3,6 +3,7 @@ module Test.Spec
   , SpecT(..)
   , module Reexport
   , SpecTree
+  , mapSpec
   , mapSpecTree
   , collect
 
@@ -102,6 +103,9 @@ derive newtype instance monadStateSpecT :: MonadState s m => MonadState s (SpecT
 -- | tree of abstract things, `SpecTree` is a tree of tests, each represented by
 -- | `Item`.
 type SpecTree m a = Tree String (ActionWith m a) (Item m a)
+
+mapSpec :: ∀ m m' g i a. Functor m' => (m ~> m') -> SpecT g i m a -> SpecT g i m' a
+mapSpec f = mapSpecTree f identity
 
 mapSpecTree
   :: forall m m' g g' i a i'

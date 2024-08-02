@@ -1,6 +1,10 @@
 workspace:
   extraPackages:
     parallel: 6.0.0
+    spec-node:
+      repo: https://github.com/purescript-spec/purescript-spec-node.git
+      version: v0.0.1
+      dependencies: ['argonaut-core', 'argonaut-codecs', 'optparse']
   packageSet:
     registry: 55.1.0
 
@@ -52,3 +56,4 @@ package:
       - node-process
       - node-streams
       - refs
+      - spec-node

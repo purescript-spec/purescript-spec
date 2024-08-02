@@ -1,19 +1,19 @@
-[31m1) one[0m
+1) one
 two
- [32m✓︎ [0m[2mfirst[0m
- [31m2) second[0m
+ ✓︎ first
+ 2) second
 three
  1
-  [31m3) uno[0m
-  [32m✓︎ [0m[2mdos[0m
+  3) uno
+  ✓︎ dos
  2
-  [32m✓︎ [0m[2mein[0m
-[32m3 passing[0m
-[31m3 failed[0m
+  ✓︎ ein
+3 passing
+3 failed
 
 1) one
-[31m  5 ≠ 6[0m
+  5 ≠ 6
 2) two second
-[31m  crash[0m
+  crash
 3) three 1 uno
-[31m  boom[0m
+  boom

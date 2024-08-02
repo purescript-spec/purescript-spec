@@ -16,7 +16,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install && npx spago install
+        run: npm install
 
       - name: Build project
         run: npx spago build

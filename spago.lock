@@ -40,9 +40,12 @@ workspace:
         - node-process
         - node-streams
         - refs
+        - spec-node
       build_plan:
         - aff
         - ansi
+        - argonaut-codecs
+        - argonaut-core
         - arraybuffer-types
         - arrays
         - avar
@@ -59,6 +62,7 @@ workspace:
         - enums
         - exceptions
         - exists
+        - exitcodes
         - foldable-traversable
         - foreign
         - foreign-object
@@ -88,6 +92,8 @@ workspace:
         - now
         - nullable
         - numbers
+        - open-memoize
+        - optparse
         - ordered-collections
         - orders
         - parallel
@@ -96,8 +102,11 @@ workspace:
         - posix-types
         - prelude
         - profunctor
+        - psci-support
+        - record
         - refs
         - safe-coerce
+        - spec-node
         - st
         - strings
         - tailrec
@@ -610,6 +619,13 @@ workspace:
       zipperarray: 2.0.0
   extra_packages:
     parallel: 6.0.0
+    spec-node:
+      repo: https://github.com/purescript-spec/purescript-spec-node.git
+      version: v0.0.1
+      dependencies:
+        - argonaut-core
+        - argonaut-codecs
+        - optparse
 packages:
   aff:
     type: registry
@@ -641,6 +657,38 @@ packages:
       - foldable-traversable
       - lists
       - strings
+  argonaut-codecs:
+    type: registry
+    version: 9.1.0
+    integrity: sha256-N6efXByUeg848ompEqJfVvZuZPfdRYDGlTDFn0G0Oh8=
+    dependencies:
+      - argonaut-core
+      - arrays
+      - effect
+      - foreign-object
+      - identity
+      - integers
+      - maybe
+      - nonempty
+      - ordered-collections
+      - prelude
+      - record
+  argonaut-core:
+    type: registry
+    version: 7.0.0
+    integrity: sha256-RC82GfAjItydxrO24cdX373KHVZiLqybu19b5X8u7B4=
+    dependencies:
+      - arrays
+      - control
+      - either
+      - foreign-object
+      - functions
+      - gen
+      - maybe
+      - nonempty
+      - prelude
+      - strings
+      - tailrec
   arraybuffer-types:
     type: registry
     version: 3.0.2
@@ -806,6 +854,12 @@ packages:
     integrity: sha256-A0JQHpTfo1dNOj9U5/Fd3xndlRSE0g2IQWOGor2yXn8=
     dependencies:
       - unsafe-coerce
+  exitcodes:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-4wxViTbyOoyKJ/WaRGI6+hZmgMKI5Miv16lSwefiLSM=
+    dependencies:
+      - enums
   foldable-traversable:
     type: registry
     version: 6.0.0
@@ -1153,6 +1207,58 @@ packages:
     dependencies:
       - functions
       - maybe
+  open-memoize:
+    type: registry
+    version: 6.1.0
+    integrity: sha256-ws/Cix/wgUKvrbPPxTqDSGCPpkTIvP1adTYLHAquBC4=
+    dependencies:
+      - console
+      - effect
+      - either
+      - integers
+      - lazy
+      - lists
+      - maybe
+      - partial
+      - prelude
+      - psci-support
+      - strings
+      - tuples
+  optparse:
+    type: registry
+    version: 5.0.1
+    integrity: sha256-cEzEkNW4q0gZlXl4z0zn+H2vs6l2UAp7NPHCsois73k=
+    dependencies:
+      - aff
+      - arrays
+      - bifunctors
+      - console
+      - control
+      - effect
+      - either
+      - enums
+      - exists
+      - exitcodes
+      - foldable-traversable
+      - free
+      - gen
+      - integers
+      - lazy
+      - lists
+      - maybe
+      - newtype
+      - node-buffer
+      - node-process
+      - node-streams
+      - nonempty
+      - numbers
+      - open-memoize
+      - partial
+      - prelude
+      - strings
+      - tailrec
+      - transformers
+      - tuples
   ordered-collections:
     type: registry
     version: 3.2.0
@@ -1234,6 +1340,22 @@ packages:
       - newtype
       - prelude
       - tuples
+  psci-support:
+    type: registry
+    version: 6.0.0
+    integrity: sha256-C6ql4P9TEP06hft/1Z5QumPA4yARR4VIxDdhmL1EO+Y=
+    dependencies:
+      - console
+      - effect
+      - prelude
+  record:
+    type: registry
+    version: 4.0.0
+    integrity: sha256-Za5U85bTRJEfGK5Sk4hM41oXy84YQI0I8TL3WUn1Qzg=
+    dependencies:
+      - functions
+      - prelude
+      - unsafe-coerce
   refs:
     type: registry
     version: 6.0.0
@@ -1247,6 +1369,14 @@ packages:
     integrity: sha256-a1ibQkiUcbODbLE/WAq7Ttbbh9ex+x33VCQ7GngKudU=
     dependencies:
       - unsafe-coerce
+  spec-node:
+    type: git
+    url: https://github.com/purescript-spec/purescript-spec-node.git
+    rev: 33994a5e95ccfe62ef3bfdeedddd3c2326b902ab
+    dependencies:
+      - argonaut-codecs
+      - argonaut-core
+      - optparse
   st:
     type: registry
     version: 6.2.0

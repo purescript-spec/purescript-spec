@@ -3,14 +3,12 @@ module Test.Main where
 import Prelude
 
 import Effect (Effect)
-import Effect.Aff (launchAff_)
 import Test.Spec (describe, it)
-import Test.Spec.Config (defaultConfig)
 import Test.Spec.Reporter (consoleReporter)
-import Test.Spec.Runner (runSpec')
+import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
 main :: Effect Unit
-main = launchAff_ $ runSpec' defaultConfig [consoleReporter] do
+main = runSpecAndExitProcess [consoleReporter] do
   describe "A" do
     it "should be under A" (pure unit)
   describe "B" do
