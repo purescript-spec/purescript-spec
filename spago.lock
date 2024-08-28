@@ -2,120 +2,168 @@ workspace:
   packages:
     spec:
       path: ./
-      dependencies:
-        - aff: ">=7.1.0 <8.0.0"
-        - ansi: ">=7.0.0 <8.0.0"
-        - arrays: ">=7.3.0 <8.0.0"
-        - avar: ">=5.0.0 <6.0.0"
-        - bifunctors: ">=6.0.0 <7.0.0"
-        - control: ">=6.0.0 <7.0.0"
-        - datetime: ">=6.1.0 <7.0.0"
-        - effect: ">=4.0.0 <5.0.0"
-        - either: ">=6.1.0 <7.0.0"
-        - exceptions: ">=6.1.0 <7.0.0"
-        - foldable-traversable: ">=6.0.0 <7.0.0"
-        - fork: ">=6.0.0 <7.0.0"
-        - identity: ">=6.0.0 <7.0.0"
-        - integers: ">=6.0.0 <7.0.0"
-        - lists: ">=7.0.0 <8.0.0"
-        - maybe: ">=6.0.0 <7.0.0"
-        - newtype: ">=5.0.0 <6.0.0"
-        - now: ">=6.0.0 <7.0.0"
-        - ordered-collections: ">=3.2.0 <4.0.0"
-        - parallel: ">=6.0.0 <8.0.0"
-        - pipes: ">=8.0.0 <9.0.0"
-        - prelude: ">=6.0.1 <7.0.0"
-        - refs: ">=6.0.0 <7.0.0"
-        - strings: ">=6.0.1 <7.0.0"
-        - tailrec: ">=6.1.0 <7.0.0"
-        - transformers: ">=6.1.0 <7.0.0"
-        - tuples: ">=7.0.0 <8.0.0"
-      test_dependencies:
-        - console
-        - node-buffer
-        - node-child-process
-        - node-event-emitter
-        - node-fs
-        - node-os
-        - node-process
-        - node-streams
-        - refs
-        - spec-node
-      build_plan:
-        - aff
-        - ansi
-        - argonaut-codecs
-        - argonaut-core
-        - arraybuffer-types
-        - arrays
-        - avar
-        - bifunctors
-        - catenable-lists
-        - console
-        - const
-        - contravariant
-        - control
-        - datetime
-        - distributive
-        - effect
-        - either
-        - enums
-        - exceptions
-        - exists
-        - exitcodes
-        - foldable-traversable
-        - foreign
-        - foreign-object
-        - fork
-        - free
-        - functions
-        - functors
-        - gen
-        - identity
-        - integers
-        - invariant
-        - js-date
-        - lazy
-        - lists
-        - maybe
-        - mmorph
-        - newtype
-        - node-buffer
-        - node-child-process
-        - node-event-emitter
-        - node-fs
-        - node-os
-        - node-path
-        - node-process
-        - node-streams
-        - nonempty
-        - now
-        - nullable
-        - numbers
-        - open-memoize
-        - optparse
-        - ordered-collections
-        - orders
-        - parallel
-        - partial
-        - pipes
-        - posix-types
-        - prelude
-        - profunctor
-        - psci-support
-        - record
-        - refs
-        - safe-coerce
-        - spec-node
-        - st
-        - strings
-        - tailrec
-        - transformers
-        - tuples
-        - type-equality
-        - typelevel-prelude
-        - unfoldable
-        - unsafe-coerce
+      core:
+        dependencies:
+          - aff: ">=7.1.0 <8.0.0"
+          - ansi: ">=7.0.0 <8.0.0"
+          - arrays: ">=7.3.0 <8.0.0"
+          - avar: ">=5.0.0 <6.0.0"
+          - bifunctors: ">=6.0.0 <7.0.0"
+          - control: ">=6.0.0 <7.0.0"
+          - datetime: ">=6.1.0 <7.0.0"
+          - effect: ">=4.0.0 <5.0.0"
+          - either: ">=6.1.0 <7.0.0"
+          - exceptions: ">=6.1.0 <7.0.0"
+          - foldable-traversable: ">=6.0.0 <7.0.0"
+          - fork: ">=6.0.0 <7.0.0"
+          - identity: ">=6.0.0 <7.0.0"
+          - integers: ">=6.0.0 <7.0.0"
+          - lists: ">=7.0.0 <8.0.0"
+          - maybe: ">=6.0.0 <7.0.0"
+          - newtype: ">=5.0.0 <6.0.0"
+          - now: ">=6.0.0 <7.0.0"
+          - ordered-collections: ">=3.2.0 <4.0.0"
+          - parallel: ">=6.0.0 <8.0.0"
+          - pipes: ">=8.0.0 <9.0.0"
+          - prelude: ">=6.0.1 <7.0.0"
+          - refs: ">=6.0.0 <7.0.0"
+          - strings: ">=6.0.1 <7.0.0"
+          - tailrec: ">=6.1.0 <7.0.0"
+          - transformers: ">=6.1.0 <7.0.0"
+          - tuples: ">=7.0.0 <8.0.0"
+        build_plan:
+          - aff
+          - ansi
+          - arrays
+          - avar
+          - bifunctors
+          - catenable-lists
+          - const
+          - contravariant
+          - control
+          - datetime
+          - distributive
+          - effect
+          - either
+          - enums
+          - exceptions
+          - exists
+          - foldable-traversable
+          - fork
+          - free
+          - functions
+          - functors
+          - gen
+          - identity
+          - integers
+          - invariant
+          - lazy
+          - lists
+          - maybe
+          - mmorph
+          - newtype
+          - nonempty
+          - now
+          - numbers
+          - ordered-collections
+          - orders
+          - parallel
+          - partial
+          - pipes
+          - prelude
+          - profunctor
+          - refs
+          - safe-coerce
+          - st
+          - strings
+          - tailrec
+          - transformers
+          - tuples
+          - type-equality
+          - unfoldable
+          - unsafe-coerce
+      test:
+        dependencies:
+          - console
+          - node-buffer
+          - node-child-process
+          - node-event-emitter
+          - node-fs
+          - node-os
+          - node-process
+          - node-streams
+          - refs
+          - spec-node
+        build_plan:
+          - aff
+          - argonaut-codecs
+          - argonaut-core
+          - arraybuffer-types
+          - arrays
+          - bifunctors
+          - catenable-lists
+          - console
+          - const
+          - contravariant
+          - control
+          - datetime
+          - distributive
+          - effect
+          - either
+          - enums
+          - exceptions
+          - exists
+          - exitcodes
+          - foldable-traversable
+          - foreign
+          - foreign-object
+          - free
+          - functions
+          - functors
+          - gen
+          - identity
+          - integers
+          - invariant
+          - js-date
+          - lazy
+          - lists
+          - maybe
+          - newtype
+          - node-buffer
+          - node-child-process
+          - node-event-emitter
+          - node-fs
+          - node-os
+          - node-path
+          - node-process
+          - node-streams
+          - nonempty
+          - now
+          - nullable
+          - numbers
+          - open-memoize
+          - optparse
+          - ordered-collections
+          - orders
+          - parallel
+          - partial
+          - posix-types
+          - prelude
+          - profunctor
+          - psci-support
+          - record
+          - refs
+          - safe-coerce
+          - spec-node
+          - st
+          - strings
+          - tailrec
+          - transformers
+          - tuples
+          - type-equality
+          - typelevel-prelude
+          - unfoldable
+          - unsafe-coerce
   package_set:
     address:
       registry: 55.1.0
@@ -620,11 +668,11 @@ workspace:
   extra_packages:
     parallel: 6.0.0
     spec-node:
-      repo: https://github.com/purescript-spec/purescript-spec-node.git
-      version: v0.0.1
+      git: https://github.com/purescript-spec/purescript-spec-node.git
+      ref: v0.0.1
       dependencies:
-        - argonaut-core
         - argonaut-codecs
+        - argonaut-core
         - optparse
 packages:
   aff:
@@ -1372,7 +1420,7 @@ packages:
   spec-node:
     type: git
     url: https://github.com/purescript-spec/purescript-spec-node.git
-    rev: 33994a5e95ccfe62ef3bfdeedddd3c2326b902ab
+    rev: a7527ea28341ad5d743230dede01c20e8a513a10
     dependencies:
       - argonaut-codecs
       - argonaut-core
