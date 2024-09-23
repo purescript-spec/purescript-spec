@@ -9,7 +9,7 @@ You definitely can! The `runSpecAndExitProcess'` function takes a
 `TestRunConfig` record, which you can extract from command-line options via the
 `fromCommandLine'` function. `TestRunConfig` is an open record, so you can add
 your own fields to it, and pass your own command-line parser to
-`fromCommandLine'`. Then you can use the field
+`fromCommandLine'`. Then you can use the field for whatever purpose you need.
 
 ```haskell
 import Options.Applicative as Opt
@@ -31,7 +31,12 @@ main = do
         | config.onlyIntegrationTests = integrationTests
         | otherwise = unitTests *> integrationTests
 
-  runSpecAndExitProcess' config [consoleReporter] spec
+  runSpecAndExitProcess'
+    { defaultConfig: config  -- Use this config to run the tests.
+    , parseCLIOptions: false -- We already parsed them, no need to do it again.
+    }
+    [consoleReporter]
+    spec
 
 integrationOnlyParser :: Config.OptionParser MyTestConfig
 integrationOnlyParser = ado
