@@ -28,7 +28,12 @@ main = launchAff_ do
   integration <-
     integrationSpecs { debug: config.debug }
   liftEffect $
-    runSpecAndExitProcess' config [specReporter] $ pureSpecs *> integration
+    runSpecAndExitProcess'
+      { defaultConfig: config
+      , parseCLIOptions: false
+      }
+      [specReporter] $
+      pureSpecs *> integration
   where
     pureSpecs = do
       runnerSpec

@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "purescript": "^0.15.15",
-    "spago": "^0.93.39",
+    "spago": "^0.93.40",
     "esbuild": "^0.23.0"
   }
 }
