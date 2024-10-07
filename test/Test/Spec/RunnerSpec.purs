@@ -16,7 +16,7 @@ import Test.Spec (Item(..), Spec, SpecT, Tree(..), collect, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual)
 import Test.Spec.Fixtures (itOnlyTest, describeOnlyNestedTest, describeOnlyTest, sharedDescribeTest, successTest)
 import Test.Spec.Result (Result(..))
-import Test.Spec.Runner (TreeFilter(..), defaultConfig, runSpecT)
+import Test.Spec.Runner (TreeFilter(..), defaultConfig, evalSpecT)
 import Test.Spec.Tree (annotateWithPaths, filterTrees, mapTreeAnnotations, parentSuiteName)
 
 runnerSpec :: Spec Unit
@@ -67,7 +67,7 @@ runnerSpec =
 
         it "supports fail-fast" do
           let config = defaultConfig { exit = false, failFast = true }
-          res <- un Identity $ runSpecT config [] $
+          res <- un Identity $ evalSpecT config [] $
             describe "A test" do
               it "fails" $ 1 `shouldEqual` 2
               it "also fails" $ 1 `shouldEqual` 2
@@ -96,7 +96,7 @@ runnerSpec =
                     <#> mapTreeAnnotations fst              -- Drop the paths from the tree
                 }
 
-          res <- un Identity $ runSpecT config [] do
+          res <- un Identity $ evalSpecT config [] do
             describe "aaa" do
               it "bbb" $ pure unit
               it "ccc" $ fail "boom"
