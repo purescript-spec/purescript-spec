@@ -741,7 +741,7 @@
     "extra_packages": {
       "spec-node": {
         "git": "https://github.com/purescript-spec/purescript-spec-node.git",
-        "ref": "v0.0.2",
+        "ref": "v0.0.3",
         "dependencies": [
           "argonaut-codecs",
           "argonaut-core",
@@ -1607,7 +1607,7 @@
     "spec-node": {
       "type": "git",
       "url": "https://github.com/purescript-spec/purescript-spec-node.git",
-      "rev": "76e1bc6563a95c1c40a06a16f821c439cb5e8e13",
+      "rev": "fdbeef004a59051ab6dd120ba96f88cba2f85dec",
       "dependencies": [
         "argonaut-codecs",
         "argonaut-core",

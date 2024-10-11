@@ -2,7 +2,7 @@ workspace:
   extraPackages:
     spec-node:
       git: https://github.com/purescript-spec/purescript-spec-node.git
-      ref: v0.0.2
+      ref: v0.0.3
       dependencies: [ 'argonaut-core', 'argonaut-codecs', 'optparse' ]
   packageSet:
     registry: 60.2.0
