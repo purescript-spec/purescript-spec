@@ -10,6 +10,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Show.Generic (genericShow)
+import Data.Tuple.Nested ((/\))
 import Effect.Exception as Error
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultUpdate)
@@ -20,9 +21,9 @@ import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
-import Test.Spec.Tree (Path, Tree, parentSuiteName)
+import Test.Spec.Tree (Path, Tree, TestLocator, parentSuiteName)
 
-type State = { runningItems :: Map Path RunningItem, lastPrintedSuitePath :: Maybe Path}
+type State = { runningItems :: Map TestLocator RunningItem, lastPrintedSuitePath :: Maybe Path}
 
 initialState :: State
 initialState = { runningItems: Map.empty, lastPrintedSuitePath: Nothing }
@@ -31,16 +32,16 @@ consoleReporter :: Reporter
 consoleReporter = defaultReporter initialState $ defaultUpdate
   { getRunningItems: _.runningItems
   , putRunningItems: flip _{runningItems = _}
-  , printFinishedItem: \path -> case _ of
-      RunningTest name (Just res) -> print path $ PrintTest name res
-      RunningPending name -> print path $ PrintPending name
+  , printFinishedItem: \(path /\ name) -> case _ of
+      RunningTest (Just res) -> print path $ PrintTest name res
+      RunningPending -> print path $ PrintPending name
       _ -> pure unit
   , update: case _ of
-      Event.TestEnd path name res -> do
+      Event.TestEnd (path /\ name) res -> do
         {runningItems} <- get
-        when (isNothing $ Map.lookup path runningItems) do
+        when (isNothing $ Map.lookup (path /\ name) runningItems) do
           print path $ PrintTest name res
-      Event.Pending path name -> do
+      Event.Pending (path /\ name) -> do
         {runningItems} <- get
         when (Map.isEmpty runningItems) do
           print path $ PrintPending name

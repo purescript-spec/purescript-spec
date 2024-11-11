@@ -50,7 +50,7 @@ import Test.Spec.Speed (speedOf)
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (successful)
-import Test.Spec.Tree (Path, annotateWithPaths, countTests, isAllParallelizable)
+import Test.Spec.Tree (Path, annotatedWithPaths, countTests, isAllParallelizable)
 
 foreign import exit :: Int -> Effect Unit
 
@@ -88,7 +88,7 @@ _run
 _run config = collect >>> map \tests -> do
   yield (Event.Start (countTests tests))
   keepRunningVar <- liftEffect $ Ref.new true
-  r <- loop keepRunningVar $ annotateWithPaths $ filteredTests tests
+  r <- loop keepRunningVar $ annotatedWithPaths $ filteredTests tests
   yield (Event.End r)
   pure r
   where
@@ -113,32 +113,32 @@ _run config = collect >>> map \tests -> do
       keepRunning <- liftEffect $ Ref.read keepRunningVar
 
       case test of
-        Leaf (name /\ path) (Just (Item item)) -> do
+        Leaf (path /\ name) (Just (Item item)) -> do
           if keepRunning then do
-            yield $ Event.Test (if isParallelizable then Parallel else Sequential) path name
+            yield $ Event.Test (if isParallelizable then Parallel else Sequential) (path /\ name)
             res <- executeExample item.example
             case res of
               Failure _ | config.failFast -> liftEffect $ Ref.write false keepRunningVar
               _ -> pure unit
-            yield $ Event.TestEnd path name res
+            yield $ Event.TestEnd (path /\ name) res
             pure [ Leaf name $ Just res ]
           else
             pure [ Leaf name Nothing ]
 
-        Leaf (name /\ path) Nothing -> do
+        Leaf (path /\ name) Nothing -> do
           when keepRunning $
-            yield $ Event.Pending path name
+            yield $ Event.Pending (path /\ name)
           pure [ Leaf name Nothing ]
 
         Node (Right cleanup) xs ->
           loop keepRunningVar xs <* lift (cleanup unit)
 
-        Node (Left (name /\ path)) xs -> do
+        Node (Left (path /\ name)) xs -> do
           when keepRunning $
-            yield $ Event.Suite (if isParallelizable then Parallel else Sequential) path name
+            yield $ Event.Suite (if isParallelizable then Parallel else Sequential) (path /\ name)
           res <- loop keepRunningVar xs
           when keepRunning $
-            yield $ Event.SuiteEnd path
+            yield $ Event.SuiteEnd (path /\ name)
           pure [ Node (Left name) res ]
 
     executeExample f = lift do

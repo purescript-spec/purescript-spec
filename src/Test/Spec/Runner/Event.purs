@@ -2,12 +2,10 @@ module Test.Spec.Runner.Event where
 
 import Prelude
 
+import Data.Tuple.Nested ((/\))
 import Test.Spec (Tree)
 import Test.Spec.Result (Result)
-import Test.Spec.Tree (Path)
-
-type Name = String
-type NumberOfTests = Int
+import Test.Spec.Tree (NumberOfTests, TestLocator)
 
 data Execution = Parallel | Sequential
 instance showExecution :: Show Execution where
@@ -17,19 +15,19 @@ instance showExecution :: Show Execution where
 
 data Event
   = Start NumberOfTests
-  | Suite Execution Path Name
-  | SuiteEnd Path
-  | Test Execution Path Name
-  | TestEnd Path Name Result
-  | Pending Path Name
+  | Suite Execution TestLocator
+  | SuiteEnd TestLocator
+  | Test Execution TestLocator
+  | TestEnd TestLocator Result
+  | Pending TestLocator
   | End (Array (Tree String Void Result))
 
 instance showEvent :: Show Event where
   show = case _ of
     Start n -> "Start " <> show n
-    Suite e path name -> "Suite " <> show e <> show path <> ": " <> name
-    SuiteEnd path -> "SuiteEnd " <> show path
-    Test e path name -> "Test " <> show e <> show path <> " " <> name
-    TestEnd path name res -> "TestEnd " <> show path <> " " <> name <> ": " <> show res
-    Pending path name -> "Pending " <> show path <> " " <> name
+    Suite e (path /\ name) -> "Suite " <> show e <> show path <> ": " <> name
+    SuiteEnd (path /\ name) -> "SuiteEnd " <> show path <> ": " <> name
+    Test e (path /\ name) -> "Test " <> show e <> show path <> " " <> name
+    TestEnd (path /\ name) res -> "TestEnd " <> show path <> " " <> name <> ": " <> show res
+    Pending (path /\ name) -> "Pending " <> show path <> " " <> name
     End results -> "End " <> show results

@@ -1,0 +1,11 @@
+async delayed tests
+  ✓︎ test1
+  ✓︎ test2
+  ✓︎ test3
+  ✗ test4:
+
+  true ≠ false
+  ✓︎ test5
+
+Summary
+4/5 tests passed

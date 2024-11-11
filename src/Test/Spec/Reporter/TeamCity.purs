@@ -3,28 +3,27 @@ module Test.Spec.Reporter.TeamCity (teamcityReporter, teamcity) where
 
 import Prelude
 
-import Control.Monad.State (get, modify)
-import Data.Foldable (for_)
+import Data.Array (intercalate) as Array
 import Data.Int (trunc)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (unwrap)
+import Data.String.CodeUnits (contains, drop, dropRight, dropWhile, take, takeWhile) as String
+import Data.String.Common (replaceAll) as String
 import Data.String.Pattern (Pattern(Pattern), Replacement(Replacement))
+import Data.String.Regex (replace') as Regex
+import Data.String.Regex.Flags (global) as Regex
+import Data.String.Regex.Unsafe (unsafeRegex) as Regex
 import Data.Time.Duration (Milliseconds(..))
+import Data.Tuple (fst)
+import Data.Tuple.Nested ((/\))
 import Effect.Exception (Error)
+import Effect.Exception (message, stack) as Error
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
 import Test.Spec.Result (Result(..))
 import Test.Spec.Runner (Reporter)
-import Test.Spec.Tree (Path, parentSuite)
-import Data.Array (intercalate) as Array
-import Effect.Exception (message, stack) as Error
 import Test.Spec.Runner.Event (Event(..)) as Event
-import Data.Map.Internal as Map
-import Data.String.Regex (replace') as Regex
-import Data.String.Regex.Flags (global) as Regex
-import Data.String.Regex.Unsafe (unsafeRegex) as Regex
-import Data.String.CodeUnits (contains, drop, dropRight, dropWhile, take, takeWhile) as String
-import Data.String.Common (replaceAll) as String
+import Test.Spec.Tree (Path, TestLocator, parentSuite)
 
 escape :: String -> String
 escape = Regex.replace'
@@ -124,12 +123,12 @@ type ServiceMessage x =
 type WithMessage = ServiceMessage (message :: String)
 type WithDuration = ServiceMessage (duration :: Number)
 
-serviceMessage :: String -> Path -> ServiceMessage ()
-serviceMessage name path =
+serviceMessage :: TestLocator -> ServiceMessage ()
+serviceMessage (path /\ name) =
   let
     nodeId = idFromPath path
     parentNodeId = parentSuite path
-      <#> _.path
+      <#> fst
       <#> idFromPath
   in
     { name, nodeId, parentNodeId }
@@ -149,28 +148,25 @@ idFromPath path = path
   # Array.intercalate ","
 
 teamcityReporter :: Reporter
-teamcityReporter = defaultReporter Map.empty case _ of
-  Event.Suite _ path name -> do
-    void $ modify $ Map.insert path name
-    tellLn $ testSuiteStarted $ serviceMessage name path
-  Event.SuiteEnd path -> do
-    maybeName <- get <#> Map.lookup path
-    for_ maybeName \name -> do
-      tellLn $ testSuiteFinished $ serviceMessage name path
-  Event.Test _ path name -> do
-    tellLn $ testStarted $ serviceMessage name path
-  Event.Pending path name -> do
-    let attributes = serviceMessage name path
+teamcityReporter = defaultReporter unit case _ of
+  Event.Suite _ loc -> do
+    tellLn $ testSuiteStarted $ serviceMessage loc
+  Event.SuiteEnd loc -> do
+    tellLn $ testSuiteFinished $ serviceMessage loc
+  Event.Test _ loc -> do
+    tellLn $ testStarted $ serviceMessage loc
+  Event.Pending loc -> do
+    let attributes = serviceMessage loc
     tellLn $ testStarted attributes
     tellLn $ testIgnored attributes
     tellLn $ testFinished attributes
-  Event.TestEnd path name (Success _ (Milliseconds millies)) ->
+  Event.TestEnd loc (Success _ (Milliseconds millies)) ->
     tellLn $ testFinishedIn
-      ( serviceMessage name path
+      ( serviceMessage loc
           # withDuration millies
       )
-  Event.TestEnd path name (Failure error) -> do
-    let attributes = serviceMessage name path # withMessage (show error)
+  Event.TestEnd loc (Failure error) -> do
+    let attributes = serviceMessage loc # withMessage (show error)
     tellLn $ testFailed attributes error
     tellLn $ testFinished attributes
   Event.End _ -> pure unit

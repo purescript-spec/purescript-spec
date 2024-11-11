@@ -12,6 +12,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Show.Generic (genericShow)
 import Data.Time.Duration (Milliseconds(..))
+import Data.Tuple.Nested ((/\))
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (RunningItem(..), defaultReporter, defaultSummary, defaultUpdate)
 import Test.Spec.Result (Result(..))
@@ -21,9 +22,9 @@ import Test.Spec.Runner.Event as Event
 import Test.Spec.Speed as Speed
 import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
-import Test.Spec.Tree (Path)
+import Test.Spec.Tree (Path, TestLocator)
 
-type State = { runningItems :: Map Path RunningItem, numFailures :: Int }
+type State = { runningItems :: Map TestLocator RunningItem, numFailures :: Int }
 
 initialState :: State
 initialState = { runningItems: Map.empty, numFailures: 0}
@@ -32,19 +33,19 @@ specReporter :: Reporter
 specReporter = defaultReporter initialState $ defaultUpdate
   { getRunningItems: _.runningItems
   , putRunningItems: flip _{runningItems = _}
-  , printFinishedItem: \path -> case _ of
-      RunningTest name (Just res) -> print path $ PrintTest name res
-      RunningPending name -> print path $ PrintPending name
-      RunningSuite name true -> print path $ PrintSuite name
+  , printFinishedItem: \(path /\ name) -> case _ of
+      RunningTest (Just res) -> print path $ PrintTest name res
+      RunningPending -> print path $ PrintPending name
+      RunningSuite true -> print path $ PrintSuite name
       _ -> pure unit
   , update: case _ of
-      Event.Suite Sequential path name -> do
+      Event.Suite Sequential (path /\ name) -> do
         print path $ PrintSuite name
-      Event.TestEnd path name res -> do
+      Event.TestEnd (path /\ name) res -> do
         {runningItems} <- get
-        when (isNothing $ Map.lookup path runningItems) do
+        when (isNothing $ Map.lookup (path /\ name) runningItems) do
           print path $ PrintTest name res
-      Event.Pending path name -> do
+      Event.Pending (path /\ name) -> do
         {runningItems} <- get
         when (Map.isEmpty runningItems) do
           print path $ PrintPending name
