@@ -11,7 +11,7 @@ package:
   name: spec
   publish:
     license: MIT
-    version: 8.1.0
+    version: 8.1.1
     location:
       githubOwner: purescript-spec
       githubRepo: purescript-spec

@@ -16,6 +16,9 @@ in detail how to use purescript-spec. **You should probably start here.**
 
 ## Changelog
 
+* **8.1.1**
+  * Fixed #149 - broken reporting via `consoleReporter` and `specReporter` for parallel tests.
+
 * **8.0.0**
   * `runSpec` renamed to `runSpecPure`.
   * `runSpecT` renamed to `evalSpecT`.
