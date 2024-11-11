@@ -17,9 +17,9 @@ type DotReporterConfig = { width :: Int }
 
 dotReporter :: DotReporterConfig -> Reporter
 dotReporter { width } = defaultReporter (-1) case _ of
-  Event.TestEnd _ _ (Success speed _) -> wrap $ styled (Speed.toStyle speed) "."
-  Event.TestEnd _ _ (Failure _) -> wrap $ styled Style.red "!"
-  Event.Pending _ _ -> wrap $ styled Style.dim ","
+  Event.TestEnd _ (Success speed _) -> wrap $ styled (Speed.toStyle speed) "."
+  Event.TestEnd _ (Failure _) -> wrap $ styled Style.red "!"
+  Event.Pending _ -> wrap $ styled Style.dim ","
   Event.End _ -> tellLn ""
   _ -> pure unit
   where

@@ -19,7 +19,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..), uncurry)
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Effect.Exception as Error
 import Pipes (await, yield)
@@ -36,7 +36,7 @@ import Test.Spec.Style (styled)
 import Test.Spec.Style as Style
 import Test.Spec.Summary (Summary(..))
 import Test.Spec.Summary as Summary
-import Test.Spec.Tree (Path, annotateWithPaths, parentSuiteName)
+import Test.Spec.Tree (Name, TestLocator, annotatedWithPaths, parentSuiteName)
 
 
 defaultSummary :: forall m
@@ -55,15 +55,15 @@ defaultSummary xs = do
 printFailures
   :: forall m
    . MonadWriter String m
-  => Array (Tree String Void Result)
+  => Array (Tree Name Void Result)
   -> m Unit
-printFailures xs' = evalStateT (go $ annotateWithPaths xs') 0
+printFailures xs' = evalStateT (go $ annotatedWithPaths xs') 0
   where
-    go :: Array (Tree (String /\ Path) Void Result) -> StateT Int m Unit
+    go :: Array (Tree TestLocator Void Result) -> StateT Int m Unit
     go = traverse_ case _ of
       S.Node (Left _) xs -> go xs
       S.Node (Right v) _ -> absurd v
-      S.Leaf (n /\ path) (Just (Failure err)) -> do
+      S.Leaf (path /\ n) (Just (Failure err)) -> do
         i <- State.modify $ add 1
         let label = intercalate " " (parentSuiteName path <> [n])
         tellLn $ show i <> ") " <> label
@@ -99,51 +99,53 @@ defaultReporter initialState onEvent = pure initialState # scanWithStateM \s e -
 
 
 data RunningItem
-  = RunningTest String (Maybe Result)
-  | RunningPending String
-  | RunningSuite String Boolean
+  = RunningTest (Maybe Result)
+  | RunningPending
+  | RunningSuite Boolean
 
-derive instance runningItemGeneric :: Generic RunningItem _
-instance runningItemShow :: Show RunningItem where show = genericShow
+derive instance Generic RunningItem _
+instance Show RunningItem where show = genericShow
 
 defaultUpdate
   :: forall s
-  . { getRunningItems :: s -> Map Path RunningItem
-    , putRunningItems :: Map Path RunningItem -> s -> s
-    , printFinishedItem :: Path -> RunningItem -> StateT s (Writer String) Unit
+  . { getRunningItems :: s -> Map TestLocator RunningItem
+    , putRunningItems :: Map TestLocator RunningItem -> s -> s
+    , printFinishedItem :: TestLocator -> RunningItem -> StateT s (Writer String) Unit
     , update :: Event -> StateT s (Writer String) Unit
     }
-  -> (Event -> StateT s (Writer String) Unit)
+  -> Event
+  -> StateT s (Writer String) Unit
 defaultUpdate opts e = do
   baseUpdate e
   opts.update e
   where
     baseUpdate = case _ of
-      Event.Suite Event.Sequential _ _ ->
+      Event.Suite Event.Sequential _ ->
         pure unit
-      Event.Suite Event.Parallel path name -> do
-        modifyRunningItems $ Map.insert path $ RunningSuite name false
-      Event.SuiteEnd path -> do
-        modifyRunningItems $ flip Map.update path case _ of
-          RunningSuite n _ -> Just $ RunningSuite n true
+      Event.Suite Event.Parallel loc -> do
+        modifyRunningItems $ Map.insert loc $ RunningSuite false
+      Event.SuiteEnd loc -> do
+        modifyRunningItems $ flip Map.update loc case _ of
+          RunningSuite _ -> Just $ RunningSuite true
           _ -> Nothing
-      Event.Test Event.Sequential _ _ -> do
+      Event.Test Event.Sequential _ -> do
         pure unit
-      Event.Test Event.Parallel path name -> do
-        modifyRunningItems $ Map.insert path $ RunningTest name Nothing
-      Event.TestEnd path _ res -> do
+      Event.Test Event.Parallel loc -> do
+        modifyRunningItems $ Map.insert loc $ RunningTest Nothing
+      Event.TestEnd loc res -> do
         runningItem <- gets opts.getRunningItems
-        case Map.lookup path runningItem of
-          Just (RunningTest n _) ->
-            modifyRunningItems $ Map.insert path $ RunningTest n $ Just res
+        case Map.lookup loc runningItem of
+          Just (RunningTest _) ->
+            modifyRunningItems $ Map.insert loc $ RunningTest $ Just res
           _ ->
             pure unit
-      Event.Pending path name -> do
+      Event.Pending loc -> do
         runningItem <- gets opts.getRunningItems
         unless (Map.isEmpty runningItem) do
-          modifyRunningItems $ Map.insert path $ RunningPending name
+          modifyRunningItems $ Map.insert loc RunningPending
       Event.End _ -> pure unit
       Event.Start _ -> pure unit
+
     modifyRunningItems f = do
       s <- get
       let
@@ -152,10 +154,9 @@ defaultUpdate opts e = do
       put $ opts.putRunningItems (if allFinished then Map.empty else nextRunningItems) s
 
       when allFinished do
-        for_ (asArray $ Map.toUnfoldable nextRunningItems) $ uncurry opts.printFinishedItem
+        for_ (Map.toUnfoldable nextRunningItems :: Array _) $ uncurry opts.printFinishedItem
       where
-        asArray = identity :: Array ~> Array
         runningItemIsFinished = case _ of
-          RunningPending _ -> true
-          RunningTest _ res -> isJust res
-          RunningSuite _ finished -> finished
+          RunningPending -> true
+          RunningTest res -> isJust res
+          RunningSuite finished -> finished

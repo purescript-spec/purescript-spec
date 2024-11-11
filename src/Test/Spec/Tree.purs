@@ -1,10 +1,14 @@
 module Test.Spec.Tree
   ( ActionWith
   , Item(..)
+  , Name
+  , NumberOfTests
   , Path
   , PathItem(..)
+  , TestLocator
   , Tree(..)
   , annotateWithPaths
+  , annotatedWithPaths
   , bimapTreeWithPaths
   , countTests
   , discardUnfocused
@@ -22,7 +26,7 @@ import Prelude
 
 import Control.Monad.State (execState)
 import Control.Monad.State as State
-import Data.Array (mapMaybe, mapWithIndex, snoc)
+import Data.Array (mapMaybe, mapWithIndex, snoc, unsnoc)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Bifunctor (class Bifunctor, bimap, lmap)
@@ -32,6 +36,10 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Traversable (for, for_)
 import Data.Tuple.Nested (type (/\), (/\))
+
+type Name = String
+type NumberOfTests = Int
+type TestLocator = Path /\ Name
 
 data Tree n c a
   = Node (Either n c) (Array (Tree n c a))
@@ -80,17 +88,19 @@ newtype Item m a = Item
   , example :: (ActionWith m a -> m Unit) -> m Unit
   }
 
-derive instance itemNewtype :: Newtype (Item m a) _
+derive instance Newtype (Item m a) _
 
-instance itemShow :: Show (Item m a) where
+instance Show (Item m a) where
   show (Item { isFocused, isParallelizable }) =
     "Item (" <> show { isFocused, isParallelizable, example: "Function" } <> ")"
 
-instance itemEq :: Eq (Item m a) where
+instance Eq (Item m a) where
   eq (Item a) (Item b) =
     a.isFocused == b.isFocused && a.isParallelizable == b.isParallelizable
 
-annotateWithPaths :: ∀ c a. Array (Tree String c a) -> Array (Tree (String /\ Path) c a)
+-- | Legacy version with `Name /\ Path` flipped compared to the `TestLocator`
+-- | definition. Will be removed in the future and replaced with `annotatedWithPath`.
+annotateWithPaths :: ∀ c a. Array (Tree Name c a) -> Array (Tree (Name /\ Path) c a)
 annotateWithPaths = mapWithIndex $ go []
   where
     go path index = case _ of
@@ -102,6 +112,19 @@ annotateWithPaths = mapWithIndex $ go []
 
       Leaf name item ->
         Leaf (name /\ path) item
+
+annotatedWithPaths :: ∀ c a. Array (Tree Name c a) -> Array (Tree TestLocator c a)
+annotatedWithPaths = mapWithIndex $ go []
+  where
+    go path index = case _ of
+      Node c children ->
+        let name = either Just (const Nothing) c
+            nextPath = path <> [PathItem { index, name }]
+        in
+          Node (c # lmap (path /\ _)) (mapWithIndex (go nextPath) children)
+
+      Leaf name item ->
+        Leaf (path /\ name) item
 
 mapTreeAnnotations :: ∀ n m c a. (n -> m) -> Tree n c a -> Tree m c a
 mapTreeAnnotations f = case _ of
@@ -155,18 +178,18 @@ modifyAroundAction action (Item item) = Item $ item
 
 newtype PathItem = PathItem { index :: Int, name :: Maybe String }
 
-derive instance newtypePathItem :: Newtype PathItem _
-derive newtype instance showIdTerm :: Show PathItem
-derive newtype instance pathItemEq :: Eq PathItem
-derive newtype instance pathItemOrd :: Ord PathItem
+derive instance Newtype PathItem _
+derive newtype instance Show PathItem
+derive newtype instance Eq PathItem
+derive newtype instance Ord PathItem
 
 type Path = Array PathItem
 
-parentSuiteName :: Path -> Array String
+parentSuiteName :: Path -> Array Name
 parentSuiteName = mapMaybe (un PathItem >>> _.name)
 
-parentSuite :: Path -> Maybe { path :: Path, name :: String }
-parentSuite = flip foldr Nothing case _, _ of
-  PathItem { name: Just name }, Nothing -> Just { path: [], name }
-  PathItem { name: Nothing }, Nothing -> Nothing
-  p, Just acc -> Just acc { path = [ p ] <> acc.path }
+parentSuite :: Path -> Maybe TestLocator
+parentSuite path = do
+  { init, last } <- unsnoc path
+  name <- last # un PathItem # _.name
+  pure $ init /\ name

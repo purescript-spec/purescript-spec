@@ -7,6 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.String (Pattern(Pattern), joinWith, split)
 import Data.String.Regex as Regex
 import Data.String.Regex.Unsafe (unsafeRegex)
+import Data.Tuple.Nested ((/\))
 import Effect.Exception as Error
 import Test.Spec.Console (tellLn)
 import Test.Spec.Reporter.Base (defaultReporter)
@@ -22,15 +23,15 @@ tapReporter :: Reporter
 tapReporter = defaultReporter 1 case _ of
   Event.Start nTests ->
     tellLn $ "1.." <> show nTests
-  Event.Pending _ name -> do
+  Event.Pending (_ /\ name) -> do
     n <- get
     tellLn $ "ok " <> show n <> " " <> (escTitle name) <> " # SKIP -"
     modify_ (_ + 1)
-  Event.TestEnd _ name (Success _ _) -> do
+  Event.TestEnd (_ /\ name) (Success _ _) -> do
     n <- get
     tellLn $ "ok " <> show n <> " " <> (escTitle name)
     modify_ (_ + 1)
-  Event.TestEnd _ name (Failure err) -> do
+  Event.TestEnd (_ /\ name) (Failure err) -> do
     n <- get
     tellLn $ "not ok " <> show n <> " " <> (escTitle name)
     tellLn $ escMsg $ Error.message err
