@@ -9,7 +9,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Tuple.Nested ((/\))
@@ -41,10 +41,6 @@ specReporter = defaultReporter initialState $ defaultUpdate
   , update: case _ of
       Event.Suite Sequential (path /\ name) -> do
         print path $ PrintSuite name
-      Event.TestEnd (path /\ name) res -> do
-        {runningItems} <- get
-        when (isNothing $ Map.lookup (path /\ name) runningItems) do
-          print path $ PrintTest name res
       Event.Pending (path /\ name) -> do
         {runningItems} <- get
         when (Map.isEmpty runningItems) do

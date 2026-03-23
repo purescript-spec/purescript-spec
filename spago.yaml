@@ -1,17 +1,12 @@
 workspace:
-  extraPackages:
-    spec-node:
-      git: https://github.com/purescript-spec/purescript-spec-node.git
-      ref: v0.0.3
-      dependencies: [ 'argonaut-core', 'argonaut-codecs', 'optparse' ]
   packageSet:
-    registry: 60.2.0
+    registry: 75.0.0
 
 package:
   name: spec
   publish:
     license: MIT
-    version: 8.1.1
+    version: 8.1.2
     location:
       githubOwner: purescript-spec
       githubRepo: purescript-spec
@@ -43,6 +38,7 @@ package:
     - tailrec: ">=6.1.0 <7.0.0"
     - transformers: ">=6.1.0 <7.0.0"
     - tuples: ">=7.0.0 <8.0.0"
+    - debug
   test:
     main: Test.Main
     dependencies:

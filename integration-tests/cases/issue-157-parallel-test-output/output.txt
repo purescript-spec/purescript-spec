@@ -1,0 +1,31 @@
+mixed tests » sync tests - first batch
+  ✓︎ test 1
+  ✗ test 2:
+
+  true ≠ false
+  ✓︎ test 3
+mixed tests » async delayed tests
+  ✗ test 4:
+
+  true ≠ false
+  ✓︎ test 5
+  ✓︎ test 6
+mixed tests » async delayed tests » nested sync tests
+  ✗ test 7:
+
+  true ≠ false
+  ✓︎ test 8
+mixed tests » async delayed tests
+  ✓︎ test 10
+  ✗ test 9:
+
+  true ≠ false
+mixed tests » sync tests - second batch
+  ✓︎ test 11
+  ✗ test 12:
+
+  true ≠ false
+  ✓︎ test 13
+
+Summary
+8/13 tests passed
