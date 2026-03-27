@@ -3,7 +3,7 @@ module Test.Integration where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.String as S
 import Data.String as Str
 import Data.String.Regex (replace) as Regex
@@ -21,18 +21,20 @@ import Node.ChildProcess.Types as IO
 import Node.Encoding (Encoding(..))
 import Node.EventEmitter (on_)
 import Node.FS.Aff as FS
+import Node.FS.Constants as FSC
 import Node.FS.Stats (isDirectory)
 import Node.OS (tmpdir)
 import Node.Process (cwd)
 import Node.Stream as Stream
+import Spago.Generated.BuildInfo as BuildInfo
 import Test.Spec (Spec, afterAll, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 -- | Reads the contents of `/integration-tests/cases` and turns each
 -- | subdirectory into a test case. See `/integration-tests/cases/README` for
 -- | more details.
-integrationSpecs :: { debug :: Boolean } -> Aff (Spec Unit)
-integrationSpecs { debug } = do
+integrationSpecs :: { debug :: Boolean, accept :: Boolean } -> Aff (Spec Unit)
+integrationSpecs { debug, accept } = do
   { runFile, cleanupEnvironment } <- liftEffect $ prepareEnvironment { debug }
   cases <- FS.readdir "integration-tests/cases"
 
@@ -42,9 +44,13 @@ integrationSpecs { debug } = do
         let testDir = "integration-tests/cases/" <> testName
         it testName do
           program <- FS.readTextFile UTF8 $ testDir // "Main.purs"
-          goldenOutput <- FS.readTextFile UTF8 $ testDir // "output.txt"
-          actualOutput <- runFile program
-          Str.trim actualOutput `shouldEqual` Str.trim goldenOutput
+          goldenOutput <- Str.trim <$> FS.readTextFile UTF8 (testDir // "output.txt")
+          actualOutput <- Str.trim <$> runFile program
+          if accept then do
+            FS.writeTextFile UTF8 (testDir // "output.txt") actualOutput
+            log $ "Accepted new output for test case: " <> testName
+          else
+            actualOutput `shouldEqual` goldenOutput
 
 prepareEnvironment :: { debug :: Boolean } -> Effect { runFile :: String -> Aff String, cleanupEnvironment :: Aff Unit }
 prepareEnvironment { debug } =
@@ -92,7 +98,10 @@ prepareEnvironment { debug } =
           traceLog $ "Preparing environment in: " <> dir
           copyAllFiles { from: "integration-tests/env-template", to: dir }
           patchRepoPath $ dir // "spago.yaml"
-          run' dir "npm" ["install", "purescript@0.15", "spago@0.93"]
+          run' dir "npm" ["install", "purescript@" <> BuildInfo.pursVersion, "spago@" <> BuildInfo.spagoVersion]
+          copyAllFiles { from: dir // "node_modules", to: "integration-tests/env-template/node_modules" }
+          whenM (isNothing <$> FS.access (dir // "output")) $
+            copyAllFiles { from: dir // "output", to: "integration-tests/env-template/output" }
           pure dir
 
     patchRepoPath file = do
@@ -104,11 +113,11 @@ prepareEnvironment { debug } =
     copyAllFiles { from, to } = do
       ensureDirExists to
       FS.readdir from >>= traverse_ \f -> do
-        stat <- FS.stat f
+        stat <- FS.stat $ from // f
         if isDirectory stat then
           copyAllFiles { from: from // f, to: to // f }
         else
-          FS.copyFile (from // f) (to // f)
+          FS.copyFile' (from // f) (to // f) FSC.copyFile_FICLONE
 
     run' cwd cmd = void <<< run cwd cmd
 

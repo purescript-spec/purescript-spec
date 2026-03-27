@@ -7,11 +7,11 @@ workspace:
       version: v0.0.1
       dependencies: ['argonaut-core', 'argonaut-codecs', 'optparse', 'node-fs']
   packageSet:
-    registry: 55.1.0
+    registry: 75.0.0
 
 package:
   name: integration-test
-  dependencies: []
+  dependencies: ["aff", "effect", "maybe", "prelude", "spec", "spec-node"]
   test:
     main: Test.Main
-    dependencies: ["aff", "effect", "maybe", "prelude", "spec", "spec-node"]
+    dependencies: []

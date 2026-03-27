@@ -5,10 +5,9 @@ import Prelude
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (delay)
 import Test.Spec (Spec, describe, it, parallel, pending, sequential)
--- import Test.Spec.Assertions (shouldEqual)
 
 parallelSpec :: Spec Unit
-parallelSpec = do
+parallelSpec = describe "Parallel" do
   describe "g" do
     it "g.1" $ delay $ Milliseconds 500.0
     it "g.2" $ delay $ Milliseconds 500.0

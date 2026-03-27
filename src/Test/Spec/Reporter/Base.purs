@@ -133,15 +133,17 @@ defaultUpdate opts e = do
       Event.Test Event.Parallel loc -> do
         modifyRunningItems $ Map.insert loc $ RunningTest Nothing
       Event.TestEnd loc res -> do
-        runningItem <- gets opts.getRunningItems
-        case Map.lookup loc runningItem of
+        runningItems <- gets opts.getRunningItems
+        case Map.lookup loc runningItems of
           Just (RunningTest _) ->
             modifyRunningItems $ Map.insert loc $ RunningTest $ Just res
+          Nothing ->
+            opts.printFinishedItem loc $ RunningTest $ Just res
           _ ->
             pure unit
       Event.Pending loc -> do
-        runningItem <- gets opts.getRunningItems
-        unless (Map.isEmpty runningItem) do
+        runningItems <- gets opts.getRunningItems
+        unless (Map.isEmpty runningItems) do
           modifyRunningItems $ Map.insert loc RunningPending
       Event.End _ -> pure unit
       Event.Start _ -> pure unit

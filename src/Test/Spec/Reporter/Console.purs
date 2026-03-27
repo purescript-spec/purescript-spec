@@ -8,7 +8,7 @@ import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Exception as Error
@@ -37,10 +37,6 @@ consoleReporter = defaultReporter initialState $ defaultUpdate
       RunningPending -> print path $ PrintPending name
       _ -> pure unit
   , update: case _ of
-      Event.TestEnd (path /\ name) res -> do
-        {runningItems} <- get
-        when (isNothing $ Map.lookup (path /\ name) runningItems) do
-          print path $ PrintTest name res
       Event.Pending (path /\ name) -> do
         {runningItems} <- get
         when (Map.isEmpty runningItems) do

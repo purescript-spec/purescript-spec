@@ -149,21 +149,20 @@ _run config = collect >>> map \tests -> do
       let duration = end `diff` start
       pure $ either Failure (const $ Success (speedOf config.slow duration) duration) e
 
-
 -- https://github.com/felixSchl/purescript-pipes/issues/16
 mergeProducers :: forall t o a. Traversable t => t (Producer o Aff a) -> Producer o Aff (t a)
 mergeProducers ps = do
   var <- lift AV.empty
 
   fib <- lift $ forkAff do
-    let consumer i = lift (AV.put i var) *> pure unit
+    let consumer i = lift (AV.put (Right i) var) *> pure unit
     x <- parTraverse (\p -> P.runEffectRec $ p //> consumer) ps
-    AV.kill (error "finished") var
+    AV.put (Left unit) var
     pure x
 
   let
     loop = do
-      res <- lift $ try (AV.take var)
+      res <- lift (AV.take var)
       case res of
         Left _ -> lift $ joinFiber fib
         Right e -> do

@@ -33,7 +33,7 @@ jobs:
       run: bundler exec jekyll build
 
     - name: Upload GH Pages artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v4
       with:
         path: docs/_site
       if: github.event_name != 'pull_request'

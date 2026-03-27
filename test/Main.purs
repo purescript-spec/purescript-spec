@@ -23,10 +23,10 @@ import Test.Spec.RunnerSpec (runnerSpec)
 main :: Effect Unit
 main = launchAff_ do
   config <- liftEffect $
-    Config.fromCommandLine' defaultConfig (Config.commandLineOptionParsers <> [debug])
+    Config.fromCommandLine' defaultConfig (Config.commandLineOptionParsers <> [debug, accept])
     <#> _ { timeout = Just $ Milliseconds 30000.0 }
   integration <-
-    integrationSpecs { debug: config.debug }
+    integrationSpecs { debug: config.debug, accept: config.accept }
   liftEffect $
     runSpecAndExitProcess'
       { defaultConfig: config
@@ -43,10 +43,10 @@ main = launchAff_ do
       parallelSpec
       teamcitySpec
 
-type Config = Config.TestRunConfig' (debug :: Boolean)
+type Config = Config.TestRunConfig' (debug :: Boolean, accept :: Boolean)
 
 defaultConfig :: Config
-defaultConfig = Config.defaultConfig `merge` { debug: false }
+defaultConfig = Config.defaultConfig `merge` { debug: false, accept: false }
 
 debug :: Config.OptionParser Config
 debug = ado
@@ -56,3 +56,12 @@ debug = ado
     ]
 
   in _ { debug = d }
+
+accept :: Config.OptionParser Config
+accept = ado
+  a <- Opt.switch $ fold
+    [ Opt.long "accept"
+    , Opt.help "Accept all test outputs as new expected outputs."
+    ]
+
+  in _ { accept = a }
