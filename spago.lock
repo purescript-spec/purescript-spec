@@ -26,7 +26,6 @@
             {
               "datetime": ">=6.1.0 <7.0.0"
             },
-            "debug",
             {
               "effect": ">=4.0.0 <5.0.0"
             },
@@ -944,15 +943,6 @@
         "partial",
         "prelude",
         "tuples"
-      ]
-    },
-    "debug": {
-      "type": "registry",
-      "version": "6.0.2",
-      "integrity": "sha256-d/EzRm/J2JyzvlIeo2Ex78Y7HRB0IXBitnVJywL4gHk=",
-      "dependencies": [
-        "functions",
-        "prelude"
       ]
     },
     "distributive": {

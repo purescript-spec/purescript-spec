@@ -38,7 +38,6 @@ package:
     - tailrec: ">=6.1.0 <7.0.0"
     - transformers: ">=6.1.0 <7.0.0"
     - tuples: ">=7.0.0 <8.0.0"
-    - debug
   test:
     main: Test.Main
     dependencies:
